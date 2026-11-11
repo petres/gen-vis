@@ -31,7 +31,7 @@ class Store {
     defOrg = null;
     // the definition of gen-vis 5 with its expressions of the globals, see
     // utils/resolve.js and applyResolved of utils/def.js
-    source = null;
+    authored = null;
     // the coordinate system of the definition, of the values of its globals
     // the one of them, of the ones loaded by their name (`coords`), see
     // applyControls
@@ -89,7 +89,7 @@ class Store {
 
     // the formatters of the locale of the definition, also of a global,
     // e.g. of a control of the language, see utils/locale.js
-    get locale() { return localeOf(this.def?.options?.locale) }
+    get locale() { return localeOf(this.def?.locale) }
 
     // the changes of the user compared to the definition, see utils/state.js
     get state() { return this.loaded ? diffState(snapshot(this.def), this.defaults) : null }
@@ -218,7 +218,7 @@ class Store {
     applyControls(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
-            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files, this.def.options?.locale);
+            const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files, this.def.locale);
             if (columns !== this.columns) {
                 this.columns = columns;
                 columns.changed.forEach(c => changedColumns.add(c));
@@ -232,7 +232,7 @@ class Store {
             const before = sourceRows(this.rows, this.columns);
             const columnsBefore = new Set(changedColumns);
             applyResolved(this.def, this.defOrg, { dataKeys: (column, inOrder) => this.dataKeys(column, inOrder), keepVisible, transform, files: this.files,
-                symbols: symbolDefaults(this.chartDefaults), source: this.source, markTypes,
+                symbols: symbolDefaults(this.chartDefaults), authored: this.authored, markTypes,
                 types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
             Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))
@@ -243,12 +243,12 @@ class Store {
             // the last one (not one of the page), e.g. of a filter
             const passRows = sourceRows(this.rows, this.columns) !== before;
             const passColumns = [...changedColumns].filter(c => !columnsBefore.has(c));
-            const language = languageOf(this.def.options, this.def.globals);
+            const language = languageOf(this.def, this.def.globals);
             const languageChanged = language !== this.valuesLanguage;
             this.valuesLanguage = language;
             if (!passRows && passColumns.length == 0 && !languageChanged)
                 break;
-            const reset = updateDataValues(this.defOrg ?? {}, this.def, this.rows, this.columns, valueFormat(this.def.options?.locale),
+            const reset = updateDataValues(this.defOrg ?? {}, this.def, this.rows, this.columns, valueFormat(this.def.locale),
                 spec => passRows || languageChanged || passColumns.includes(spec.column) || passColumns.includes(spec.names),
                 language, ref => this.globals?.[ref] !== undefined);
             if (reset.length == 0)
@@ -263,7 +263,7 @@ class Store {
         else if (changed.length > 0)
             this.data = raw(updateData(this.rows, this.data, this.def, changed, this.columns));
         // the coordinate system of a global, e.g. polar instead of cartesian
-        const coord = this.coords?.get(this.def.options.coord ?? 'cartesian');
+        const coord = this.coords?.get(this.def.coord ?? 'cartesian');
         if (coord && coord !== this.coord)
             this.coord = coord;
         // another geometry or the features of another part of a map, e.g. of

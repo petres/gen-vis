@@ -7,7 +7,7 @@ import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { isMatch, operators, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
-import { translate, checkDims, entryOf } from '@/utils/language';
+import { translate, checkDims, entryOf, optionKeys } from '@/utils/language';
 import { resolve, namesOfGlobals } from '@/utils/resolve';
 import { normalize } from '@/utils/normalize';
 
@@ -471,7 +471,8 @@ const placed = marks => {
     return rest;
 };
 
-// the options of the definition, the height of a facet and the space around
+// the options of the definition (the ones of its top level, see optionKeys
+// of utils/language.js), the height of a facet and the space around
 // its plots, e.g. of the axes
 // an option of null is none, e.g. of an expression of a global without a value
 // the margins are the sides the definition gives, the others are the ones
@@ -559,33 +560,34 @@ const inLanguage = (v, language) => {
 };
 
 /**
- * The language of the texts (`options.language`): a tag or a global
- * ("@lang"), by default the one of `options.locale`, undefined without both.
+ * The language of the texts of a definition (`language`): a tag or a global
+ * ("@lang"), by default the one of its `locale`, undefined without both.
  */
-const languageOf = (options, globals = {}) => {
-    const given = options?.language;
+const languageOf = (def, globals = {}) => {
+    const given = def?.language;
     if (typeof given == 'string' && !given.startsWith('@'))
         return given;
     // a global without a value: the language of the locale
     const global = typeof given == 'string' ? globals?.[given.slice(1)] : undefined;
     if (global != null && global !== '')
         return String(global);
-    const locale = options?.locale;
+    const locale = def?.locale;
     return typeof locale == 'string' ? locale : (isObject(locale) && typeof locale.base == 'string' ? locale.base : undefined);
 };
 
-// the places of texts which can be in several languages, by part, a path
-// of keys ('*' every entry of an object or a list), only these, other
-// objects of short keys are not texts, e.g. { "of": "x" } of a scale
+// the places of texts which can be in several languages, by part (an
+// option, the dims or the annotations), a path of keys ('*' every entry of
+// an object or a list, no key: the part itself), only these, other objects
+// of short keys are not texts, e.g. { "of": "x" } of a scale
 const textPaths = {
-    options: [['title'], ['subtitle'], ['footer'], ['empty'], ['hover', 'title'], ['hover', 'row'], ['hover', 'total']],
+    title: [[]], subtitle: [[]], source: [[]], empty: [[]], hover: [['title'], ['row'], ['total']],
     dims: [['*', 'name'], ['*', 'format'], ['*', 'axis', 'format'], ['*', 'axis', 'title', 'name'], ['*', 'hover', 'format'],
         ['*', 'legend', 'format'], ['*', 'legend', 'missing', 'name'], ['*', 'common', 'name'], ['*', 'categories', '*', 'name'], ['*', 'ranks', '*', 'name']],
     annotations: [['*', 'label'], ['*', 'text']],
 };
 
 /**
- * A part of a definition (`options`, `dims` or `annotations`) with its
+ * A part of a definition (an option, `dims` or `annotations`) with its
  * texts in several languages in the one of `language` (see inLanguage), at
  * their places (textPaths), a copy of the objects on the way to them.
  */
@@ -605,7 +607,7 @@ const textsIn = (name, part, language) => {
 };
 
 // the parts of a definition which the globals can change, see resolvedParts
-const patchable = ['options', 'dims', 'marks', 'annotations', 'filter', 'facets', 'geo', 'transform'];
+const patchable = [...optionKeys, 'dims', 'marks', 'annotations', 'filter', 'facets', 'geo', 'transform'];
 
 // the definitions of the engine of all values of the controls of a
 // definition, kept on the one of its load (see load of utils/load.js), e.g.
@@ -626,17 +628,17 @@ const selectedEntries = def => (def.controls ?? []).map(e => selectedEntry(def, 
 const sources = Symbol('sources');
 
 /**
- * The patchable parts of the definition `source` (the one of gen-vis 5 with
+ * The patchable parts of the definition `authored` (the one of gen-vis 5 with
  * its expressions of the globals, see utils/resolve.js) of the globals of
  * `def`: resolved with them and the fields of the selected entries of the
  * controls, translated and normalized (`markTypes` are the mark types,
- * see utils/normalize.js); without a source the parts of `defOrg`. The
+ * see utils/normalize.js); without one the parts of `defOrg`. The
  * globals of an entry can select the entry of a later control, e.g. a
  * language selects its names, they are set in `def.globals` until no entry
  * changes them anymore, at most once per control, e.g. of entries
  * which set each other's globals.
  */
-const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
+const resolvedParts = (def, defOrg, authored = null, markTypes = {}) => {
     for (let i = 0; i <= (def.controls ?? []).length; i++) {
         const selected = selectedEntries(def);
         const globals = JSON.stringify(def.globals);
@@ -645,15 +647,15 @@ const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
             break;
     }
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
-    if (!source)
+    if (!authored)
         return pick(JSON.parse(JSON.stringify(pick(defOrg))));
-    const names = namesOfGlobals(def.globals, source.controls);
-    return pick(normalize(checkDims(translate(resolve(source, names))), { markTypes }));
+    const names = namesOfGlobals(def.globals, authored.controls);
+    return pick(normalize(checkDims(translate(resolve(authored, names))), { markTypes }));
 };
 
 /**
  * The parts of a definition of its globals (see resolvedParts: the
- * `source` of gen-vis 5 resolved with them, e.g. a column or a scale of a
+ * `authored` definition of gen-vis 5 resolved with them, e.g. a column or a scale of a
  * control, `markTypes` of its normalization), prepared into `def`, `defOrg`
  * is the definition of the load. Column templates are filled with the
  * globals, e.g. "{values}{share}". Only the parts which differ from the
@@ -668,16 +670,16 @@ const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
  * of the symbols of legends, see symbolDefaults. Returns the names of the
  * dims whose values change, the ones of another column or type.
  */
-const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, markTypes = {}, types = null } = {}) => {
-    const merged = resolvedParts(def, defOrg, source, markTypes);
+const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, authored = null, markTypes = {}, types = null } = {}) => {
+    const merged = resolvedParts(def, defOrg, authored, markTypes);
     // the texts in the language of the definition, e.g. of a global of a
     // control; the locale of the numbers and dates is the language
     // without one of its own
-    const language = languageOf(merged.options, def.globals);
+    const language = languageOf(merged, def.globals);
     const patched = { ...merged };
-    ['options', 'dims', 'annotations'].filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
-    if (hasLocale(language) && patched.options?.locale === undefined)
-        patched.options = { ...patched.options, locale: language };
+    Object.keys(textPaths).filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
+    if (hasLocale(language) && patched.locale === undefined)
+        patched.locale = language;
     // the names of the controls and of their entries
     (def.controls ?? []).forEach((e, i) => {
         const org = defOrg.controls?.[i];
@@ -701,7 +703,13 @@ const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, t
             def[name] = prepare(raw);
     };
 
-    part('options', patched.options, prepareOptions);
+    // the options, one which the definition has not (anymore) is none
+    const options = prepareOptions(Object.fromEntries(optionKeys.filter(k => patched[k] !== undefined).map(k => [k, patched[k]])));
+    optionKeys.forEach(k => {
+        part(k, options[k] ?? null, o => o ?? undefined);
+        if (def[k] === undefined)
+            delete def[k];
+    });
     part('facets', patched.facets ?? null, f => f && isObject(f) ? { cols: 1, ...f } : undefined);
     if (!def.facets)
         delete def.facets;

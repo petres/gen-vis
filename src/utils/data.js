@@ -861,7 +861,7 @@ const usedColumns = def => {
 // dims), e.g. "@region == 'W'" of a column `region`
 const expressionColumns = def => {
     const expressions = [def.filter, ...[def.marks ?? []].flat().map(p => p?.filter),
-        ...Object.values(def.dims ?? {}).map(m => m?.stacked), def.options?.hover?.filter];
+        ...Object.values(def.dims ?? {}).map(m => m?.stacked), def.hover?.filter];
     return expressions.filter(e => e !== undefined && e !== null && typeof e != 'boolean' && !(isObject(e) && !isOperator(e)))
         .flatMap(e => refNames(e)).filter(n => typeof n == 'string').map(n => n.split(':')[0]);
 };

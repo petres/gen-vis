@@ -238,7 +238,7 @@ const categoryNames = def => new Set([
  */
 const normalize = (raw, { markTypes = {} } = {}) => {
     const def = clone(raw);
-    const coord = def.options?.coord ?? 'cartesian';
+    const coord = def.coord ?? 'cartesian';
     if (def.marks !== undefined)
         def.marks = def.marks.map(p => normalizeMark(p, coord, markTypes));
     const used = categoryNames(def);

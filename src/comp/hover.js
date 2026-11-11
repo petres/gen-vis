@@ -49,7 +49,7 @@ const styleOf = row => {
  * the `style` of a row are the styles of the props of its categories
  * (`hover.row.props`), the nearest one stays bold, its `attrs` the keys of
  * its categories, e.g. data-type="load". The content is the one of the
- * hover slot, of the templates of the definition (options.hover) or the
+ * hover slot, of the templates of the definition (`hover`) or the
  * table of the rows. `slots()` are the slots of the page.
  */
 // the row of the total of a table of the hover, see totalRow
@@ -63,7 +63,7 @@ const createHover = (store, slots) => {
     let title = null;
     let table = null;
 
-    const template = () => store.def.options.hover ?? {};
+    const template = () => store.def.hover ?? {};
     // the rows from the top to the bottom, see orderOf of comp/facet-hover.js
     const sortedOf = data => [...(data ?? [])].sort((a, b) => byOrder(a.order, b.order));
 

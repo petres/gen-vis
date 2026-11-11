@@ -7,19 +7,21 @@ import { categoryKeys, isCategorical } from '@/utils/normalize';
 
 /**
  * The definition language of gen-vis 5 (see docs/definition.md) translated
- * into the form the engine reads (the one of 4.x normalized, see
- * utils/normalize.js: `options`, `dims`, `marks` with `props`,
- * `controls`): the top-level options into `options`, the shorthands
- * of the `dims` written out, `marks` with their channels into marks with the
- * `props` of the scaled positions, the values of the `controls` as entries, the hover columns into
- * the `hover` of the dims, `stack` and `dodge` of marks into the parts of
- * the dims and the props, the string syntax of expressions into their
- * objects. `translate` is pure, JSON to JSON; the rows are not known, the
- * types of the dims follow later (see inferTypes of utils/data.js).
+ * into the form the engine reads, see utils/normalize.js. The engine's
+ * form has the names of the language (`dims`, `marks`, `controls`, the
+ * options at the top level), `translate` writes out its shorthands: the
+ * shorthands of the dims (e.g. `zero` of their scale), the marks with their
+ * channels as marks with the `props` of the scaled positions and the full
+ * name of their type, the values of the controls as entries, the hover
+ * columns as the `hover` of the dims, `stack` and `dodge` of marks as the
+ * parts of the dims and the props, `facets.by` as the dims of the facets,
+ * the string syntax of expressions as their objects. `translate` is pure,
+ * JSON to JSON; the rows are not known, the types of the dims follow later
+ * (see inferTypes of utils/data.js).
  */
 
-// the keys of the top level which are the options of the engine, `source`
-// is the footer
+// the keys of the top level which are the options of the chart, `source`
+// is the text of its footer
 const optionKeys = ['title', 'subtitle', 'source', 'height', 'width', 'margins', 'coord', 'locale', 'language', 'transition', 'class',
     'message', 'empty', 'hover', 'highlight', 'fontFamily'];
 
@@ -772,23 +774,20 @@ const translated = raw => {
         if (def[k] !== undefined)
             out[k] = def[k];
     });
-    const options = {};
-    // `source` of 5.0 is the `footer` of the engine (its name of 4.x, e.g.
-    // of the element of the footer), authoredPath names it `source` again
     optionKeys.forEach(k => {
         if (def[k] !== undefined)
-            options[k == 'source' ? 'footer' : k] = def[k];
+            out[k] = def[k];
     });
-    const hover = isObject(options.hover) ? { ...options.hover } : options.hover;
+    // the columns of the hover are the `hover` of their dims, see below
+    const hover = isObject(out.hover) ? { ...out.hover } : out.hover;
     const columns = isObject(hover) ? hover.columns : undefined;
     if (isObject(hover))
         delete hover.columns;
     if (isObject(hover) && Object.keys(hover).length == 0)
-        delete options.hover;
+        delete out.hover;
     else if (hover !== undefined)
-        options.hover = hover;
-    out.options = options;
-    const coord = options.coord ?? 'cartesian';
+        out.hover = hover;
+    const coord = out.coord ?? 'cartesian';
 
     // a dim of null (or false) is none, e.g. of a global which removes it
     const dims = {};
@@ -897,8 +896,7 @@ const checkDims = def => {
 };
 
 // the path of a part of the engine's form as the one of the definition,
-// e.g. "marks[0].props.fill" is "marks[0].fill", "options.title" is "title", "options.footer" is
-// "source" (see translated), "facets.rows" (the dim of the rows of a grid)
+// e.g. "marks[0].props.fill" is "marks[0].fill", "facets.rows" (the dim of the rows of a grid)
 // is "facets.by.rows". "facets.cols" stays: it is the number of columns of
 // facets of a dim in both forms; the dim of the columns of a grid, also
 // `cols` of the engine, is "facets.by.cols", which its checks name
@@ -906,7 +904,5 @@ const checkDims = def => {
 // layout.js), a path does not tell the two apart
 const authoredPath = path => String(path)
     .replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].')
-    .replace(/^options\.footer\b/, 'source')
-    .replace(/^options\./, '')
     .replace(/^facets\.dim\b/, 'facets.by')
     .replace(/^facets\.rows\b/, 'facets.by.rows');

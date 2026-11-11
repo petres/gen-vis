@@ -148,7 +148,7 @@ describe('Store.init', () => {
         const stores = [createStore(), createStore()];
         await Promise.all(stores.map(s => s.init({ defUrl: 'http://h/data/def.json' })));
         expect(requested).toEqual(['http://h/data/def.json', 'http://h/data/data.csv', 'http://h/data/base.json']);
-        expect(stores.map(s => s.def.options.title)).toEqual(['base', 'base']);
+        expect(stores.map(s => s.def.title)).toEqual(['base', 'base']);
 
         // later ones load again, the content is not kept
         vi.advanceTimersByTime(5 * 60 * 1000);
@@ -310,9 +310,9 @@ describe('Store.init', () => {
         await store.init({ defUrl: 'http://h/a/def.json' });
         expect([store.loaded, store.loading, store.loads]).toEqual([true, false, 1]);
         const loading = store.init({ defUrl: 'http://h/b/def.json' });
-        expect([store.loaded, store.loading, store.def.options.title]).toEqual([true, true, 'a']);
+        expect([store.loaded, store.loading, store.def.title]).toEqual([true, true, 'a']);
         await loading;
-        expect([store.loaded, store.loading, store.loads, store.def.options.title]).toEqual([true, false, 2, 'b']);
+        expect([store.loaded, store.loading, store.loads, store.def.title]).toEqual([true, false, 2, 'b']);
     });
 
     test('an outdated init does not overwrite a newer one', async () => {
@@ -326,7 +326,7 @@ describe('Store.init', () => {
         const slow = store.init({ defUrl: 'http://h/slow/def.json' });
         await store.init({ defUrl: 'http://h/fast/def.json' });
         await slow;
-        expect(store.def.options.title).toBe('fast');
+        expect(store.def.title).toBe('fast');
     });
 });
 
@@ -348,7 +348,7 @@ describe('requirements', () => {
 
     test('the parts of the definition', () => {
         const need = requirements({
-            options: { coord: 'polar', transition: 300, locale: 'de' },
+            coord: 'polar', transition: 300, locale: 'de',
             geo: { data: 'map.json' },
             transform: { type: 'share', column: 'value', as: 'share' },
             dims: {
@@ -376,7 +376,7 @@ describe('requirements', () => {
     });
 
     test('a name of a color which is no part of a scale or of props needs no colors', () => {
-        expect(requirements({ options: { title: '"scheme": "Blues"' }, dims: { c: { column: 'interpolator' } } }).colors).toBe(false);
+        expect(requirements({ title: '"scheme": "Blues"', dims: { c: { column: 'interpolator' } } }).colors).toBe(false);
     });
 });
 
@@ -447,7 +447,7 @@ describe('form elements of globals, coordinate systems and maps', () => {
         expect(store.coord).toBe(coords.cartesian);
         store.def.globals.coord = 'polar';
         store.applyControls();
-        expect(store.def.options.coord).toBe('polar');
+        expect(store.def.coord).toBe('polar');
         expect(store.coord).toBe(coords.polar);
         store.def.globals.coord = 'cartesian';
         store.applyControls();

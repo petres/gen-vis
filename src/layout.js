@@ -372,7 +372,7 @@ const layout = (store, width, before = null) => {
         return e === undefined || e === null || e === 'auto' ? e : Number(e) || 0;
     };
     const given = Object.fromEntries(['top', 'right', 'bottom', 'left'].map(k =>
-        [k, side(def.options.margins?.[k]) ?? store.styleMargins?.[k] ?? side(marginDefaults[k]) ?? 'auto']));
+        [k, side(def.margins?.[k]) ?? store.styleMargins?.[k] ?? side(marginDefaults[k]) ?? 'auto']));
     const auto = Object.values(given).includes('auto');
     const grid = faceted ? gridOf(def) : null;
     // (at least one column, e.g. of 0 or of an expression without a number)
@@ -404,7 +404,7 @@ const layout = (store, width, before = null) => {
         : entries.map(f => partOf(n, f)).map(part => [part.flatMap(e => e.rows), domainOfAll(n, part)?.rows]), scope);
     // the facets of the margins: their sizes, scopes and scales
     const build = margins => {
-        const size = { width: usable/cols, height: stepped === undefined ? sizeOf(store, evaluate(def.options.height, scope), 'height', 400) : stepped + margins.top + margins.bottom };
+        const size = { width: usable/cols, height: stepped === undefined ? sizeOf(store, evaluate(def.height, scope), 'height', 400) : stepped + margins.top + margins.bottom };
         // a container smaller than its margins has no room, not a negative one,
         // which would flip the ranges of the scales, e.g. a negative radius
         size.innerWidth = Math.max(0, size.width - (margins.left + margins.right));
@@ -796,7 +796,7 @@ const lengthOf = (v, fontSize) => {
 const textBoxes = (store, f) => {
     const family = store.fontFamily || 'sans-serif';
     // of cartesian charts (the positions of polar ones are around the center, maps have no margins)
-    if ((store.def.options?.coord ?? 'cartesian') != 'cartesian')
+    if ((store.def.coord ?? 'cartesian') != 'cartesian')
         return [];
     const marks = (store.def.marks ?? []).filter(p => (p.type == 'svg:text' || String(p.type).startsWith('annotation:'))
         && p.place?.in === undefined && inFacet(store.def, p, f));

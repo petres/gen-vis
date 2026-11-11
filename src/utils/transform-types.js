@@ -729,7 +729,7 @@ const filled = (t, globals) => {
     return fill(t);
 };
 
-// the time formats of a locale (`options.locale`), of the default one
+// the time formats of a locale (`locale` of the definition), of the default one
 // while the locale is not resolved yet, e.g. an expression of a global
 const timeLocale = locale => {
     try {
@@ -752,7 +752,7 @@ const timeLocale = locale => {
  * replaces them (`replace`): then `rows` are the rows of the columns, the
  * ones of the data otherwise (null).
  * `notes` are the warnings of the transforms, e.g. values outside the edges.
- * `locale` is the one of the chart (`options.locale`), e.g. of the names of
+ * `locale` is the one of the chart (`locale` of the definition), e.g. of the names of
  * months of a format.
  */
 const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), before = null, files = null, locale = undefined) => {

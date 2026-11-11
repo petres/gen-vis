@@ -43,7 +43,7 @@ const annotation = type => ({
     marks(groups, mark, ctx) {
         const coord = ctx.store.coord;
         if (!coord.annotate || !(coord.annotations ?? []).includes(type)) {
-            const name = ctx.store.def.options?.coord ?? 'cartesian';
+            const name = ctx.store.def.coord ?? 'cartesian';
             const known = coord.annotations?.length ? `, only ${coord.annotations.map(t => `'${t}'`).join(', ')}` : '';
             warnOnce(ctx.store, `annotation:${type}`, `the coordinate system '${name}' has no annotations of the type '${type}'${known}, they are not drawn`);
             return null;

@@ -26,7 +26,7 @@ describe('prepareDef', () => {
         // the names of the props of the highlight and of the others, of the stylesheet of the highlight, see utils/highlight.js
         expect(def.marks[0]).toMatchObject({ id: 'mark-0', by: [], highlightProps: ['r'], othersProps: ['opacity'], props: { r: '@r' } });
         expect(def.marks[0].props).not.toHaveProperty('highlight-r');
-        expect(def.options.margins).toEqual({});
+        expect(def.margins).toEqual({});
     });
 });
 
@@ -165,7 +165,7 @@ describe('formatOf', () => {
 describe('applyResolved (the parts of the definition of its globals)', () => {
     // the source of 5.0 of a definition of 4.x with patches, see utils/migrate.js
     const sourceOf = def4 => migrate(def4);
-    const options = source => ({ source, markTypes });
+    const options = source => ({ authored: source, markTypes });
     const defOrg = {
         globals: { value: 'a' },
         formElements: [{ ref: 'value', type: 'radio', values: [
@@ -213,13 +213,13 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
         const source = sourceOf(org);
         const def = prepareDef(engineNames(org), options(source));
         const region = def.dims.region;
-        expect(def.options).toMatchObject({ title: 'World', height: 400 });
+        expect(def).toMatchObject({ title: 'World', height: 400 });
         // the filter of the rows is the expression of the global, all rows of the other values
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
 
         def.globals.view = 'europe';
         applyResolved(def, engineNames(org), options(source));
-        expect(def.options).toMatchObject({ title: 'Europe', height: 300, margins: {} });
+        expect(def).toMatchObject({ title: 'Europe', height: 300, margins: {} });
         expect(def.geo).toEqual({ data: 'world.json', fit: 'data' });
         expect(def.filter).toEqual({ match: ['@globals.view', { europe: { '==': ['@region', 'EU'] } }, true] });
         expect(def.marks[0].props).toMatchObject({ r: 2, fill: 'red' });
@@ -393,14 +393,14 @@ describe('applyResolved of globals and of the categories of the data', () => {
             mapping: { y: { column: 'c0', type: 'numeric' } },
         };
         const source = migrate(org);
-        const def = prepareDef(engineNames(org), { source, markTypes });
+        const def = prepareDef(engineNames(org), { authored: source, markTypes });
         expect(def.dims.y.column).toBe('cx');
         def.globals.a = '1';
-        expect(applyResolved(def, engineNames(org), { source, markTypes })).toEqual(['y']);
+        expect(applyResolved(def, engineNames(org), { authored: source, markTypes })).toEqual(['y']);
         expect(def.globals.b).toBe('y');
         expect(def.dims.y.column).toBe('cy');
         // a second one changes nothing
-        expect(applyResolved(def, engineNames(org), { source, markTypes })).toEqual([]);
+        expect(applyResolved(def, engineNames(org), { authored: source, markTypes })).toEqual([]);
         expect(def.dims.y.column).toBe('cy');
     });
 

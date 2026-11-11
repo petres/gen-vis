@@ -444,7 +444,7 @@ describe('fixes of the review of the docs', () => {
         const { normalize } = await import('@/utils/normalize');
         const { markTypes } = await import('@/marks');
         const def = prepareDef(normalize(translate({ margins: 'auto', dims: { x: 'a', y: 'b' }, marks: { type: 'line' } }), { markTypes }));
-        expect(def.options.margins).toEqual({});
+        expect(def.margins).toEqual({});
     });
 });
 

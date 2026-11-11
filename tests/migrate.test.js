@@ -54,7 +54,7 @@ const same = def => JSON.parse(JSON.stringify(def, function (k, v) {
     // a legend of 4.x without a symbol has none in 5.0 (`null`), the default is the one of the plots
     if (k == 'symbol' && (v === null || (v && v.elements)))
         return undefined;
-    if (k == 'hover' && v && typeof v == 'object' && Object.keys(v).length == 0 && this.footer !== undefined)
+    if (k == 'hover' && v && typeof v == 'object' && Object.keys(v).length == 0 && this.source !== undefined)
         return undefined;
     if (k == 'id' && typeof v == 'string' && /^plot-\d+$/.test(v))
         return undefined;
@@ -124,7 +124,7 @@ describe('the migration of the definitions of 4.x', () => {
         expect(def.dims.y.scale.type).toBe("=match(@scale, {log: 'log'}, 'linear')");
         // resolved with the global
         expect(translate(resolve(def, { scale: 'log' })).dims.y.scale.type).toBe('log');
-        expect(translate(resolve(def, { scale: 'lin' })).options.subtitle).toBe('linear');
+        expect(translate(resolve(def, { scale: 'lin' })).subtitle).toBe('linear');
     });
 
     test('a child with a parent: the patches of both, their globals and the leaves of the child', () => {
@@ -192,8 +192,6 @@ const engine4 = def => {
             delete s.reverse;
     });
     delete n.globals;
-    if (isObject(n.options) && Object.keys(n.options).length == 0)
-        delete n.options;
     return n;
 };
 // a filter which switches over a global between conditions of the rows
@@ -216,8 +214,6 @@ const engine5 = (def, globals) => {
     }
     const out = same(normalize(n, { markTypes }));
     ['globals', 'formElements', 'controls'].forEach(k => delete out[k]);
-    if (isObject(out.options) && Object.keys(out.options).length == 0)
-        delete out.options;
     Object.values(out.dims ?? {}).forEach(m => m?.scale?.reverse === false && delete m.scale.reverse);
     return out;
 };
@@ -384,7 +380,7 @@ describe('patches, rules and texts of 4.x, drawn as 4.x drew them', () => {
             formElements: [radio('m', [{ value: 'a' }, { value: 'b', patch: { options: { subtitle: '=B' }, mapping: { y: { axis: { title: '=200' } } } } }])] };
         drawsAs4(def4);
         const t = translate(resolve(migrate(def4), namesOfGlobals({ m: 'b' }, migrate(def4).controls)));
-        expect([t.options.title, t.options.footer, t.options.subtitle, t.dims.y.axis.title, t.marks[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
+        expect([t.title, t.source, t.subtitle, t.dims.y.axis.title, t.marks[0].props.text]).toEqual(['= Summe der Länder', '=Quelle', '=B', '=200', '=Total']);
     });
 });
 
@@ -406,7 +402,7 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         for (const scale of ['lin', 'log'])
             expect(engine5(merged, { scale })).toEqual(engine5(expected, { scale }));
         const t = engine5(merged, { scale: 'log' });
-        expect([t.options.title, t.options.height, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type, t.marks[0].props['stroke-width']])
+        expect([t.title, t.height, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type, t.marks[0].props['stroke-width']])
             .toEqual(['Child', 300, 'v', '.1f', 'log', 2]);
     });
     test('a child of 4.x of a parent of 5.0, and of 4.x of both', async () => {
@@ -415,7 +411,7 @@ describe('a chain of parents of parts of 4.x and 5.0', () => {
         const files = { 'file:///p/parent.json': parent4, 'file:///p/mid.json': mid, 'file:///p/child.json': child4 };
         const merged = await resolved(files, 'file:///p/child.json');
         const t = engine5(merged, { scale: 'log' });
-        expect([t.options.title, t.options.subtitle, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type]).toEqual(['Mid', 'Child', 'v', '.1f', 'log']);
+        expect([t.title, t.subtitle, t.dims.y.column, t.dims.y.format, t.dims.y.scale.type]).toEqual(['Mid', 'Child', 'v', '.1f', 'log']);
         // a chain of 4.x only stays one of 4.x, migrated as a whole
         const old = await resolved({ ...files, 'file:///p/child.json': { ...child4, parent: 'parent.json' } }, 'file:///p/child.json');
         expect(old.mapping.y).toEqual({ column: 'v', axis: { grid: true }, format: '.1f' });

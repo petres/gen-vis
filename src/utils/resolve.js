@@ -101,7 +101,7 @@ const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&
 const escapedNames = names => Object.fromEntries(Object.entries(names).map(([k, v]) => [k, typeof v == 'string' ? v.replace(/[&<>"']/g, c => escapes[c]) : v]));
 
 // the value of an expression of the names only, unresolved of others (also
-// of a reference to a name, so "@lang" of options.language stays)
+// of a reference to a name, so "@lang" of `language` stays)
 const unresolved = Symbol('unresolved');
 const resolved = (ast, names) => {
     const refs = refNames(ast);

@@ -595,9 +595,7 @@
   {
     "name": "polar plots: x and angle are angular, y and radius radial",
     "def": {
-      "options": {
-        "coord": "polar"
-      },
+      "coord": "polar",
       "dims": {
         "x": {
           "column": "m",
@@ -610,9 +608,7 @@
       }
     },
     "result": {
-      "options": {
-        "coord": "polar"
-      },
+      "coord": "polar",
       "dims": {
         "x": {
           "column": "m",
@@ -642,9 +638,7 @@
   {
     "name": "maps have no positions",
     "def": {
-      "options": {
-        "coord": "geo"
-      },
+      "coord": "geo",
       "dims": {
         "x": {
           "column": "a",
@@ -653,9 +647,7 @@
       }
     },
     "result": {
-      "options": {
-        "coord": "geo"
-      },
+      "coord": "geo",
       "dims": {
         "x": {
           "column": "a",

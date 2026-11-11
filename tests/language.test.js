@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { translate, compileStrings, implicitDims, isDefinition4, isDefinition5, authoredPath } from '@/utils/language.js';
+import { translate, compileStrings, implicitDims, isDefinition4, isDefinition5, authoredPath, optionKeys } from '@/utils/language.js';
 import { resolve } from '@/utils/resolve.js';
 
 describe('the language of 5.0', () => {
@@ -17,7 +17,9 @@ describe('the language of 5.0', () => {
                 { type: 'point', by: 'land', r: 4 },
             ],
         });
-        expect(def.options).toEqual({ title: 'Bevölkerung', subtitle: 'nach Bundesland', footer: 'Q', height: 300 });
+        // the options stay at the top level
+        expect(optionKeys.filter(k => def[k] !== undefined).map(k => [k, def[k]])).toEqual([['title', 'Bevölkerung'], ['subtitle', 'nach Bundesland'], ['source', 'Q'], ['height', 300]]);
+        expect(def.options).toBeUndefined();
         // the dims the marks use are in the hover
         expect(def.dims.y).toEqual({ column: 'Einwohner', format: ',.0f', scale: { zero: true }, axis: { grid: true }, hover: {} });
         // listed categories are all of them, the hover has the dims of `by`
@@ -46,7 +48,7 @@ describe('the language of 5.0', () => {
         expect(def.dims.type).toEqual({ column: 'Type', hover: {}, fromData: 'rows' });
         expect(def.dims.geo).toEqual({ column: 'Geo', fromData: 'rows' });
         expect(def.facets).toEqual({ dim: 'geo', cols: 2, scales: [] });
-        expect(def.options.hover).toEqual({ total: true });
+        expect(def.hover).toEqual({ total: true });
         expect(def.marks[0].props).toEqual({ opacity: 0.7, x: '@x:scaled', y0: '@y:start:scaled', y1: '@y:end:scaled' });
     });
 
@@ -150,7 +152,6 @@ describe('the language of 5.0', () => {
         expect(isDefinition5({ dims: {}, marks: [] })).toBe(true);
         expect(isDefinition5({ data: 'x.csv' })).toBe(true);
         expect(authoredPath('marks[1].props.fill')).toBe('marks[1].fill');
-        expect(authoredPath('options.footer')).toBe('source');
         expect(authoredPath('facets.rows')).toBe('facets.by.rows');
         expect(authoredPath('facets.dim')).toBe('facets.by');
         expect(authoredPath('facets.cols')).toBe('facets.cols');

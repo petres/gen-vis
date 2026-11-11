@@ -116,7 +116,6 @@ const createVis = app => {
     const { store, files } = app;
     const slots = () => app.slots() ?? {};
     const texts = () => store.locale.texts;
-    const options = () => store.def.options;
 
     // the rows, facets and scales, see layout.js, the width of the plots and
     // of the visualisation, see measure
@@ -157,15 +156,15 @@ const createVis = app => {
             (Object.values(at).find(names => names.length > 0) ?? at.top).push(annotationsLegend);
         return at;
     };
-    // the text instead of the plots: `options.message`, a prop of the
+    // the text instead of the plots: `message`, a prop of the
     // globals and the width, e.g. steps of `totalWidth` or a global of a
-    // control, or `options.empty` without rows
+    // control, or `empty` without rows
     const messageOf = () => {
         const scope = { ...store.scope, totalWidth: width };
-        const message = store.text(evaluate(options().message ?? null, scope));
+        const message = store.text(evaluate(store.def.message ?? null, scope));
         if (message !== null && message !== undefined && message !== '')
             return String(message);
-        return view && view.rows.length == 0 && options().empty ? store.text(options().empty) : null;
+        return view && view.rows.length == 0 && store.def.empty ? store.text(store.def.empty) : null;
     };
     // legends beside the plots
     const sidesOf = at => at.left.length > 0 || at.right.length > 0;
@@ -224,7 +223,7 @@ const createVis = app => {
     // keeps the rows of the view, see layout
     const update = (animated = false, resize = false) => {
         const next = layout(store, width, resize ? view : null);
-        const transition = options().transition;
+        const transition = store.def.transition;
         // no motion if the user prefers it, a setting of the system
         const duration = animated && !reducedMotion() ? (transition === true ? 300 : (Number(transition) || 0)) : 0;
         next.facets.forEach(f => f.transition = duration);
@@ -247,7 +246,7 @@ const createVis = app => {
     // is measured otherwise
     // the width of the chart of its own: of an export (`store.fixedWidth`,
     // see staticCopy of utils/export.js), else of the definition
-    const ownWidth = () => store.fixedWidth || sizeOf(store, options().width, 'width', null);
+    const ownWidth = () => store.fixedWidth || sizeOf(store, store.def.width, 'width', null);
     const plotsWidth = (rootWidth = undefined) => {
         const total = ownWidth() || (rootWidth ?? innerWidth(root));
         fullWidth = store.visWidth = total;
@@ -401,7 +400,8 @@ const createVis = app => {
     };
 
     const render = () => {
-        const opts = options();
+        // the options are at the top level of the definition
+        const opts = store.def;
         // the class of the definition, a template of the globals, e.g. for
         // the styles of a page, the globals as data-global- attributes,
         // e.g. for the styles of a page of a control, only the ones of
@@ -495,7 +495,7 @@ const createVis = app => {
         // the footer, html of the definition, e.g. a link of the source,
         // the values of the globals are text, cleaned (see parsed of
         // comp/html.js), also the one of the slot
-        const footerHtml = store.html(opts.footer);
+        const footerHtml = store.html(opts.source);
         if (own.footer) {
             footerSpan?.remove();
             footerSpan = null;

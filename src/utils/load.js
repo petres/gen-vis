@@ -268,21 +268,21 @@ const requirements = defOrg => {
     const dims = all.flatMap(d => Object.values(d.dims ?? {})).filter(isObject);
     return {
         colors: dims.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
-        coords: [...new Set(all.filter((d, i) => i == 0 || d.options?.coord != null).map(d => d.options?.coord ?? undefined))],
+        coords: [...new Set(all.filter((d, i) => i == 0 || d.coord != null).map(d => d.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: dims.some(m => m.legend && !hasCategories(m)),
         // labels inside the bands of an area, see marks/inside.js
         inside: all.some(d => [d.marks ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
-        locales: [...new Set([...all.filter((d, i) => i == 0 || d.options?.locale != null).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)])],
+        locales: [...new Set([...all.filter((d, i) => i == 0 || d.locale != null).map(d => d.locale ?? undefined), ...languagesOf(defOrg)])],
     };
 };
 
-// the languages of the texts a definition can have (`options.language`, a
+// the languages of the texts a definition can have (`language`, a
 // tag or a global: the values of its controls and of the definition),
 // the locales of the numbers and dates of the ones which are locales
 const languagesOf = def => {
-    const given = variants(def).map(d => d.options?.language).filter(l => typeof l == 'string');
+    const given = variants(def).map(d => d.language).filter(l => typeof l == 'string');
     const globals = given.filter(l => l.startsWith('@')).map(l => l.slice(1));
     const values = [...given.filter(l => !l.startsWith('@')), ...globals.map(g => def.globals?.[g]),
         ...(def.controls ?? []).filter(e => globals.includes(e?.global) && Array.isArray(e.values)).flatMap(e => e.values.map(v => v?.value))];
@@ -317,7 +317,7 @@ const loadParts = need => {
 // an error of the engine's form with the path of the definition, e.g.
 // "marks[0].fill: ..." of "marks[0].props.fill: ..."
 const authoredError = error => {
-    const m = /^(marks|options|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    const m = /^(marks|facets)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
 };
 
@@ -351,7 +351,7 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     if (typeof def.geo?.data == 'string')
         fetchText(resolveUrl(def.geo.data, url)).catch(() => {});
 
-    // the merged definition of gen-vis 5 (`source`, one of gen-vis 4 is
+    // the merged definition of gen-vis 5 (`authored`, one of gen-vis 4 is
     // migrated, see utils/migrate.js), resolved with its globals, translated
     // and normalized as the engine reads it, see utils/language.js and
     // utils/normalize.js, with the definitions of all values of its controls
@@ -363,7 +363,7 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
     if (migrated)
         console.info(`gen-vis ${url === undefined ? 'inline definition' : `'${url}'`}: ${old ? 'a definition' : 'parts of a definition'} of gen-vis 4, migrated while it is loaded, 'gen-vis migrate' writes ${old ? 'it' : 'them'} as one of gen-vis 5`);
     // the migration is a chunk of its own, definitions of 5.0 do not need it
-    const source = old ? (await lazy.migrate()).migrate(merged) : merged;
+    const authored = old ? (await lazy.migrate()).migrate(merged) : merged;
     const engine = v => {
         try {
             return normalize(checkDims(translate(v)), { markTypes });
@@ -371,13 +371,13 @@ const resolveDef = async ({ def: given, defUrl, data, check }) => {
             throw authoredError(error);
         }
     };
-    const defOrg = engine(resolve(source, namesOfGlobals(source.globals, source.controls)));
-    defOrg[variantsOf] = engineVariants(resolvedVariants(source), defOrg, engine);
+    const defOrg = engine(resolve(authored, namesOfGlobals(authored.globals, authored.controls)));
+    defOrg[variantsOf] = engineVariants(resolvedVariants(authored), defOrg, engine);
     // the check of the definition (of 5.0, as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
-    const validate = async rows => (await checks)?.validateDef(source, rows)
+    const validate = async rows => (await checks)?.validateDef(authored, rows)
         .forEach(w => console.warn(`gen-vis ${name}${migrated ? ' (migrated from gen-vis 4, the paths are the ones of 5)' : ''}: ${w}`));
-    return { url, defOrg, source, validate };
+    return { url, defOrg, authored, validate };
 };
 
 // the parts of a resolved definition the variants are needed for (see
@@ -428,7 +428,7 @@ const loadRows = async (defOrg, url, data) => {
     // a chart of no rows is blank, a text of `empty` says why; not of rows
     // of the page, e.g. none while they are loaded
     const header = headers.get(rows);
-    if (rows.length == 0 && !Array.isArray(data) && !defOrg.options?.empty)
+    if (rows.length == 0 && !Array.isArray(data) && !defOrg.empty)
         warn(`no rows${header?.some(c => c !== '') ? ` (only the header ${header.map(c => `'${c}'`).join(', ')})` : ''}, the chart is empty; 'empty' is a text instead of the marks`);
     return rows;
 };
@@ -474,17 +474,17 @@ const valueFormat = locale => format => {
     };
 };
 
-const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
-    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files, defOrg.options?.locale);
-    addDataValues(defOrg, rows, columns, valueFormat(defOrg.options?.locale));
+const prepare = (defOrg, authored, rows, files, state, globals, symbols = {}) => {
+    let columns = applyTransforms(rows, defOrg.transform, defOrg.globals, utcColumns(defOrg), null, files, defOrg.locale);
+    addDataValues(defOrg, rows, columns, valueFormat(defOrg.locale));
     inferTypes(defOrg, rows, columns);
     const keysOf = (column, inOrder = false) => distinctValues(rows, columns, column, inOrder).map(String);
     const transform = () => {
-        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files, prepared.options?.locale);
+        columns = applyTransforms(rows, prepared.transform, prepared.globals, utcColumns(prepared), columns, files, prepared.locale);
     };
     // the types of the dims of the definition resolved again from the values
     const types = part => inferTypes(part, rows, columns);
-    const resolving = { dataKeys: keysOf, files, symbols, source, markTypes, types };
+    const resolving = { dataKeys: keysOf, files, symbols, authored, markTypes, types };
     const prepared = prepareDef(JSON.parse(JSON.stringify(defOrg)), resolving);
     const defaults = snapshot(prepared);
     applyState(prepared, state);
@@ -495,11 +495,11 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
     // the values of the columns of the transforms of the globals of the
     // state and the page, not of the definition, e.g. the classes of a bin,
     // their names in the language and locale of the definition prepared
-    const language = languageOf(prepared.options, prepared.globals);
+    const language = languageOf(prepared, prepared.globals);
     // a global which is none of the new values is the last one, the
     // definition resolved again with it, e.g. of a filter
     if ((columns.steps.length > 0 || language !== undefined)
-        && updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.options?.locale), () => true, language,
+        && updateDataValues(defOrg, prepared, rows, columns, valueFormat(prepared.locale), () => true, language,
             ref => globals?.[ref] !== undefined).length > 0) {
         applyResolved(prepared, defOrg, { ...resolving, transform });
         transform();
@@ -511,11 +511,11 @@ const prepare = (defOrg, source, rows, files, state, globals, symbols = {}) => {
  * The warnings of the channels of marks which name neither a dim nor a
  * column of the data (of the rows or of a transform), e.g. a typo of
  * `"x": "yaer"`: a channel which names no dim is the dim of its column (see
- * implicitDims of utils/language.js), of the definition `source` resolved
+ * implicitDims of utils/language.js), of the definition `authored` resolved
  * with the `globals`; none without rows, unless the header of CSV names
  * the columns.
  */
-const missingColumns = (source, globals, rows, columns) => {
+const missingColumns = (authored, globals, rows, columns) => {
     const data = sourceRows(rows, columns);
     // without rows the columns of the header of CSV, if there is one
     const header = data === rows ? headers.get(rows) : undefined;
@@ -523,7 +523,7 @@ const missingColumns = (source, globals, rows, columns) => {
         return [];
     let resolved;
     try {
-        resolved = resolve(source, namesOfGlobals(globals, source.controls));
+        resolved = resolve(authored, namesOfGlobals(globals, authored.controls));
     } catch {
         return [];
     }
@@ -537,7 +537,7 @@ const missingColumns = (source, globals, rows, columns) => {
     };
     const implicit = implicitDims(resolved);
     return implicit.filter(d => !known.has(d.column) && !ownOf(d.path).some(r => isObject(r) && Object.hasOwn(r, d.column))).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
-        + `the dims are ${Object.keys(isObject(source.dims) ? source.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
+        + `the dims are ${Object.keys(isObject(authored.dims) ? authored.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
 };
 
 // the references of the attributes of the marks (also of their highlight
@@ -601,7 +601,7 @@ const loadGeo = (geometries, module, prepared) => {
 // geometries of all values of the controls are kept, a control can switch
 // them.
 const load = async ({ def = null, defUrl = null, data = null, state = null, globals = null, check = false, defaults: chartDefaults = null }) => {
-    const { url, defOrg, source, validate } = await resolveDef({ def, defUrl, data, check });
+    const { url, defOrg, authored, validate } = await resolveDef({ def, defUrl, data, check });
     let loaded;
     try {
         loaded = await Promise.all([
@@ -620,14 +620,14 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     await validate(rows);
     let ready;
     try {
-        ready = prepare(defOrg, source, rows, files, state, globals, symbolDefaults(chartDefaults));
+        ready = prepare(defOrg, authored, rows, files, state, globals, symbolDefaults(chartDefaults));
     } catch (error) {
         throw authoredError(error);
     }
     const { prepared, defaults, columns } = ready;
     // (with the check its warning of such a channel, see validateDef, not twice)
     if (!check)
-        [...missingColumns(source, prepared.globals, rows, columns), ...columnReferences(prepared, rows, columns)]
+        [...missingColumns(authored, prepared.globals, rows, columns), ...columnReferences(prepared, rows, columns)]
             .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     // the values the dims cannot use, e.g. "1,234" among numbers
     const odd = new Map();
@@ -637,10 +637,10 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     return {
         defUrl: url ?? null,
         defOrg,
-        source,
+        authored,
         colorLegend: colorLegend ? colorLegend.default : null,
         coords,
-        coord: coords.get(prepared.options.coord ?? 'cartesian'),
+        coord: coords.get(prepared.coord ?? 'cartesian'),
         geoModule: geoModule ?? null,
         inside: inside ?? null,
         geometries,

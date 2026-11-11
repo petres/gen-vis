@@ -279,9 +279,7 @@
   {
     "name": "the types of polar plots",
     "def": {
-      "options": {
-        "coord": "polar"
-      },
+      "coord": "polar",
       "dims": {},
       "marks": [
         {
@@ -309,9 +307,7 @@
       ]
     },
     "result": {
-      "options": {
-        "coord": "polar"
-      },
+      "coord": "polar",
       "dims": {},
       "marks": [
         {
@@ -362,9 +358,7 @@
   {
     "name": "the types of maps: the labels centered on their place",
     "def": {
-      "options": {
-        "coord": "geo"
-      },
+      "coord": "geo",
       "dims": {},
       "marks": [
         {
@@ -385,9 +379,7 @@
       ]
     },
     "result": {
-      "options": {
-        "coord": "geo"
-      },
+      "coord": "geo",
       "dims": {},
       "marks": [
         {

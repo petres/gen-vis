@@ -5,7 +5,7 @@ import polar from "@/coords/polar";
 import geo from "@/coords/geo";
 
 /**
- * The coordinate systems by name, `options.coord` of a definition:
+ * The coordinate systems by name, `coord` of a definition:
  * - `ranges`: the default ranges of the scales by their orientation, in the
  *   sizes of `dims`, `cyclic` are the orientations whose end is their start,
  *   e.g. the angle

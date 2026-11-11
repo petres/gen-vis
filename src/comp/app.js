@@ -455,7 +455,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const fixed = Boolean(props.imageWidth);
         const width = props.imageWidth == 'screen'
             ? outer.querySelector('.vis').getBoundingClientRect().width
-            : Number(props.imageWidth || pixelsOf(def.options.width) || exporting.defaultWidth);
+            : Number(props.imageWidth || pixelsOf(def.width) || exporting.defaultWidth);
         const mount = (holder, done) => {
             const shown = createGenVis(holder, { ...copy, onRendered: done.resolve, onError: done.reject });
             shown.el.classList.add(...classes);
@@ -481,7 +481,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     // the name of a file, the one of the prop, e.g. `download`, or the
     // title (with the values of the globals)
     const fileName = prop => {
-        const title = store.def.options.title;
+        const title = store.def.title;
         return typeof prop == 'string' && prop ? prop : (title ? store.text(title) : 'gen-vis');
     };
 

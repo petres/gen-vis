@@ -55,13 +55,13 @@ const createFacet = (vis, initial) => {
     // the name of the chart for screen readers, the title and the facet,
     // without a title the subtitle or the localized name of a chart
     const label = () => {
-        const { title, subtitle } = store.def.options;
+        const { title, subtitle } = store.def;
         const name = [title || subtitle, facet.name].filter(Boolean).map(t => store.text(t)).join(': ');
         return name || store.locale.texts.chart;
     };
     // the subtitle of a chart with a title describes it
     const description = () => {
-        const { title, subtitle } = store.def.options;
+        const { title, subtitle } = store.def;
         return title && subtitle ? store.text(subtitle) : undefined;
     };
 
@@ -178,7 +178,7 @@ const createFacet = (vis, initial) => {
     const drawMarks = marks => {
         marks.forEach(mark => {
             const path = markPath(store.def, mark);
-            const coord = store.def.options.coord ?? 'cartesian';
+            const coord = store.def.coord ?? 'cartesian';
             if (!Object.hasOwn(markTypes, mark.type))
                 throw new Error(`${path}.type: ${unknownType(mark.type, coord)}`);
             const type = markTypes[mark.type];

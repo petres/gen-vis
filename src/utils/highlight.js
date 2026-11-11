@@ -114,7 +114,7 @@ const usable = (mark, part, warn) => mark[`${part}Props`].filter(n => {
  * the groups, so the values are not applied twice, e.g. an opacity) have
  * the props of `highlight`, the other elements of the marks the ones of
  * `others` while one is shown (`.vis-highlighting`), the props move in
- * `transition` milliseconds (`options.highlight.transition`). Props which
+ * `transition` milliseconds (`highlight.transition`). Props which
  * are no css (see usable) are left out, with `warn(mark, message)`.
  */
 const highlightStyle = (marks, { scope = '', transition = 0, warn = null } = {}) => {

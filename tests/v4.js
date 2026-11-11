@@ -147,7 +147,7 @@ const normalize4 = def => {
             if (!isObject(p) || typeof p.type != 'string')
                 return p;
             const name = p.type == 'point' ? 'circle' : p.type;
-            const type = normalize({ options: { coord }, marks: [{ type: name }] }, { markTypes }).marks[0].type;
+            const type = normalize({ coord, marks: [{ type: name }] }, { markTypes }).marks[0].type;
             const props = isObject(p.props) ? p.props : {};
             return { ...p, type, props: withPositions(positions4[type]?.(props) ?? {}, props) };
         });
@@ -159,13 +159,17 @@ const normalize4 = def => {
  * 5.0: the form of 4.x normalized was the one the engine read, the tests of
  * the engine which are written of a definition of 4.x (e.g. one which is
  * also migrated) read it so; `mapping` are `dims`, `plot` are `marks`, `formElements` are `controls`
- * and their `ref` is their `global`. A copy.
+ * and their `ref` is their `global`, the `options` are at the top level,
+ * their `footer` is the `source`. A copy.
  */
 const engineNames = def => {
-    const { mapping, plot, formElements, ...rest } = structuredClone(def);
+    const { mapping, plot, formElements, options, ...rest } = structuredClone(def);
     const control = ({ ref, ...e }) => ({ ...e, ...(ref === undefined ? {} : { global: ref }) });
+    const { footer, ...top } = options !== null && typeof options == 'object' ? options : {};
     return {
         ...rest,
+        ...top,
+        ...(footer === undefined ? {} : { source: footer }),
         ...(mapping === undefined ? {} : { dims: mapping }),
         ...(plot === undefined ? {} : { marks: plot }),
         ...(formElements === undefined ? {} : { controls: formElements.map(e => e !== null && typeof e == 'object' ? control(e) : e) }),

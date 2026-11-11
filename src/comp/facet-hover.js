@@ -159,7 +159,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
     let box = null;
 
     // the options of the hover, see docs/usage.md "Events and slots"
-    const hoverOptions = () => store.def.options.hover ?? {};
+    const hoverOptions = () => store.def.hover ?? {};
 
     // the keys of the hover: the arrows to the left and the right move it
     // to the position before and after, the ones up and down to the row

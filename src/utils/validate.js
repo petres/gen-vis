@@ -699,9 +699,9 @@ const checkFilters = ctx => {
     const { def, names, warn } = ctx;
     checkFilter(ctx, def.filter, 'filter', names.global);
     ctx.marks.forEach(([i, p]) => checkFilter(ctx, p.filter, `marks[${i}].filter`, names.facet));
-    checkFilter(ctx, def.options?.hover?.filter, 'options.hover.filter', names.facet);
-    if (def.options?.hover?.total && !Object.values(ctx.dims).some(m => m.stacked))
-        warn('options.hover.total', `the sum of the stacked values, there is no stacked dim`);
+    checkFilter(ctx, def.hover?.filter, 'hover.filter', names.facet);
+    if (def.hover?.total && !Object.values(ctx.dims).some(m => m.stacked))
+        warn('hover.total', `the sum of the stacked values, there is no stacked dim`);
     // the facets of marks and annotations: keys of facets or, of a grid, an
     // object of the values of the dims of its rows and columns
     const facets = facetBy(def.facets);
@@ -827,17 +827,17 @@ const checkTexts = ({ def, dims, globals, warn, annotations }) => {
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
     const checkText = (text, path) => templateRefs(text).filter(r => !globals.has(r)).forEach(r =>
         warn(path, `unknown global '${r}' in the text`));
-    ['title', 'subtitle', 'footer', 'empty', 'class'].forEach(o => checkText(def.options?.[o], `options.${o}`));
-    checkText(def.options?.message, 'options.message');
+    ['title', 'subtitle', 'source', 'empty', 'class'].forEach(o => checkText(def[o], o));
+    checkText(def.message, 'message');
     // the templates of the hover, the names of the title and of a row, e.g. {land.unit}
-    const hover = def.options?.hover ?? {};
+    const hover = def.hover ?? {};
     const checkHover = (template, path, known) => templateNames(template).filter(r => !known(r)).forEach(r =>
         warn(path, `unknown name '${r}' in the template`));
     // a global or a field of its entry, e.g. `group:name`
     const isGlobal = r => globals.has(r) || (r.includes(':') && globals.has(r.split(':')[0]));
     // the title has the names of the nearest row as well, e.g. {definition}
-    checkHover(hover.title, 'options.hover.title', r => r == 'title' || r == 'total' || isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
-    checkHover(hover.row, 'options.hover.row', r => isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
+    checkHover(hover.title, 'hover.title', r => r == 'title' || r == 'total' || isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
+    checkHover(hover.row, 'hover.row', r => isGlobal(r) || Object.hasOwn(dims, r.split('.')[0]));
     Object.entries(dims).forEach(([n, m]) => {
         checkText(m.name, `dims.${n}.name`);
         checkText(m.axis?.title?.name, `dims.${n}.axis.title.name`);
@@ -850,21 +850,20 @@ const checkTexts = ({ def, dims, globals, warn, annotations }) => {
 
 // the options: the locale and the sizes
 const checkOptions = ({ def, names, warn }) => {
-    const options = isObject(def.options) ? def.options : {};
-    checkProp(options.message, 'options.message', warn, names.global);
+    checkProp(def.message, 'message', warn, names.global);
     // a built-in locale or a language of Intl, e.g. "fr", null is the default
-    const locale = isObject(options.locale) ? options.locale.base : (options.locale ?? undefined);
+    const locale = isObject(def.locale) ? def.locale.base : (def.locale ?? undefined);
     if (locale !== undefined && typeof locale != 'string')
-        warn('options.locale', `expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale`);
+        warn('locale', `expected 'de', 'en', a language of Intl, e.g. 'fr', or an object with a 'base' locale`);
     else if (locale !== undefined) {
         try {
             checkLocale(locale);
         } catch (error) {
-            warn('options.locale', error.message.replace(/^Unknown/, 'unknown'));
+            warn('locale', error.message.replace(/^Unknown/, 'unknown'));
         }
     }
-    checkProp(options.height, 'options.height', warn, names.global);
-    Object.entries(isObject(options.margins) ? options.margins : {}).forEach(([k, v]) => checkProp(v, `options.margins.${k}`, warn, names.global));
+    checkProp(def.height, 'height', warn, names.global);
+    Object.entries(isObject(def.margins) ? def.margins : {}).forEach(([k, v]) => checkProp(v, `margins.${k}`, warn, names.global));
 };
 
 // the keys each type of transform reads, see utils/transform-types.js
@@ -1054,22 +1053,22 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
 
 // the data, of the rows given: the columns of the dims (of a channel naming
 // no dim, an implicit dim of its column) and the texts of numeric dims
-const checkData = ({ raw, dims, rows, columns, warn, source }) => {
+const checkData = ({ raw, dims, rows, columns, warn, authored }) => {
     if (!columns)
         return;
-    const named = isObject(source?.dims) ? source.dims : {};
+    const named = isObject(authored?.dims) ? authored.dims : {};
     const names = [...columns].filter(c => typeof c == 'string');
     const unknownColumn = c => `'${c}' is not a column of the data${choices(c, names)}`;
     // the channels of the marks of the definition which name no dim of it
     const implicit = new Map();
-    [source?.marks ?? []].flat().forEach((m, i) => isObject(m) && Object.keys(positionChannels).forEach(k => {
+    [authored?.marks ?? []].flat().forEach((m, i) => isObject(m) && Object.keys(positionChannels).forEach(k => {
         const v = m[k];
         if (typeof v == 'string' && !/^[@=]/.test(v) && !Object.hasOwn(named, v) && !implicit.has(v))
             implicit.set(v, `marks[${i}].${k}`);
     }));
     // the columns of the rows of the marks of their own (`data`), e.g. the
     // ends of an arrow
-    const own = new Set([source?.marks ?? []].flat().flatMap(m => isObject(m) && Array.isArray(m.data) ? m.data.flatMap(r => isObject(r) ? Object.keys(r) : []) : []));
+    const own = new Set([authored?.marks ?? []].flat().flatMap(m => isObject(m) && Array.isArray(m.data) ? m.data.flatMap(r => isObject(r) ? Object.keys(r) : []) : []));
     Object.entries(dims).forEach(([n, m]) => {
         const column = typeof m.column == 'string' ? fillTemplate(m.column, raw.globals ?? {}) : undefined;
         if (column === undefined || templateNames(column).length > 0)
@@ -1113,9 +1112,9 @@ const context = (def, warn, rows, columns = null) => {
     const controls = objects([...(def.controls ?? []).entries()], i => `controls[${i}]`, 'a control');
 
     // the coordinate systems known at the time of the check, also registered ones
-    const coordName = def.options?.coord ?? 'cartesian';
+    const coordName = def.coord ?? 'cartesian';
     if (!Object.hasOwn(coords, coordName))
-        warn('options.coord', `unknown coordinate system '${coordName}'${choices(coordName, Object.keys(coords))}`);
+        warn('coord', `unknown coordinate system '${coordName}'${choices(coordName, Object.keys(coords))}`);
     const coord = coords[coordName] ?? coords.cartesian;
 
     // the names of the references, see docs/definition.md "Expressions" > "Names": everywhere the globals
@@ -1165,7 +1164,7 @@ const withTypes = (def, rows) => {
         return def;
     let columns = null;
     try {
-        columns = applyTransforms(rows, def.transform, def.globals ?? {}, utcColumns(def), null, null, def.options?.locale);
+        columns = applyTransforms(rows, def.transform, def.globals ?? {}, utcColumns(def), null, null, def.locale);
     } catch {
         // not loaded or a transform of a file, e.g. a lookup
     }
@@ -1234,22 +1233,19 @@ const defaultProps = (def, normalized, marks = []) => {
     return { written, defaults };
 };
 
-// a warning of the engine's form in the words of the definition: the paths
-// (see authoredPath) and the names of its parts, dims, marks and controls
-const authoredText = m => m
-    .replace(/\boptions\.hover\b/g, 'hover').replace(/\boptions\.height\b/g, 'height');
-const authored = ([p, m]) => [authoredPath(p), authoredText(m)];
+// a warning of the engine's form with the path of the definition, see authoredPath
+const pathed = ([p, m]) => [authoredPath(p), m];
 
 // the warnings of the engine's form of a definition of 5.0 resolved with
 // the globals `names`, in the words of the definition
-const checkResolved = (source, names, rows) => {
-    const resolved = resolve(source, names);
+const checkResolved = (authored, names, rows) => {
+    const resolved = resolve(authored, names);
     const engine = translate(resolved);
     const normalized = withTypes(normalize(engine, { markTypes: withoutDefaults() }), rows);
     // the columns of the rows given, of the data and of the transforms
     const columns = Array.isArray(rows) && rows.length > 0
         ? transformedColumns(engine.transform, new Set(rows.slice(0, 1000).flatMap(r => isObject(r) ? Object.keys(r) : [])), engine.globals) : null;
-    const warnings = [...checkDef(engine, normalized, rows, { ...defaultProps(engine, normalized, [resolved.marks ?? []].flat()), columns, source: resolved }).map(authored),
+    const warnings = [...checkDef(engine, normalized, rows, { ...defaultProps(engine, normalized, [resolved.marks ?? []].flat()), columns, authored: resolved }).map(pathed),
         ...markKeyWarnings(resolved)];
     return { resolved, warnings };
 };
@@ -1305,12 +1301,12 @@ const validateDef = (raw, rows = null) => {
     // a $schema of another version, a definition object may have none, see utils/version.js
     const version = versionError(raw?.$schema);
     const head = version ? [`$schema: no definition of gen-vis 5, ${version}`] : [];
-    const source = isObject(raw) ? (isDefinition4(raw) ? migrate(raw) : raw) : {};
-    const controls = Array.isArray(source.controls) ? source.controls : [];
-    const globals = isObject(source.globals) ? source.globals : {};
+    const authored = isObject(raw) ? (isDefinition4(raw) ? migrate(raw) : raw) : {};
+    const controls = Array.isArray(authored.controls) ? authored.controls : [];
+    const globals = isObject(authored.globals) ? authored.globals : {};
     let own, resolved;
     try {
-        ({ warnings: own, resolved } = checkResolved(source, namesOfGlobals(globals, controls), rows));
+        ({ warnings: own, resolved } = checkResolved(authored, namesOfGlobals(globals, controls), rows));
     } catch (error) {
         // the shape of a part is none the engine reads, e.g. a dim of a number
         return [...head, error.message];
@@ -1338,7 +1334,7 @@ const validateDef = (raw, rows = null) => {
                 return;
             let variant;
             try {
-                variant = checkResolved(source, namesOfGlobals({ ...globals, [g]: value }, controls), rows).warnings.map(([p, m]) => `${p}: ${m}`);
+                variant = checkResolved(authored, namesOfGlobals({ ...globals, [g]: value }, controls), rows).warnings.map(([p, m]) => `${p}: ${m}`);
             } catch (error) {
                 variant = [error.message];
             }
