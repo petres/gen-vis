@@ -1460,12 +1460,12 @@
                                 {
                                     "type": "string",
                                     "pattern": "^[a-z][\\w-]*:[\\w-]+$",
-                                    "description": "A registered plot type, see registerMarkType."
+                                    "description": "A registered mark type, see registerMarkType."
                                 },
                                 {
                                     "type": "string",
                                     "pattern": "^[a-z][\\w-]*$",
-                                    "description": "A registered plot type of the coordinate system without its prefix, see registerMarkType."
+                                    "description": "A registered mark type of the coordinate system without its prefix, see registerMarkType."
                                 }
                             ]
                         },

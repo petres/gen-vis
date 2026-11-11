@@ -334,8 +334,8 @@ const definitions = {
             type: cases([[globalText, globalText], [{ type: 'string', pattern: registeredName }, anyOf([
                 choice(markNames, 'A type of the coordinate system of the definition (line is cartesian:line or polar:line), of svg elements (circle is svg:circle of cartesian charts); point is a circle per row, label a text beside its position (see anchor), cell a rect of the bands of x and y (band scales without padding), e.g. of a heatmap, tick a short rule at the value across the band of its category (`size`), e.g. the median of a box plot or a target.'),
                 choice(markTypes, 'The full name of a type of a coordinate system, as the name without the prefix. The svg types draw an svg element per row in any coordinate system, the others are the ones of their coordinate system, the lines and areas a path per group, geo:base all features, geo:mesh the borders of an object of TopoJSON as one path, the others an element per row. The annotation types draw an annotation per row, e.g. of events, see annotations.'),
-                pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered plot type, see registerMarkType.'),
-                pattern('^[a-z][\\w-]*$', 'A registered plot type of the coordinate system without its prefix, see registerMarkType.'),
+                pattern('^[a-z][\\w-]*:[\\w-]+$', 'A registered mark type, see registerMarkType.'),
+                pattern('^[a-z][\\w-]*$', 'A registered mark type of the coordinate system without its prefix, see registerMarkType.'),
             ])]],
                 { enum: [...markNames, ...markTypes] }, 'The type of the mark, line, area, bar, rule, tick, point, label, text or cell of cartesian charts, arc of polar ones, base, region, mesh of maps, with the default attributes of the type, a definition writes only the ones which differ.'),
             id: string('The class and the data-mark of the group of the mark, mark-<index> by default, the marks of a parent are merged by their ids.'),

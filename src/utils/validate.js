@@ -800,7 +800,7 @@ const checkFacets = ({ def, dims, names, warn }) => {
             if (!Object.hasOwn(dims, n))
                 warn(`facets.scales.${n}`, `unknown dim '${n}'`);
             if (!['all', 'row', 'col'].includes(v) || (!grid && v != 'all'))
-                warn(`facets.scales.${n}`, grid ? `expected 'all', 'row' or 'col'` : `expected 'all', a scale per row or column is one of a grid of 'rows' and 'cols'`);
+                warn(`facets.scales.${n}`, grid ? `expected 'all', 'row' or 'col'` : `expected 'all', a scale per row or column is one of a grid ("by": { "rows": ..., "cols": ... })`);
         });
     if (!grid)
         checkProp(def.facets.cols, 'facets.cols', warn, names.global);

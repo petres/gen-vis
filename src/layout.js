@@ -110,6 +110,8 @@ const facetKey = (def, values) => {
 const facetDim = (store, part, d) => {
     const m = Object.hasOwn(store.def.dims, d) ? store.dim(d) : null;
     const path = part ? `facets.by.${part}` : 'facets.by';
+    if (d === undefined || d === null)
+        throw new Error(`${path}: the facets need the dim of their categories, e.g. "by": "country"`);
     if (!m)
         throw new Error(`${path}: unknown dim '${d}', the dims are ${Object.keys(store.def.dims).map(n => `'${n}'`).join(', ') || 'none'}`);
     if (!m.categoryProps)

@@ -47,6 +47,8 @@ describe('the messages of the draw', () => {
     test('the facets of an unknown dim and of one without categories', async () => {
         expect(await errorOf(def({ facets: { by: 'nope' } }))).toBe("facets.by: unknown dim 'nope', the dims are 'x', 'y', 'land'");
         expect(await errorOf(def({ facets: { by: { rows: 'nope' } } }))).toBe("facets.by.rows: unknown dim 'nope', the dims are 'x', 'y', 'land'");
+        // facets without their dim, e.g. of only the number of columns
+        expect(await errorOf(def({ facets: { cols: 2 } }))).toBe('facets.by: the facets need the dim of their categories, e.g. "by": "country"');
         // the values of a numeric dim are its categories
         expect(await errorOf(def({ facets: { by: 'y' } }))).toBeUndefined();
     });

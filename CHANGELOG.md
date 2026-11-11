@@ -9,9 +9,10 @@ commits.
 A new definition language: dims instead of mappings, marks with channels
 instead of plots with props of scaled positions, controls of globals
 instead of form elements with patches, the options at the top level and
-one expression language with a string syntax. The engine reads the same
-form as before (the one of 4.x, normalized), a definition of 5.0 is
-translated into it, so the charts are drawn as before; definitions of 4.x
+one expression language with a string syntax. The engine reads a form
+of the same names (`dims`, `marks` with the `props` of the scaled
+positions, `controls`, the options at the top level), the shorthands of a
+definition written out, so the charts are drawn as before; definitions of 4.x
 are migrated when they are loaded, `gen-vis migrate` writes them as ones of
 5.0. Besides the language: margins measured of the axes, dodged bars,
 labels, cells and rules of ranges, the highlight by classes and a
@@ -55,7 +56,7 @@ meets:
   (were `registerPlotType`, `PlotType`, `PlotGroup`); a mark type's
   `marks(groups, mark, ctx)`.
 - **`@preschen/gen-vis/check`** no longer exports `translate` and
-  `normalize`: the form the engine reads (the one of 4.x) is internal.
+  `normalize`: the form the engine reads is internal.
   `resolveParents`, `validateDef`, `migrate`, `resolve`, `variants` and the
   others stay.
 - **Dependencies**: `deepmerge` and `modern-screenshot` are no
@@ -874,6 +875,26 @@ Security, the events and the exports:
   without a command is a usage error (exit 2).
 
 ### Package and builds
+
+- One vocabulary: the engine reads the names of 5.0. The translated and
+  the prepared definition have `dims`, `marks`, `controls` (of a `global`)
+  and the options at the top level (`source` is the text of the footer),
+  not `mapping`, `plot`, `formElements` (with `ref`) and `options`; the
+  facets are `by` as written; the mark types are in `src/marks/`. Nothing
+  changes for a valid definition, a page or a message. Internals an
+  extension may have used: `vis.store.def.mapping` is `store.def.dims`,
+  `store.def.plot` is `store.def.marks`, `store.def.formElements` is
+  `store.def.controls` (`ref` is `global`), `store.def.options.x` is
+  `store.def.x` (`options.footer` is `store.def.source`),
+  `ctx.store.mapping(n)` is `ctx.store.dim(n)`,
+  `store.mappingNamesWithKey` is `store.dimNamesWithKey`,
+  `store.applyFormElements` is `store.applyControls`, `store.source` (the
+  definition as written) is `store.authored`. The documented `mark`, `ctx`
+  and `group` of a mark type are unchanged.
+- A text of `facets.cols` is no dim of a grid anymore and the keys `dim`
+  and `rows` of 4.x in the facets of a definition of 5.0 (unknown keys of
+  the schema) are not read: `"by": { "rows": …, "cols": … }`; facets
+  without `by` are an error which says so.
 
 - The deep merge is the package's own (`src/utils/merge.js`, the semantics
   of deepmerge, the keys in the order of the target): lists are merged by

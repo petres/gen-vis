@@ -2025,7 +2025,7 @@ describe('the update of the facets', () => {
 });
 
 describe('extensions', () => {
-    test('a registered plot type', async () => {
+    test('a registered mark type', async () => {
         registerMarkType('test:square', {
             marks: (groups, plot, ctx) => perRow(groups, 'rect', v => ({
                 ...v, x: v.cx - 2, width: 4, height: ctx.innerHeight,
