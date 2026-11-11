@@ -159,7 +159,7 @@ writes: the dims are objects, `plot` is a list of objects.
   `null` removes a default. The order of the props is the one of the defaults, then the other
   ones (the order of the attributes of the elements).
 
-The default props (`src/plots/defaults.js`), `color` is
+The default props (`src/marks/defaults.js`), `color` is
 `{"or": ["@color", "currentColor"]}` (the color of the text without
 categories), `fill` is `{"or": ["@color", "#4269D0"]}` (the first of the
 default colors of categories). The positions are no defaults, `translate`

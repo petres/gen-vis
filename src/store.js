@@ -5,7 +5,7 @@ import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, escapeHtml, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { inferTypes } from "@/utils/data";
-import { markTypes } from "@/plots";
+import { markTypes } from "@/marks";
 import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { evaluate, formatter, isOperator, refNames } from "@/utils/expr";
@@ -42,7 +42,7 @@ class Store {
     // loadGeometries of utils/load.js
     geo = null;
     geoModule = null;
-    // the placement of labels inside of bands, loaded for them, see plots/inside.js
+    // the placement of labels inside of bands, loaded for them, see marks/inside.js
     inside = null;
     geometries = null;
     def = null;

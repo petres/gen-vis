@@ -5,7 +5,7 @@
 // (translate, normalize of utils/) is internal, see spec/normalize.md
 export { resolveParents } from '@/utils/load';
 export { validateDef } from '@/utils/validate';
-export { registerMarkType } from '@/plots';
+export { registerMarkType } from '@/marks';
 export { registerCoord } from '@/coords';
 export { registerScheme } from '@/utils/d3';
 export { migrate, formatJson } from '@/utils/migrate';

@@ -19,7 +19,7 @@ import geo from "@/coords/geo";
  * - `names(store)`: the dims of the hover and the stacks instead of the
  *   ones of `axis`, e.g. of a map, `flip` swaps them, see axisNames of
  *   layout.js
- * The `ctx` is the facet, as the one of the mark types, see plots/index.js,
+ * The `ctx` is the facet, as the one of the mark types, see marks/index.js,
  * `ctx.inner` is the element of the marks and axes. The elements of the
  * functions are DOM elements, no d3 selections.
  * - `prepare(ctx)`: adds to the context before the axes and marks are drawn,

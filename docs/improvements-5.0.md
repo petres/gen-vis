@@ -104,7 +104,7 @@ The fixes and features of the review added 5.3 kB gzip to the first load
 (99.3 → 104.6 kB with `gzip -9`), spread over many modules: the reader of
 CSV of semicolons and the shared rows (`data.js`, `load.js`), the cleaned
 HTML (`html.js`), the marks without a position and the tweens of arcs
-(`plots/elements.js`, `draw.js`), the table button (0.7 kB, its table is a
+(`marks/elements.js`, `draw.js`), the table button (0.7 kB, its table is a
 lazy chunk). Z1 to Z4 below give more than that back.
 
 | # | Change | Saves (gzip, estimated by share) | Status |
@@ -200,7 +200,7 @@ Only if the size of the first load matters more than it does today.
   them back: two moves per draw.
 - Dead code found by the review: `finish` of `utils/draw.js`, the outer ticks
   of `utils/axis.js` (`tickSizeOuter` is always 0), `propDim` beside
-  `propScale` in `plots/elements.js`, `tickInset` twice (`utils/axis.js`,
+  `propScale` in `marks/elements.js`, `tickInset` twice (`utils/axis.js`,
   `utils/margins.js`), `dateComparisons` beside `comparisons` in
   `utils/data.js`, exports only of tests (`isBinary`, `inferType`,
   `randomOf`, `getAttr`, `cubicInOut`, `csvCell`, `parts`).

@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset, once } from "@/plots/elements";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset, once } from "@/marks/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";

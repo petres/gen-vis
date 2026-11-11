@@ -97,7 +97,7 @@
                         again.
                     </li>
                     <li>
-                        <strong>Marks</strong> <code>src/plots/</code>: a mark type turns the groups of the rows of a
+                        <strong>Marks</strong> <code>src/marks/</code>: a mark type turns the groups of the rows of a
                         mark into a layer, plain objects of SVG elements with their attributes, it draws nothing.
                     </li>
                     <li>

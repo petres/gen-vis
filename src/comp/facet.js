@@ -5,7 +5,7 @@ import { arrowheads, defsOf } from "@/utils/arrows";
 import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
-import { markTypes } from "@/plots";
+import { markTypes } from "@/marks";
 import { markPath, similar, withPath } from "@/utils/warn";
 import { inFacet, markGroups, markRows } from "@/layout";
 import { el, patch, place, setText } from "@/comp/html";
@@ -172,7 +172,7 @@ const createFacet = (vis, initial) => {
     const markKey = mark => `mark ${store.def.marks.indexOf(mark)} ${mark.id} ${mark.type}`;
 
     // a group per mark, kept from one draw to the next, the layer of the
-    // marks of its type (see plots/index.js) is drawn into it, of the
+    // marks of its type (see marks/index.js) is drawn into it, of the
     // types with `update` into the elements of the draw before, the
     // elements of the others are removed
     const drawMarks = marks => {
@@ -237,7 +237,7 @@ const createFacet = (vis, initial) => {
         cursor = marker;
 
         // the context of the mark types and the coordinate system, see
-        // plots/index.js, the scales are only replaced with the facet
+        // marks/index.js, the scales are only replaced with the facet
         const { key, rows, scales, axis, stackOf, isStacked, stackOrder, scope, dims, innerWidth, innerHeight, margins, outer, cell, sharing, slotKeys } = facet;
         ctx = {
             store,
@@ -265,7 +265,7 @@ const createFacet = (vis, initial) => {
             // the distinct values of a dim of all facets, see rowValue of layout.js
             slotKeys,
             // the groups of a mark of the facet by its id, of this draw, e.g.
-            // the bands of an area of labels inside them (plots/inside.js)
+            // the bands of an area of labels inside them (marks/inside.js)
             groupsOf: id => {
                 if (!drawnGroups.has(id)) {
                     const p = store.def.marks.find(q => q.id === id);

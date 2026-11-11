@@ -47,7 +47,7 @@ with the coordinate system's prefix (e.g. `cartesian:spike`), then to
 `svg:spike`, otherwise to the only registered type of that name (here
 `my:spike`). The attributes of a mark are merged
 into the defaults (nested ones deeply, `null` removes one); the built-in
-defaults are in `src/plots/defaults.js`. A registered type gets the
+defaults are in `src/marks/defaults.js`. A registered type gets the
 channels of a mark as attributes of its elements, as written: `x: "lo"` of
 a mark is `x: "@lo:scaled"` of the item (a dim is its scaled position), a
 number stays a number; the type reads them as any other attribute, e.g.

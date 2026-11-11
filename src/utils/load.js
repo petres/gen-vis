@@ -15,7 +15,7 @@ import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
 import { versionError } from "@/utils/version";
 import { refNames } from "@/utils/expr";
-import { markTypes } from "@/plots";
+import { markTypes } from "@/marks";
 import { symbolDefaults } from "@/utils/defaults";
 
 // the load of a visualisation: its definition with its parents, the parts
@@ -272,7 +272,7 @@ const requirements = defOrg => {
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
         colorLegend: dims.some(m => m.legend && !hasCategories(m)),
-        // labels inside the bands of an area, see plots/inside.js
+        // labels inside the bands of an area, see marks/inside.js
         inside: all.some(d => [d.marks ?? []].flat().some(p => isObject(p) && isObject(p.place) && p.place.in !== undefined)),
         locales: [...new Set([...all.filter((d, i) => i == 0 || d.options?.locale != null).map(d => d.options?.locale ?? undefined), ...languagesOf(defOrg)])],
     };

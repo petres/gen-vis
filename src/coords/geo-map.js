@@ -7,7 +7,7 @@ import {
 import { named } from "@/utils/registry";
 import { annotationItem } from "@/coords/annotations";
 import { rect, placeLine } from "@/coords/hover";
-import { featureByKey } from "@/plots/geo";
+import { featureByKey } from "@/marks/geo";
 
 // the projections of maps (`geo.projection.type`), e.g. mercator
 export const projections = {
@@ -116,7 +116,7 @@ const featureAt = (ctx, pointer, event) => {
     return f ? ctx.store.geo.key(f) : null;
 };
 
-// the places of the labels of maps, see positioned of plots/geo.js
+// the places of the labels of maps, see positioned of marks/geo.js
 // the distance of a point to the rings of a polygon (projected), negative
 // outside of it
 const ringDistance = (x, y, rings) => {
@@ -280,7 +280,7 @@ const fitLabels = (items, mark, x, y, placeOf) => {
 
 // the projection, the annotations and the hover of maps, see coords/geo.js
 export default {
-    // the places of the labels of maps, loaded with them, see plots/geo.js
+    // the places of the labels of maps, loaded with them, see marks/geo.js
     labelPlace,
     fitLabels,
     prepare(ctx) {

@@ -1,6 +1,6 @@
 import { loadColors } from '@/utils/d3';
 import { migrate } from '@/utils/migrate';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 import { describe, test, expect, beforeAll } from 'vitest';
 import { engineNames } from './v4.js';
 import { resolve, namesOfGlobals } from '@/utils/resolve';

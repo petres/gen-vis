@@ -231,7 +231,7 @@ function drawItem(item) {
 }
 
 /**
- * Draws a layer of a mark (see `marks` of the mark types, plots/index.js)
+ * Draws a layer of a mark (see `marks` of the mark types, marks/index.js)
  * into the group of the mark `parent`, an element, into the elements of the draw before (see join of utils/dom.js),
  * returns the elements of the items, an array:
  * - `groups`: an element `g.vis-group` per group (its `categories` are its

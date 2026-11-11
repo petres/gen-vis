@@ -442,7 +442,7 @@ describe('fixes of the review of the docs', () => {
         const { prepareDef } = await import('@/utils/def');
         const { translate } = await import('@/utils/language');
         const { normalize } = await import('@/utils/normalize');
-        const { markTypes } = await import('@/plots');
+        const { markTypes } = await import('@/marks');
         const def = prepareDef(normalize(translate({ margins: 'auto', dims: { x: 'a', y: 'b' }, marks: { type: 'line' } }), { markTypes }));
         expect(def.options.margins).toEqual({});
     });

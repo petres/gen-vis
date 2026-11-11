@@ -98,7 +98,7 @@ const points = (g, mark, ctx, path) => {
  * one before), so the areas of the others do not overlap it between its
  * neighbours, e.g. a series without a row of a year; not of `"order":
  * "rows"`. Kept for the groups of a draw, e.g. of the labels inside the
- * areas (see plots/inside.js).
+ * areas (see marks/inside.js).
  */
 const stackedPoints = new WeakMap();
 const areaPoints = (groups, mark, ctx, keys) => {
@@ -244,7 +244,7 @@ const halo = mark => !mark.halo ? {} : {
 
 const element = type => ({ update: true, marks: groups => perRow(groups, type) });
 
-// the labels placed inside of bands (see placeInside of plots/inside.js):
+// the labels placed inside of bands (see placeInside of marks/inside.js):
 // a group of the row of each label and the spots by the rows, centered
 const centered = { 'text-anchor': 'middle', 'dominant-baseline': 'central' };
 const inside = placed => ({ groups: placed.map(([g, row]) => ({ ...g, rows: [row] })), spots: new Map(placed.map(([, row, s]) => [row, s])) });
@@ -262,7 +262,7 @@ export default {
         update: true,
         marks(groups, mark, ctx) {
             const props = halo(mark);
-            // inside the bands of an area mark (`place`), see plots/inside.js
+            // inside the bands of an area mark (`place`), see marks/inside.js
             if (mark.place?.in !== undefined) {
                 const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, mark, ctx, false));
                 return { ...perRow(placed, "text", (v, row) => ({ ...props, ...v, ...centered, x: spots.get(row).x, y: spots.get(row).y })), fit: true };

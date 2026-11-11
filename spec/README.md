@@ -256,4 +256,4 @@ form the engine reads (`options`, `dims`, `plot`; a
 definition of 5.0 is translated into it first, see `normalize.md`), merged
 with its parents, and its normalized form `result`, the one which the
 renderer reads. The plot types are the
-built-in ones, their default props are the ones of `src/plots/defaults.js`.
+built-in ones, their default props are the ones of `src/marks/defaults.js`.

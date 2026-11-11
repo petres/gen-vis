@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi, beforeEach, onTestFinished } from 'vitest';
 import { createGenVis, mountGenVisElement, mountGenVisByClass, unmountGenVisElement, registerMarkType, registerScheme, perRow } from '@/index.js';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import * as d3 from 'd3-scale-chromatic';
 import { prepareDef } from '@/utils/def';
@@ -331,7 +331,7 @@ describe('rendering', () => {
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['#121212', '#222222']);
         // with colors of the categories none
         def.mapping.c.categories.Wien.color = 'red';
-        // a plot without categories is drawn in the color of the text, see plots/defaults.js
+        // a plot without categories is drawn in the color of the text, see marks/defaults.js
         expect(strokes(await mount({ def, data: lineData }))).toEqual(['red', 'currentColor']);
         expect(errors).toEqual([]);
     });

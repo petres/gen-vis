@@ -1,7 +1,7 @@
-// the labels inside the bands of area plots (plots/inside.js): the spots of
+// the labels inside the bands of area plots (marks/inside.js): the spots of
 // a label in a band, the choice of the spots of several labels
 import { describe, test, expect } from 'vitest';
-import { bestSpots, chooseSpots } from '@/plots/inside.js';
+import { bestSpots, chooseSpots } from '@/marks/inside.js';
 
 // a band of 200 pixels of x from y `lo(x)` to `hi(x)` (pixels of y, 0 at the top)
 const band = (lo, hi) => {

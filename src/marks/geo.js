@@ -1,6 +1,6 @@
 import { evaluate } from "@/utils/expr";
 import { directOf, rowOf } from "@/utils/draw";
-import { perRow, finite, halo } from "@/plots/elements";
+import { perRow, finite, halo } from "@/marks/elements";
 import { warnOnce } from "@/utils/warn";
 
 const keyOf = (ctx, row) => String(row[ctx.store.def.geo.join]);

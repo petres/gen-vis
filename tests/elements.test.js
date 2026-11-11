@@ -1,5 +1,5 @@
 import { describe, test, expect } from 'vitest';
-import { dodge, once } from '@/plots/elements';
+import { dodge, once } from '@/marks/elements';
 
 describe('dodge', () => {
     test('positions far enough apart are kept', () => {

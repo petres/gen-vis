@@ -15,7 +15,7 @@ const docs = 'https://github.com/petres/gen-vis/blob/main/docs/definition.md';
 
 // --- the names of the registries of the code ---
 
-// the full names of the mark types of the engine (`<coordinate system>:<kind>`), see plots/
+// the full names of the mark types of the engine (`<coordinate system>:<kind>`), see marks/
 const markTypes = ['svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'cartesian:line', 'cartesian:area', 'cartesian:rule', 'cartesian:bar',
     'polar:line', 'polar:area', 'polar:arc', 'polar:circle', 'polar:text', 'geo:base', 'geo:region', 'geo:circle', 'geo:text', 'geo:mesh',
     'annotation:band', 'annotation:line', 'annotation:text', 'annotation:circle'];

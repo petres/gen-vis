@@ -240,7 +240,7 @@ const typeOf = (type, coord) => {
 
 // the expressions of a dodged bar: the band of the position dim `pos` split
 // among the categories of `group`, its position (the bar mark adds half a
-// band, see plots/cartesian.js) and its width; `center` is the middle of
+// band, see marks/cartesian.js) and its width; `center` is the middle of
 // the slot of the category, e.g. of a label on a dodged bar. The band of a
 // scale without one (a date of an `interval`, a point scale) is 80% of the
 // period or the step, as the width of a bar, around the middle of the period
@@ -375,7 +375,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     // the base of a bar or an area of the value of a dim without a start of
     // its own: 0 (the domain includes it, see translate), of an area on a
     // log scale, which has no 0, the start of the domain (bars: the end of
-    // the domain nearest to 0, see baseOf of plots/cartesian.js)
+    // the domain nearest to 0, see baseOf of marks/cartesian.js)
     const based = c => {
         if (c?.dim === undefined)
             return undefined;
@@ -717,7 +717,7 @@ const facetsOf = f => {
 const sharedScales = dims => Object.keys(dims).filter(n => isObject(dims[n]) ? dims[n].scale?.orientation !== null : true);
 
 // the attribute of the color of the category of the group of a mark type
-// by default, see plots/defaults.js
+// by default, see marks/defaults.js
 const colorAttribute = { line: 'stroke', rule: 'stroke', area: 'fill', bar: 'fill', arc: 'fill', circle: 'fill', text: 'fill' };
 // a mark of the definition draws in the colors of the categories of its
 // groups: by the default of its type (not of a label) or by "@color" in

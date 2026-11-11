@@ -5,7 +5,7 @@ import * as d3 from "@/utils/d3";
 import { checkLocale } from "@/utils/locale";
 import { fillTemplate, templateRefs } from "@/utils/def";
 import { curves } from "@/utils/draw";
-import { markTypes } from "@/plots";
+import { markTypes } from "@/marks";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
 import { projectionNames } from "@/coords/geo.js";
@@ -625,7 +625,7 @@ const checkMarks = ctx => {
         const namesOfMark = typeof p.data == 'string' ? null
             : new MarkNames([...names.mark(categories.filter(c => Object.hasOwn(dims, c))), ...rows.flatMap(r => Object.keys(r ?? {}))]);
         checkProp(p.props, `${path}.props`, warn, namesOfMark);
-        // labels inside the bands of an area mark, see plots/inside.js
+        // labels inside the bands of an area mark, see marks/inside.js
         if (isObject(p.place)) {
             const area = markList.find(q => q?.id === p.place.in);
             if (!['svg:text', 'polar:text', 'text'].includes(p.type))
@@ -1196,7 +1196,7 @@ const withoutDefaults = () => Object.fromEntries(Object.entries(markTypes).map((
 // of the dims of the axes (see mark of utils/language.js): a position the
 // mark has not, e.g. the y of a point without a dim y, is one of the dim of
 // its axis, which does not exist, see defaultProps (the defaults of the
-// types have no positions, see plots/defaults.js)
+// types have no positions, see marks/defaults.js)
 const positions = {
     'cartesian:line': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y: '@y:scaled' } } : { d: { x: '@x:scaled', y: '@y:scaled' } },
     'cartesian:area': props => isObject(props.d) && ('x0' in props.d || 'x1' in props.d) ? { d: { y0: '@y:scaled:0', y1: '@y:scaled' } }

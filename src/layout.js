@@ -12,8 +12,8 @@ import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
 import { directOf, elementOf, replaceRow } from "@/utils/draw";
-import { markTypes } from "@/plots";
-import { alongRows } from "@/plots/elements";
+import { markTypes } from "@/marks";
+import { alongRows } from "@/marks/elements";
 
 // the warning of a condition of a filter of no dim, e.g. of a column
 // instead of the dim of it, which no row has, see rowFilter
@@ -768,7 +768,7 @@ const withColor = parts => {
 const ofScale = /^(scaled:(min|max|-?\d+(\.\d+)?)|bandwidth|step)$/;
 
 /**
- * The groups of the rows of a mark by its categories, see plots/index.js:
+ * The groups of the rows of a mark by its categories, see marks/index.js:
  * the props of their categories (`props`), their `rows`, the values of the
  * props of the mark of a row (`at(row)`, `prop(name)(row)` of one prop) and
  * the ones which are the same for all rows (`attrs`), e.g. the color of a

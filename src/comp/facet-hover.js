@@ -140,7 +140,7 @@ const clamp = (index, length) => Math.max(0, Math.min(length - 1, index));
  * hover and select events (`emit`). `facetOf()` is the facet drawn,
  * `origin()` the origin of its marks, `highlight(entry)` highlights the
  * elements of the categories of a row. `init(ctx)` prepares the hover of a
- * draw (`ctx` of the mark types, see plots/index.js), e.g. its rows, and
+ * draw (`ctx` of the mark types, see marks/index.js), e.g. its rows, and
  * shows the one of the draw before, `render()` places the marker and the
  * box, `key(e)` moves the hover by the keyboard, `hide()` hides it,
  * `end()` ends it with the facet, `keyboard` tells whether the facet has

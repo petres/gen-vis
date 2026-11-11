@@ -10,7 +10,7 @@ import { deepMerge } from '@/utils/merge.js';
 import { sameValue, isObject } from '@/utils/values.js';
 import { isOperator } from '@/utils/expr.js';
 import { normalize } from '@/utils/normalize.js';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 
 // lists whose entries all have an `id` merge by it (4.x knew no other keys)
 const hasIds = a => a.length > 0 && a.every(e => e !== null && typeof e == 'object' && !Array.isArray(e) && 'id' in e);

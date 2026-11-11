@@ -5,7 +5,7 @@ import { dataFormats } from '@/utils/data';
 import schemaFile from '../schema.json';
 import { schema, markTypes, coordNames, curveNames, localeNames, dataFormats as formats, scaleTypes, projectionNames, transformTypes, controlTypes } from '@/schema/definition.js';
 import { curveNames as curves } from '@/utils/validate';
-import { markTypes as registered } from '@/plots';
+import { markTypes as registered } from '@/marks';
 import { coords } from '@/coords';
 import { definitions } from '@/dev/definitions.js';
 import { localeNames as locales } from '@/utils/locale';

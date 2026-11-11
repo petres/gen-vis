@@ -441,7 +441,7 @@ const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}) => {
 }
 
 // the annotations are marks of a row of their values, of the types of
-// plots/annotations.js, below the axes and the marks (`layer`, `"above"` or
+// marks/annotations.js, below the axes and the marks (`layer`, `"above"` or
 // `above` above the marks), or right before the mark `before` in its layer,
 // see prepareMarks
 const annotationMarks = (annotations = []) => [annotations].flat().map((a, i) => {

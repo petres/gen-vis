@@ -5,7 +5,7 @@ import { prepareDef } from '@/utils/def';
 import { normalize } from '@/utils/normalize';
 import { rowFilter, parseData, dataFormat } from '@/utils/data';
 import { loadTransforms } from '@/utils/transform';
-import { markTypes, registerMarkType } from '@/plots';
+import { markTypes, registerMarkType } from '@/marks';
 import { coords, registerCoord } from '@/coords';
 import { resolveParents } from '@/utils/load';
 import { translate } from '@/utils/language';

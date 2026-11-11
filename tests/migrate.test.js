@@ -10,7 +10,7 @@ import { parseExpression } from '@/utils/expr-parse.js';
 import { isOperator } from '@/utils/expr.js';
 import { isObject } from '@/utils/values.js';
 import { resolveParents } from '@/utils/load.js';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 import { definitions } from '@/dev/definitions.js';
 import { resolveParents4, patched4, globalSets, normalize4 } from './v4.js';
 

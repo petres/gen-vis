@@ -4,7 +4,7 @@ export { angleOf, radiusRange, markTypes };
 
 import * as d3 from "@/utils/d3";
 import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';
-import markTypes from "@/plots/polar";
+import markTypes from "@/marks/polar";
 import { bandCenter } from "@/utils/scales";
 import { tickValues, tickFormat, tickCount, labelProps, domainProps, tickMarks } from "@/coords/ticks";
 import { constraints, span, position, annotationItem, labelItems } from "@/coords/annotations";
@@ -350,7 +350,7 @@ export default {
                 return pointRadial((a0 + a1)/2, (inner + outer)/2);
             }
             const value = ctx.stackOf ? d3.mean(ctx.stackOf(row)) : row[names.v];
-            // not through the center, as the marks, see plots/polar.js
+            // not through the center, as the marks, see marks/polar.js
             const s = ctx.scales[names.v];
             return pointRadial(angleOf(ctx.scales[names.h], row[names.h]), Math.max(d3.min(s.range()), s(value)));
         },

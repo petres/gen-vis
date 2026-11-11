@@ -3,7 +3,7 @@
 // the hover and the mark types (polar:line, ...) are loaded with the first
 // polar plot, see coords/polar-plot.js and loadCoord of coords/index.js.
 import { lazy } from '@/utils/lazy';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 
 const tau = 2*Math.PI;
 

@@ -8,7 +8,7 @@ import { evaluate, bind, formatter } from '@/utils/expr';
 import { parseExpression } from '@/utils/expr-parse';
 import { format } from 'd3-format';
 import { normalize } from '@/utils/normalize';
-import { markTypes } from '@/plots';
+import { markTypes } from '@/marks';
 
 // the fixtures of a directory of spec/ by the name of their file, e.g. "rolling"
 const fixtures = files => Object.entries(files).map(([file, cases]) => [file.split('/').pop().replace(/\.json$/, ''), cases]);

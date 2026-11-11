@@ -30,7 +30,7 @@ import { isOperator, refNames } from '@/utils/expr';
  *   short name and of a full one alike (`line` is `cartesian:line`), null
  *   removes a default
  *
- * `markTypes` are the mark types by name, see plots/index.js.
+ * `markTypes` are the mark types by name, see marks/index.js.
  */
 
 // the parts of the categories of a dim, a dim with any of them has

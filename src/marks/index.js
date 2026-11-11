@@ -1,16 +1,16 @@
 export { markTypes, registerMarkType };
 
-import elements from "@/plots/elements";
-import cartesian from "@/plots/cartesian";
-import geo from "@/plots/geo";
-import annotations from "@/plots/annotations";
-import { defaults } from "@/plots/defaults";
+import elements from "@/marks/elements";
+import cartesian from "@/marks/cartesian";
+import geo from "@/marks/geo";
+import annotations from "@/marks/annotations";
+import { defaults } from "@/marks/defaults";
 
 /**
  * The mark types by name, the `type` of a mark:
  * - `marks(groups, mark, ctx)` returns the layer of the elements of the
  *   groups of rows of the mark (one per combination of its categories), see
- *   drawLayer of utils/draw.js and perRow and perGroup of plots/elements.js,
+ *   drawLayer of utils/draw.js and perRow and perGroup of marks/elements.js,
  *   it does not draw, null draws nothing. A group has its `rows`, the props
  *   of its categories (`props`), the values of the props of the mark of a
  *   row, `at(row)`, of one prop `prop(name)(row)`, the ones which are the
@@ -32,7 +32,7 @@ import { defaults } from "@/plots/defaults";
  * - `defaults`: the default props of the marks of the type, written with or
  *   without the prefix of the coordinate system ("line" is
  *   "cartesian:line"), an object or a function of the props of the mark,
- *   see plots/defaults.js and utils/normalize.js
+ *   see marks/defaults.js and utils/normalize.js
  */
 // the mark types of polar plots are loaded with the first one, until then
 // they are known by their names, e.g. to validateDef, see coords/polar.js

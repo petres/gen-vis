@@ -2,10 +2,10 @@
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, once, dodge, halo, inside, centered } from "@/plots/elements";
-import { barScale, barWidth } from "@/plots/cartesian";
+import { perGroup, perRow, finite, curve, points, areaPoints, propScale, once, dodge, halo, inside, centered } from "@/marks/elements";
+import { barScale, barWidth } from "@/marks/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
-import { defaults } from "@/plots/defaults";
+import { defaults } from "@/marks/defaults";
 import { shapeOf } from "@/utils/draw";
 
 // the angles of a band scale are in the center of the band, as the ones of the axis
@@ -52,7 +52,7 @@ const positioned = (name, type, x, y) => ({
         const text = type == 'text';
         const below = text ? halo(mark) : {};
         const [r0] = radiusRange(ctx);
-        // inside the bands of an area mark (`place`), see plots/inside.js
+        // inside the bands of an area mark (`place`), see marks/inside.js
         if (text && mark.place?.in !== undefined) {
             const { groups: placed, spots } = inside(ctx.store.inside.placeInside(groups, mark, ctx, true));
             return perRow(placed, type, (v, row) => {
@@ -159,5 +159,5 @@ const types = {
     'polar:text': positioned('polar:text', 'text', 'x', 'y'),
 };
 
-// with their default props, see plots/defaults.js
+// with their default props, see marks/defaults.js
 export default Object.fromEntries(Object.entries(types).map(([name, t]) => [name, { ...t, defaults: defaults[name] }]));
