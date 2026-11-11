@@ -16,8 +16,8 @@ with gen-vis, the data of its files (`/data/hierarchy.json`, `labels.json`,
 - `d2-series.json`: the aggregated indicator over time, the circle of the
   last year, hidden while another year is highlighted (`others` of `visibility`),
   the domain includes 100 (`include`)
-- `d2-map.json`: the international comparison, the view of Europe is a patch
-  of the filter (`europe`), the Top 3 is a message (there are other Top 3
+- `d2-map.json`: the international comparison, the view of Europe is a case
+  of the filter (a `match` of the global `view`, the column `europe`), the Top 3 is a message (there are other Top 3
   per indicator), the legend is a vertical scale left of the map
 - `d2-ranking.json`: the first ten countries of the map (the transform
   `rank`), e.g. beside the map, linked by the `highlight` of the page

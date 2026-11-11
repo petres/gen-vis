@@ -1,4 +1,4 @@
-// the labels inside the bands of area plots (marks/inside.js): the spots of
+// the labels inside the bands of areas (marks/inside.js): the spots of
 // a label in a band, the choice of the spots of several labels
 import { describe, test, expect } from 'vitest';
 import { bestSpots, chooseSpots } from '@/marks/inside.js';

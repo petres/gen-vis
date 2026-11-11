@@ -15,7 +15,7 @@ the columns of the api: `date`, `value`, `avg7`, `avg15`, `avg31`,
   all years in green (`mean` by the day), the band between the year and the
   mean red above it and cyan below it (`calc` with `max` and `min`, the
   columns on the scale of the values, `"scale": {"of": "y"}`), absolute or
-  relative to the mean (the globals of the entries of a form element), the
+  relative to the mean (the globals of the entries of a control), the
   mean of a year, a month, two weeks, a week or the day (the columns of the
   api), the hover of the day of the selected year in the center
 - `year-tg.json`, `year-rr.json` (`_year.json`, `LineYear.vue`): the means
@@ -25,7 +25,7 @@ the columns of the api: `date`, `value`, `avg7`, `avg15`, `avg31`,
   since 1959, the means of 1961–1990 and 1991–2020 (`mean` of a `base` of
   at least 22 years) as lines over their bands with their values
 
-Other than on the page the year is chosen by a form element (on the page by
+Other than on the page the year is chosen by a control (on the page by
 the yearly chart, a page links the charts by the events `select` and `hover`
 and the props `globals` and `highlight`), the names of the months of the
 lower half are not upside down and the values of the radius are only on
