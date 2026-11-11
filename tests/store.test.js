@@ -428,7 +428,7 @@ describe('form elements of globals, coordinate systems and maps', () => {
             mapping: { y: { column: 'c0', type: 'numeric' } }, plot: [],
         }, data: [{ cx: 1, cy: 2, c0: 0 }] });
         store.def.globals.a = '1';
-        store.applyFormElements();
+        store.applyControls();
         expect(store.def.dims.y.column).toBe('cy');
         expect(store.data[0].y).toBe(2);
     });
@@ -446,11 +446,11 @@ describe('form elements of globals, coordinate systems and maps', () => {
         }, data: csv });
         expect(store.coord).toBe(coords.cartesian);
         store.def.globals.coord = 'polar';
-        store.applyFormElements();
+        store.applyControls();
         expect(store.def.options.coord).toBe('polar');
         expect(store.coord).toBe(coords.polar);
         store.def.globals.coord = 'cartesian';
-        store.applyFormElements();
+        store.applyControls();
         expect(store.coord).toBe(coords.cartesian);
 
         // the one of a patch selected at the load
@@ -485,10 +485,10 @@ describe('form elements of globals, coordinate systems and maps', () => {
         expect(requested.sort()).toEqual(['http://localhost:3000/districts.json', 'http://localhost:3000/states.json']);
         expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
         store.def.globals.level = 'districts';
-        store.applyFormElements();
+        store.applyControls();
         expect(store.geo.features.map(store.geo.key)).toEqual(['901', '701', '702']);
         store.def.globals.level = 'states';
-        store.applyFormElements();
+        store.applyControls();
         expect(store.geo.features.map(store.geo.key)).toEqual(['W', 'T']);
         expect(requested).toHaveLength(2);
     });
@@ -516,12 +516,12 @@ describe('form elements of the values of a column (review of 4.1)', () => {
     test('a global which is none of the values of other classes is the last one', async () => {
         const s = createStore();
         await s.init({ def: binDef(), data: binData, globals: { step: '2' } });
-        expect(s.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+        expect(s.def.controls[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
         expect(s.def.globals.lo).toBe('8');
         const t = createStore();
         await t.init({ def: binDef(), data: binData });
         t.setGlobals({ step: '3' });
-        expect(t.def.formElements[0].values.map(v => v.value)).toEqual(['0', '3', '6']);
+        expect(t.def.controls[0].values.map(v => v.value)).toEqual(['0', '3', '6']);
         expect(t.def.globals.lo).toBe('6');
     });
 
@@ -536,7 +536,7 @@ describe('form elements of the values of a column (review of 4.1)', () => {
         mapping: { x: { column: 'month', type: 'categorical', scale: { type: 'band', orientation: 'horizontal' } }, y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' } } },
         plot: { type: 'cartesian:bar' } });
     const monthData = 'month,value\n2026-09,1\n2026-10,2';
-    const names = s => s.def.formElements[0].values.map(v => v.name);
+    const names = s => s.def.controls[0].values.map(v => v.name);
 
     test('the names of a format in the language of the definition, also of a format per language', async () => {
         let s = createStore();

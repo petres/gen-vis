@@ -104,7 +104,7 @@ const cssPixels = (value, styles) => {
 
 /**
  * The visualisation of a loaded definition (the element `.vis`): the
- * header, the form elements, the legends, the facets and the footer. `app`
+ * header, the controls, the legends, the facets and the footer. `app`
  * has the store, the slots (`slots()`), the props of the buttons
  * (`props()`), the files (save, copy, csv), `emit` of the events of the
  * hover, `stateChanged()` of a change of the user, `rendered()` once it is
@@ -124,7 +124,7 @@ const createVis = app => {
     let width = null;
     let fullWidth = null;
     let globals = {};
-    let formElements = [];
+    let controls = [];
     // the check instead of the icon of the copy for a while
     let copied = false;
     const clipboard = canCopy();
@@ -237,7 +237,7 @@ const createVis = app => {
         app.stateChanged();
     };
     const formChanged = () => {
-        store.applyFormElements();
+        store.applyControls();
         changeSelected();
     };
 
@@ -404,7 +404,7 @@ const createVis = app => {
         const opts = options();
         // the class of the definition, a template of the globals, e.g. for
         // the styles of a page, the globals as data-global- attributes,
-        // e.g. for the styles of a page of a form element, only the ones of
+        // e.g. for the styles of a page of a control, only the ones of
         // names and values of text
         const rootClass = opts.class ? store.text(opts.class) : null;
         const globalAttrs = Object.fromEntries(Object.entries(store.def.globals)
@@ -417,7 +417,7 @@ const createVis = app => {
             style.textContent = css;
 
         // the title and the subtitle with the values of the globals, e.g.
-        // "Durchschnitt {base} = 100" of a form element
+        // "Durchschnitt {base} = 100" of a control
         const own = slots();
         const head = { title: store.text(opts.title), subtitle: store.text(opts.subtitle) };
         if (own.header) {
@@ -433,7 +433,7 @@ const createVis = app => {
             setText(headerSubtitle, head.subtitle);
         }
 
-        formElements.forEach(f => f.update());
+        controls.forEach(f => f.update());
 
         // a text instead of the plots and the legends, e.g. of a narrow screen
         const text = messageOf();
@@ -591,18 +591,18 @@ const createVis = app => {
     };
 
     // the elements before the first measure, as the ones of Vue: without
-    // the view, the form elements and the width
+    // the view, the controls and the width
     render();
 
     return {
         el: root,
-        // once it is in the page: the form elements, the width, the view
+        // once it is in the page: the controls, the width, the view
         mounted() {
-            // hidden form elements have no element, their globals are set by the page
+            // hidden controls have no element, their globals are set by the page
             globals = store.def.globals;
-            formElements = store.def.formElements.filter(e => e.type != 'hidden')
+            controls = store.def.controls.filter(e => e.type != 'hidden')
                 .map(e => createControl(vis, e, globals, formChanged));
-            form.append(...formElements.map(f => f.el));
+            form.append(...controls.map(f => f.el));
             measure();
             update();
             store.listeners.add(stateListener);
@@ -636,7 +636,7 @@ const createVis = app => {
             clearTimeout(resizeTimeout);
             clearTimeout(copiedTimeout);
             facets?.destroy();
-            formElements.forEach(f => f.destroy());
+            controls.forEach(f => f.destroy());
             headerSlot.clear();
             footerSlot.clear();
             buttonsSlot.clear();

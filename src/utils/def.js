@@ -512,7 +512,7 @@ const prepareMarks = (marks, annotations, files) => {
 };
 
 /**
- * The prepared definition: the globals, the form elements and the parts
+ * The prepared definition: the globals, the controls and the parts
  * which the globals can change, see applyResolved, the definition is
  * changed, `options` are the ones of applyResolved.
  */
@@ -520,11 +520,11 @@ const prepareDef = (def, options = {}) => {
     const org = JSON.parse(JSON.stringify(def));
     if (def[variantsOf])
         org[variantsOf] = def[variantsOf];
-    // the values of the form elements, also without globals of the definition
+    // the values of the controls, also without globals of the definition
     def.globals ??= {};
-    // a form element without entries has none
-    def.formElements = (def.formElements ?? []).map((e, i) => object(e, `formElements[${i}]`, 'a form element'));
-    def.formElements.forEach(e => {
+    // a control without entries has none
+    def.controls = (def.controls ?? []).map((e, i) => object(e, `controls[${i}]`, 'a control'));
+    def.controls.forEach(e => {
         if (!Array.isArray(e.values))
             e.values = [];
     });
@@ -614,12 +614,12 @@ const patchable = ['options', 'dims', 'marks', 'annotations', 'filter', 'facets'
 const variantsOf = Symbol('variants');
 const variants = def => def[variantsOf] ?? [def];
 
-// the entry of a form element of the value of its global, undefined if
+// the entry of a control of the value of its global, undefined if
 // there is none
-const selectedEntry = (def, e) => e.values.find(v => sameValue(v.value, def.globals?.[e.ref]));
+const selectedEntry = (def, e) => e.values.find(v => sameValue(v.value, def.globals?.[e.global]));
 
-// the entries of the form elements of the values of their globals
-const selectedEntries = def => (def.formElements ?? []).map(e => selectedEntry(def, e)).filter(Boolean);
+// the entries of the controls of the values of their globals
+const selectedEntries = def => (def.controls ?? []).map(e => selectedEntry(def, e)).filter(Boolean);
 
 // the sources of the prepared parts of a definition, a part whose source is
 // the same is kept, e.g. a dim with its categories of the data
@@ -631,13 +631,13 @@ const sources = Symbol('sources');
  * `def`: resolved with them and the fields of the selected entries of the
  * controls, translated and normalized (`markTypes` are the mark types,
  * see utils/normalize.js); without a source the parts of `defOrg`. The
- * globals of an entry can select the entry of a later form element, e.g. a
+ * globals of an entry can select the entry of a later control, e.g. a
  * language selects its names, they are set in `def.globals` until no entry
- * changes them anymore, at most once per form element, e.g. of entries
+ * changes them anymore, at most once per control, e.g. of entries
  * which set each other's globals.
  */
 const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
-    for (let i = 0; i <= (def.formElements ?? []).length; i++) {
+    for (let i = 0; i <= (def.controls ?? []).length; i++) {
         const selected = selectedEntries(def);
         const globals = JSON.stringify(def.globals);
         selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
@@ -671,16 +671,16 @@ const resolvedParts = (def, defOrg, source = null, markTypes = {}) => {
 const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, source = null, markTypes = {}, types = null } = {}) => {
     const merged = resolvedParts(def, defOrg, source, markTypes);
     // the texts in the language of the definition, e.g. of a global of a
-    // form element; the locale of the numbers and dates is the language
+    // control; the locale of the numbers and dates is the language
     // without one of its own
     const language = languageOf(merged.options, def.globals);
     const patched = { ...merged };
     ['options', 'dims', 'annotations'].filter(k => merged[k] !== undefined).forEach(k => patched[k] = textsIn(k, merged[k], language));
     if (hasLocale(language) && patched.options?.locale === undefined)
         patched.options = { ...patched.options, locale: language };
-    // the names of the form elements and of their entries
-    (def.formElements ?? []).forEach((e, i) => {
-        const org = defOrg.formElements?.[i];
+    // the names of the controls and of their entries
+    (def.controls ?? []).forEach((e, i) => {
+        const org = defOrg.controls?.[i];
         if (!isObject(org) || !isObject(e))
             return;
         if (org.name !== undefined)
@@ -776,7 +776,7 @@ const formatOf = (m, part) => {
     return hover;
 };
 
-// a name of a template, a global or a field of the entry of a form element
+// a name of a template, a global or a field of the entry of a control
 // selected by it, e.g. `group` or `group:name`, of letters of any language,
 // digits and _, e.g. {größe}
 const templateName = /\{([\p{L}\p{N}_]+(?::[\p{L}\p{N}_]+)?)\}/gu;
@@ -795,14 +795,14 @@ const fillTemplate = (column, names = {}) =>
     column.replace(templateName, (t, n) => Object.hasOwn(names, n) ? String(names[n]) : t);
 
 // the names of the templates of a prepared definition: the globals and the
-// fields of the selected entries of the form elements, e.g. `group:name` of
+// fields of the selected entries of the controls, e.g. `group:name` of
 // the name of the entry of the global `group`
 const templateNames = def => {
     // also as `globals.<name>`, e.g. of a global which a dim of the same name shadows
     const names = { ...def.globals, ...Object.fromEntries(Object.entries(def.globals ?? {}).map(([k, v]) => [`globals.${k}`, v])) };
-    (def.formElements ?? []).forEach(e => {
+    (def.controls ?? []).forEach(e => {
         Object.entries(selectedEntry(def, e) ?? {}).filter(([, v]) => v === null || typeof v != 'object')
-            .forEach(([k, v]) => names[`${e.ref}:${k}`] ??= v);
+            .forEach(([k, v]) => names[`${e.global}:${k}`] ??= v);
     });
     return names;
 };

@@ -279,13 +279,13 @@ const requirements = defOrg => {
 };
 
 // the languages of the texts a definition can have (`options.language`, a
-// tag or a global: the values of its form elements and of the definition),
+// tag or a global: the values of its controls and of the definition),
 // the locales of the numbers and dates of the ones which are locales
 const languagesOf = def => {
     const given = variants(def).map(d => d.options?.language).filter(l => typeof l == 'string');
     const globals = given.filter(l => l.startsWith('@')).map(l => l.slice(1));
     const values = [...given.filter(l => !l.startsWith('@')), ...globals.map(g => def.globals?.[g]),
-        ...(def.formElements ?? []).filter(e => globals.includes(e?.ref) && Array.isArray(e.values)).flatMap(e => e.values.map(v => v?.value))];
+        ...(def.controls ?? []).filter(e => globals.includes(e?.global) && Array.isArray(e.values)).flatMap(e => e.values.map(v => v?.value))];
     return [...new Set(values.filter(v => typeof v == 'string'))].filter(tag => {
         try {
             checkLocale(tag);
@@ -317,7 +317,7 @@ const loadParts = need => {
 // an error of the engine's form with the path of the definition, e.g.
 // "marks[0].fill: ..." of "marks[0].props.fill: ..."
 const authoredError = error => {
-    const m = /^(marks|options|formElements|facets)\b([^\s:]*): /.exec(error?.message ?? '');
+    const m = /^(marks|options|facets)\b([^\s:]*): /.exec(error?.message ?? '');
     return m ? new Error(`${authoredPath(m[1] + m[2])}: ${error.message.slice(m[0].length)}`, { cause: error }) : error;
 };
 
@@ -454,14 +454,14 @@ const loadFiles = async (defOrg, url) => {
  * The prepared definition of the rows with the state and the globals of the
  * page (the types of the dims without one are the ones of their values,
  * see inferTypes), its defaults (the state of the definition, see utils/state.js) and
- * the columns of the transforms. The form elements can have the values of
+ * the columns of the transforms. The controls can have the values of
  * the data, the state needs them. The transforms of the globals of the
  * state are computed before the dims, their categories can be the ones
  * of a transform, and again after them, e.g. of a global of a scale of
  * dates to utc, the entries of the legends are the ones of the state, e.g. of the
  * categories of another column.
  */
-// the format of the names of the values of a form element of a column
+// the format of the names of the values of a control of a column
 // (`values.format`) in the locale of the definition: a time format of dates
 // (a format with %), e.g. "%b %Y" of "2026-10", a number format otherwise
 const valueFormat = locale => format => {

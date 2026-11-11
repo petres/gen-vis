@@ -238,7 +238,7 @@ describe('applyResolved (the parts of the definition of its globals)', () => {
     test('an entry sets globals', () => {
         const org = {
             globals: { group: 'inno', label: 'Innovation Leaders' },
-            formElements: [{ ref: 'group', type: 'radio', values: [
+            controls: [{ global: 'group', type: 'radio', values: [
                 { value: 'inno', globals: { label: 'Innovation Leaders' } },
                 { value: 'eu', globals: { label: 'EU-27' } },
             ] }],
@@ -293,10 +293,10 @@ describe('column templates', () => {
         expect(templateRefs('{größe}{x_1}')).toEqual(['größe', 'x_1']);
     });
 
-    test('the fields of the selected entries of the form elements', () => {
+    test('the fields of the selected entries of the controls', () => {
         const def = prepareDef({
             globals: { group: 'eu' },
-            formElements: [{ ref: 'group', type: 'radio', values: [
+            controls: [{ global: 'group', type: 'radio', values: [
                 { id: 'inno', name: 'Innovation Leaders', value: 'inno' },
                 { id: 'eu', name: 'EU-27', value: 'eu', short: 'EU', patch: { dims: {} } },
             ] }],
@@ -407,16 +407,16 @@ describe('applyResolved of globals and of the categories of the data', () => {
     test('entries which set each other\'s globals end', () => {
         const org = {
             globals: { a: '1', b: '1' },
-            formElements: [
-                { ref: 'a', values: [{ value: '1', globals: { b: '2' } }, { value: '2', globals: { b: '1' } }] },
-                { ref: 'b', values: [{ value: '1', globals: { a: '1' } }, { value: '2', globals: { a: '2' } }] },
+            controls: [
+                { global: 'a', values: [{ value: '1', globals: { b: '2' } }, { value: '2', globals: { b: '1' } }] },
+                { global: 'b', values: [{ value: '1', globals: { a: '1' } }, { value: '2', globals: { a: '2' } }] },
             ],
         };
         expect(() => prepareDef(JSON.parse(JSON.stringify(org)))).not.toThrow();
     });
 
     test('a dim of the categories of the data is prepared again with other values of its column', () => {
-        const org = { globals: { lang: 'de' }, formElements: [{ ref: 'lang', values: [{ value: 'de' }, { value: 'en' }] }],
+        const org = { globals: { lang: 'de' }, controls: [{ global: 'lang', values: [{ value: 'de' }, { value: 'en' }] }],
             dims: { c: { column: 'name', fromData: true, legend: {} } } };
         let keys = ['Österreich', 'Deutschland'];
         const def = prepareDef(JSON.parse(JSON.stringify(org)), { dataKeys: () => keys });

@@ -278,13 +278,13 @@ describe('bin and random in a chart', () => {
         const { createStore } = await import('@/store');
         const store = createStore();
         await store.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data });
-        expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '5']);
+        expect(store.def.controls[0].values.map(v => v.value)).toEqual(['0', '5']);
         store.setGlobals({ step: '2' });
-        expect(store.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+        expect(store.def.controls[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
         // also of a global of the page when the chart is loaded
         const page = createStore();
         await page.init({ def: { ...def(), formElements: [{ id: 'lo', ref: 'lo', type: 'select', values: { column: 'lo' } }] }, data, globals: { step: '2' } });
-        expect(page.def.formElements[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
+        expect(page.def.controls[0].values.map(v => v.value)).toEqual(['0', '2', '4', '6', '8']);
     });
 
     test('the rows of a bin: replaced, with later calc and share, after a filter, without values', () => {

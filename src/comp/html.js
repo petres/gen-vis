@@ -46,7 +46,7 @@ const setStyle = (node, style, before) => {
  * undefined remove it, as the attributes given before which `attrs` does
  * not have. `class` is a string, `style` see setStyle, `hidden`,
  * `checked`, `selected` and `disabled` are on or off, `checked`,
- * `selected` and `value` are also the properties of form elements (`value`
+ * `selected` and `value` are also the properties of controls (`value`
  * last), false is "false" of the others, e.g. of `data-` attributes.
  */
 const patch = (node, attrs) => {

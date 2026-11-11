@@ -158,11 +158,18 @@ const normalize4 = def => {
  * A definition of 4.x in the names of the engine, which are the ones of
  * 5.0: the form of 4.x normalized was the one the engine read, the tests of
  * the engine which are written of a definition of 4.x (e.g. one which is
- * also migrated) read it so; `mapping` are `dims`, `plot` are `marks`. A copy.
+ * also migrated) read it so; `mapping` are `dims`, `plot` are `marks`, `formElements` are `controls`
+ * and their `ref` is their `global`. A copy.
  */
 const engineNames = def => {
-    const { mapping, plot, ...rest } = structuredClone(def);
-    return { ...rest, ...(mapping === undefined ? {} : { dims: mapping }), ...(plot === undefined ? {} : { marks: plot }) };
+    const { mapping, plot, formElements, ...rest } = structuredClone(def);
+    const control = ({ ref, ...e }) => ({ ...e, ...(ref === undefined ? {} : { global: ref }) });
+    return {
+        ...rest,
+        ...(mapping === undefined ? {} : { dims: mapping }),
+        ...(plot === undefined ? {} : { marks: plot }),
+        ...(formElements === undefined ? {} : { controls: formElements.map(e => e !== null && typeof e == 'object' ? control(e) : e) }),
+    };
 };
 
 export { mergeAll4, resolveParents4, patched4, globalSets, normalize4, engineNames };

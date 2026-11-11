@@ -22,12 +22,12 @@ const timeout = 20000;
 // "Einheit: Anteil · Jahr: 2024" (of a control without a name only the
 // entry), the image has no controls, the ones with `"inImage": false` only
 // change the presentation, e.g. shared scales
-const selection = def => (def.formElements ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
+const selection = def => (def.controls ?? []).filter(e => e.inImage !== false && e.type != 'hidden').map(e => {
     const entry = selectedEntry(def, e);
     return entry ? (e.name === undefined || e.name === null || e.name === '' ? `${entry.name}` : `${e.name}: ${entry.name}`) : null;
 }).filter(Boolean).join(' · ');
 
-// a copy of the visualisation without the form elements, the buttons and the
+// a copy of the visualisation without the controls, the buttons and the
 // legend of the facets (their titles name them), the selection is a line
 // below the subtitle (of the class `vis-selection`, with the attributes of
 // the subtitle) and the legends only have the entries shown

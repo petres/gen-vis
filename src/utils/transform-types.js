@@ -12,7 +12,7 @@ import { getLocale } from "@/utils/locale";
 
 /**
  * The transforms of a definition compute columns of the data in the browser,
- * e.g. an index of a base year, which can be the global of a form element,
+ * e.g. an index of a base year, which can be the global of a control,
  * instead of a column per base year in the file. A transform computes the
  * column `as` (by default its `column`, which it replaces) of the values of
  * `column` in the groups of the rows of the same values of the columns `by`,

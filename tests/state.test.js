@@ -4,12 +4,12 @@ import { prepareDef } from '@/utils/def';
 
 const def = () => prepareDef({
     globals: { column: 'value', scales: ['y'] },
-    formElements: [
-        { id: 'column', name: 'Wert', ref: 'column', type: 'radio', values: [
+    controls: [
+        { id: 'column', name: 'Wert', global: 'column', type: 'radio', values: [
             { id: 'value', name: 'Value', value: 'value' },
             { id: 'other', name: 'Other', value: 'other' },
         ] },
-        { id: 'scales', name: 'Skala', ref: 'scales', type: 'radio', values: [
+        { id: 'scales', name: 'Skala', global: 'scales', type: 'radio', values: [
             { id: 'shared', name: 'Geteilt', value: ['y'] },
             { id: 'free', name: 'Getrennt', value: [] },
         ] },
@@ -23,7 +23,7 @@ const def = () => prepareDef({
 });
 
 describe('snapshot', () => {
-    test('the globals of the form elements and the visible entries of the legends', () => {
+    test('the globals of the controls and the visible entries of the legends', () => {
         expect(snapshot(def())).toEqual({
             globals: { column: 'value', scales: ['y'] },
             visible: { c: { Wien: true, Tirol: false } },

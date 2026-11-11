@@ -10,22 +10,22 @@ let count = 0;
 
 /**
  * A control of the definition (a select, radio buttons or a slider),
- * its entry is the value of the global `element.ref` of `globals`, a change
+ * its entry is the value of the global `control.global` of `globals`, a change
  * of the user sets it and calls `changed()`. `update()` draws it again,
  * e.g. of a new state, `destroy()` ends a move of a slider.
  */
-const createControl = (vis, element, globals, changed) => {
+const createControl = (vis, control, globals, changed) => {
     const uid = `gen-vis-control-${count++}`;
-    const type = element.type;
-    const root = el('div', { class: 'vis-control', 'data-id': element.id });
+    const type = control.type;
+    const root = el('div', { class: 'vis-control', 'data-id': control.id });
     let frame = null;
     let position = null;
 
-    const equal = v => sameValue(v, globals[element.ref]);
+    const equal = v => sameValue(v, globals[control.global]);
     const switched = entry => {
         if (!entry || equal(entry.value))
             return;
-        globals[element.ref] = entry.value;
+        globals[control.global] = entry.value;
         changed();
     };
     // the entry of a slider, at most once a frame, the events of a fast
@@ -35,11 +35,11 @@ const createControl = (vis, element, globals, changed) => {
         if (end) {
             cancelAnimationFrame(frame);
             frame = null;
-            return switched(element.values[index]);
+            return switched(control.values[index]);
         }
         frame ??= requestAnimationFrame(() => vis.guard(() => {
             frame = null;
-            switched(element.values[position]);
+            switched(control.values[position]);
         }));
     };
     const on = (node, name, fn) => node.addEventListener(name, e => vis.guard(() => fn(e)));
@@ -49,7 +49,7 @@ const createControl = (vis, element, globals, changed) => {
     let input = null, value = null;
     if (type == 'select') {
         input = root.appendChild(el('select'));
-        on(input, 'change', e => switched(element.values[e.target.selectedIndex]));
+        on(input, 'change', e => switched(control.values[e.target.selectedIndex]));
     } else if (type == 'radio') {
         input = root.appendChild(el('div'));
     } else if (type == 'slider') {
@@ -62,36 +62,36 @@ const createControl = (vis, element, globals, changed) => {
     }
 
     const update = () => {
-        const id = `${uid}-${element.id}`;
-        patch(root, { class: 'vis-control', 'data-id': element.id });
+        const id = `${uid}-${control.id}`;
+        patch(root, { class: 'vis-control', 'data-id': control.id });
         patch(title, type == 'radio' ? { class: 'vis-control-title', id: `${id}-title` } : { class: 'vis-control-title', for: id });
-        setText(title, `${element.name ?? ''}:`);
+        setText(title, `${control.name ?? ''}:`);
         if (type == 'select') {
             patch(input, { id });
-            join(input, element.values, { key: e => e.id, create: () => el('option') }).forEach((option, i) => {
-                const e = element.values[i];
+            join(input, control.values, { key: e => e.id, create: () => el('option') }).forEach((option, i) => {
+                const e = control.values[i];
                 patch(option, { selected: equal(e.value), value: e.id });
                 setText(option, e.name);
             });
         } else if (type == 'radio') {
             patch(input, { class: 'vis-radio', role: 'radiogroup', 'aria-labelledby': `${id}-title` });
             // the change of the radio button, by its label, a click or the keyboard
-            join(input, element.values, { key: e => e.id, create: () => {
+            join(input, control.values, { key: e => e.id, create: () => {
                 const div = el('div', null, el('input'), el('label'));
                 on(div.firstChild, 'change', () => switched(div[itemOf]));
                 return div;
             } }).forEach((div, i) => {
-                const e = element.values[i];
+                const e = control.values[i];
                 patch(div, { 'data-id': e.id });
                 patch(div.firstChild, { type: 'radio', id: `${id}-${e.id}`, name: id, checked: equal(e.value), value: e.id });
                 patch(div.lastChild, { for: `${id}-${e.id}` });
                 setText(div.lastChild, e.name);
             });
         } else if (type == 'slider') {
-            const index = Math.max(element.values.findIndex(e => equal(e.value)), 0);
-            patch(input, { type: 'range', id, min: '0', max: element.values.length - 1, step: '1', 'aria-valuetext': element.values[index]?.name, value: index });
+            const index = Math.max(control.values.findIndex(e => equal(e.value)), 0);
+            patch(input, { type: 'range', id, min: '0', max: control.values.length - 1, step: '1', 'aria-valuetext': control.values[index]?.name, value: index });
             patch(value, { class: 'vis-slider-value' });
-            setText(value, element.values[index]?.name);
+            setText(value, control.values[index]?.name);
         }
     };
     update();

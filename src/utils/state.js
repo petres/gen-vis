@@ -4,17 +4,17 @@ import { sameValue } from "@/utils/def";
 
 /**
  * The state of a visualisation is what the user can change: the globals of
- * the form elements and the visible entries of the legends, e.g.
+ * the controls and the visible entries of the legends, e.g.
  * { globals: { column: "share" }, visible: { year: { "2019": false } } }
  */
 
-// the form elements of the user, not the hidden ones, their globals are set
+// the controls of the user, not the hidden ones, their globals are set
 // by the page, see applyGlobals
-const userElements = def => (def.formElements ?? []).filter(e => e.type != 'hidden');
+const userControls = def => (def.controls ?? []).filter(e => e.type != 'hidden');
 
 // the complete state of a prepared definition
 const snapshot = def => ({
-    globals: Object.fromEntries(userElements(def).map(e => [e.ref, def.globals?.[e.ref]])),
+    globals: Object.fromEntries(userControls(def).map(e => [e.global, def.globals?.[e.global]])),
     visible: Object.fromEntries(Object.entries(def.dims)
         .filter(([n, m]) => m.legend && m.categoryProps)
         .map(([n, m]) => [n, Object.fromEntries(Object.entries(m.categoryProps).map(([k, p]) => [k, p.visible]))])),
@@ -41,7 +41,7 @@ const diffState = (state, defaults) => {
 // values, dims and entries are ignored, e.g. of an older definition
 const applyState = (def, state) => {
     Object.entries(state?.globals ?? {}).forEach(([r, v]) => {
-        const entry = userElements(def).filter(e => e.ref == r)
+        const entry = userControls(def).filter(e => e.global == r)
             .flatMap(e => e.values).find(e => sameValue(e.value, v));
         if (entry)
             def.globals[r] = entry.value;
@@ -58,12 +58,12 @@ const applyState = (def, state) => {
     });
 };
 
-// the globals of the page, e.g. the language, of a form element (also a
+// the globals of the page, e.g. the language, of a control (also a
 // hidden one) only one of its values, other globals are set as they are,
 // e.g. ones of the texts
 const applyGlobals = (def, globals) => {
     Object.entries(globals ?? {}).forEach(([r, v]) => {
-        const elements = (def.formElements ?? []).filter(e => e.ref == r);
+        const elements = (def.controls ?? []).filter(e => e.global == r);
         if (elements.length == 0) {
             def.globals[r] = v;
             return;

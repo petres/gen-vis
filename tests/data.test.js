@@ -310,7 +310,7 @@ describe('parseData', () => {
 });
 
 describe('the columns a definition uses', () => {
-    test('of the dims, the columns of all values of the controls and the values of form elements', () => {
+    test('of the dims, the columns of all values of the controls and the values of controls', () => {
         // the definitions of all values of the controls, as the load keeps them, see utils/resolve.js
         const def = {
             globals: { col: 'a' },
@@ -335,15 +335,15 @@ describe('the columns a definition uses', () => {
         expect(usedColumns({
             globals: { values: 'twh', share: '' },
             dims: { y: { column: '{values}{share}' } },
-            formElements: [
-                { ref: 'values', values: [{ value: 'twh' }, { value: 'co2' }] },
-                { ref: 'share', values: [{ value: '' }, { value: '.share' }] },
+            controls: [
+                { global: 'values', values: [{ value: 'twh' }, { value: 'co2' }] },
+                { global: 'share', values: [{ value: '' }, { value: '.share' }] },
             ],
         })).toEqual(['twh', 'twh.share', 'co2', 'co2.share']);
         // the values of a column are not known before the data
         expect(usedColumns({
             dims: { y: { column: 'value.{year}' } },
-            formElements: [{ ref: 'year', values: { column: 'year' } }],
+            controls: [{ global: 'year', values: { column: 'year' } }],
         })).toBeNull();
     });
 
@@ -369,24 +369,24 @@ describe('the columns a definition uses', () => {
         expect(usedColumns({
             globals: { group: 'a' },
             dims: { y: { column: '{group:col}.{group}' } },
-            formElements: [{ ref: 'group', values: [{ value: 'a', col: 'A' }, { value: 'b', col: 'B' }] }],
+            controls: [{ global: 'group', values: [{ value: 'a', col: 'A' }, { value: 'b', col: 'B' }] }],
         })).toEqual(['A.a', 'A.b', 'B.a', 'B.b']);
     });
 
     test('the column of the names of the values of a control', async () => {
         expect(usedColumns({ dims: { y: { column: 'value' } },
-            formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] })).toEqual(['value', 'code', 'label']);
+            controls: [{ global: 'c', values: { column: 'code', names: 'label' } }] })).toEqual(['value', 'code', 'label']);
         const buffer = parquetWriteBuffer({ columnData: [
             { name: 'code', data: ['a', 'b'], type: 'STRING' },
             { name: 'label', data: ['Alpha', 'Beta'], type: 'STRING' },
             { name: 'value', data: [1, 2], type: 'DOUBLE' },
             { name: 'unused', data: [1, 2], type: 'DOUBLE' },
         ] });
-        const def = { dims: { y: { column: 'value' } }, formElements: [{ ref: 'c', values: { column: 'code', names: 'label' } }] };
+        const def = { dims: { y: { column: 'value' } }, controls: [{ global: 'c', values: { column: 'code', names: 'label' } }] };
         const rows = await parseData(buffer, 'parquet', usedColumns(def));
         expect(Object.keys(rows[0])).toEqual(['code', 'label', 'value']);
         addDataValues(def, rows);
-        expect(def.formElements[0].values.map(v => v.name)).toEqual(['Alpha', 'Beta']);
+        expect(def.controls[0].values.map(v => v.name)).toEqual(['Alpha', 'Beta']);
     });
 });
 
@@ -588,18 +588,18 @@ describe('the categories of the data', () => {
         expect(def.dims.d.keys).toEqual(['x']);
     });
 
-    test('the values of a column of a form element', () => {
-        const def = { formElements: [{ id: 'y', ref: 'y', values: { column: 'year' } }] };
+    test('the values of a column of a control', () => {
+        const def = { controls: [{ id: 'y', global: 'y', values: { column: 'year' } }] };
         addDataValues(def, [{ year: '2021' }, { year: '2019' }, { year: '' }]);
-        expect(def.formElements[0].values.map(v => v.value)).toEqual(['2019', '2021']);
+        expect(def.controls[0].values.map(v => v.value)).toEqual(['2019', '2021']);
         expect(def.globals.y).toBe('2021');
     });
 
     test('values of the same text are one entry and one category, e.g. 1 and "1" of JSON', () => {
         const rows = [{ k: 2 }, { k: 1 }, { k: '1' }, { k: '2' }, { k: 10 }];
-        const def = { formElements: [{ id: 'k', ref: 'k', values: { column: 'k' } }] };
+        const def = { controls: [{ id: 'k', global: 'k', values: { column: 'k' } }] };
         addDataValues(def, rows);
-        expect(def.formElements[0].values.map(v => v.id)).toEqual(['1', '2', '10']);
+        expect(def.controls[0].values.map(v => v.id)).toEqual(['1', '2', '10']);
         expect(distinctValues(rows, null, 'k')).toEqual([1, 2, 10]);
         expect(distinctValues(rows, null, 'k', true)).toEqual([2, 1, 10]);
     });

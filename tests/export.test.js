@@ -42,9 +42,9 @@ const texts = root => [...root.querySelectorAll('text')].map(t => t.textContent)
 
 describe('the selection line of the images', () => {
     test('the entries chosen, of a control without a name only the entry', () => {
-        const def = { globals: { u: 'b', y: '2024' }, formElements: [
-            { ref: 'u', type: 'radio', name: 'Unit', values: [{ id: 'a', name: 'TWh', value: 'a' }, { id: 'b', name: 'PJ', value: 'b' }] },
-            { ref: 'y', type: 'select', values: [{ id: '2024', name: '2024', value: '2024' }] },
+        const def = { globals: { u: 'b', y: '2024' }, controls: [
+            { global: 'u', type: 'radio', name: 'Unit', values: [{ id: 'a', name: 'TWh', value: 'a' }, { id: 'b', name: 'PJ', value: 'b' }] },
+            { global: 'y', type: 'select', values: [{ id: '2024', name: '2024', value: '2024' }] },
         ] };
         expect(selection(def)).toBe('Unit: PJ · 2024');
     });

@@ -388,7 +388,7 @@ const columnValues = (rows, columns, column) => {
 };
 
 // the values of dims of the parsed rows in the prepared ones, e.g. of
-// another column of a form element, the rows are the same objects
+// another column of a control, the rows are the same objects
 const updateData = (rows, data, def, names, columns = null) => {
     const dims = names.map(n => ({
         name: n,
@@ -807,19 +807,19 @@ const conditionValues = (c, scope) => {
  * the ones of the dims, also of the other values of the controls (see
  * variants), and of the values of the controls and of their names. A column
  * template is a column of every value of its globals, e.g. "{values}{share}"
- * of the entries of two form elements, or of the field of every entry, e.g.
- * "{group:name}"; a global of a form element with the values of a column
- * has unknown ones, also a global without a form element, which the page
+ * of the entries of two controls, or of the field of every entry, e.g.
+ * "{group:name}"; a global of a control with the values of a column
+ * has unknown ones, also a global without a control, which the page
  * sets to any value (the `globals` of the visualisation).
  */
 const usedColumns = def => {
-    const elements = def.formElements ?? [];
+    const elements = def.controls ?? [];
     // the values of a name of a template: of a global the one of the
-    // definition and the ones of its form elements, of a field the ones of
+    // definition and the ones of its controls, of a field the ones of
     // their entries (`global:field`)
     const valuesOf = name => {
         const [ref, field] = name.split(':');
-        const own = elements.filter(e => e.ref == ref);
+        const own = elements.filter(e => e.global == ref);
         if (own.length == 0 || own.some(e => !Array.isArray(e.values)))
             return null;
         const entries = own.flatMap(e => e.values);
@@ -849,7 +849,7 @@ const usedColumns = def => {
     ].map(expand);
     if (columns.includes(null))
         return null;
-    // the columns of the values of the form elements and of their names
+    // the columns of the values of the controls and of their names
     const ofValues = elements.flatMap(e => [e.values?.column, e.values?.names]).filter(c => typeof c == 'string');
     return [...new Set([...columns.flat(), ...ofValues, ...variants(def).flatMap(expressionColumns)])];
 };
@@ -882,7 +882,7 @@ const distinctValues = (rows, columns, column, inOrder = false) => {
     return inOrder ? values : values.sort(comparison(values));
 };
 
-// the spec of the values of a form element of a column (`values` of the
+// the spec of the values of a control of a column (`values` of the
 // definition, e.g. { "column": "year" }), kept on the element of the
 // original definition, see updateDataValues
 const valuesSource = Symbol('valuesSource');
@@ -913,21 +913,21 @@ const dataValues = (spec, rows, columns, formatOf, language) => {
     return values.map(v => ({ id: v, name: nameOf(v), value: v }));
 };
 
-// the entries of form elements with the values of a column of the rows, e.g.
+// the entries of controls with the values of a column of the rows, e.g.
 // "values": { "column": "year" }, see dataValues, a global which is none of
 // them (or missing) is the last value, e.g. the latest year
 const addDataValues = (def, rows, columns = null, formatOf = null) => {
-    (def.formElements ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
+    (def.controls ?? []).filter(e => e?.values && !Array.isArray(e.values)).forEach(e => {
         e[valuesSource] = e.values;
         e.values = dataValues(e.values, rows, columns, formatOf);
         def.globals ??= {};
-        if (e.values.length > 0 && !e.values.some(v => sameValue(v.value, def.globals[e.ref])))
-            def.globals[e.ref] = e.values.at(-1).value;
+        if (e.values.length > 0 && !e.values.some(v => sameValue(v.value, def.globals[e.global])))
+            def.globals[e.global] = e.values.at(-1).value;
     });
 };
 
 /**
- * The values of the form elements of columns of the prepared definition
+ * The values of the controls of columns of the prepared definition
  * `def` again, of the specs kept on the ones of the original one (`defOrg`,
  * see addDataValues), e.g. of the column of a transform of a global, the
  * classes of other edges of a bin, their names in `language`; only the ones
@@ -937,13 +937,13 @@ const addDataValues = (def, rows, columns = null, formatOf = null) => {
  */
 const updateDataValues = (defOrg, def, rows, columns, formatOf = null, changed = () => true, language = undefined, kept = () => false) => {
     const reset = [];
-    (defOrg.formElements ?? []).forEach((e, i) => {
+    (defOrg.controls ?? []).forEach((e, i) => {
         const spec = e?.[valuesSource];
-        const target = (def.formElements ?? []).find(f => f?.id !== undefined && f.id === e.id) ?? def.formElements?.[i];
+        const target = (def.controls ?? []).find(f => f?.id !== undefined && f.id === e.id) ?? def.controls?.[i];
         if (!spec || !target || !changed(spec))
             return;
         target.values = dataValues(spec, rows, columns, formatOf, language);
-        const ref = target.ref ?? e.ref;
+        const ref = target.global ?? e.global;
         if (ref !== undefined && !kept(ref) && target.values.length > 0
             && !target.values.some(v => sameValue(v.value, def.globals?.[ref]))) {
             def.globals ??= {};

@@ -35,7 +35,7 @@ const entryAttrs = (own, props, after) => {
 const drawn = Symbol('symbol');
 
 // the symbol of an entry, its elements with the props of the category, drawn
-// again if they change, e.g. of the globals of a form element; an element
+// again if they change, e.g. of the globals of a control; an element
 // of a mark with a highlight (`mark`, see symbolHighlight of utils/def.js)
 // is of the stylesheet of its highlight (`data-symbol-of`), with the values
 // of the category of its props, e.g. "@color" (see symbolVars)
@@ -81,7 +81,7 @@ const createLegend = (vis, legend) => {
     const list = root.appendChild(el('div'));
     let before = null;
 
-    // the dim, a form element can replace it, e.g. by another column
+    // the dim, a control can replace it, e.g. by another column
     const info = () => store.dim(legend);
     // the categories of the entries, without the ones with `"legend": false`,
     // e.g. headers, they stay visible, also the ones which are not in the rows

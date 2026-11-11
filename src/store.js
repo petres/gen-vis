@@ -34,7 +34,7 @@ class Store {
     source = null;
     // the coordinate system of the definition, of the values of its globals
     // the one of them, of the ones loaded by their name (`coords`), see
-    // applyFormElements
+    // applyControls
     coord = null;
     coords = null;
     // the map of the definition, see geoOf, of the module of maps and of the
@@ -139,13 +139,13 @@ class Store {
     marginDefaults() { return marginDefaults(this.chartDefaults) }
 
     // the names of the templates, the globals and the fields of the selected
-    // entries of the form elements, e.g. `group:name`, see templateNames
+    // entries of the controls, e.g. `group:name`, see templateNames
     get names() { return templateNames(this.def) }
 
     // a text of the definition with the values of the globals, e.g. "{base} = 100"
     text(t) { return fillText(this.textOf(t), this.names) }
     // html of the definition, e.g. the footer, with the values of the globals
-    // as text, they can be values of the data, e.g. of a form element
+    // as text, they can be values of the data, e.g. of a control
     // (of an expression the texts of its names, e.g. globals of the page, as
     // text, the texts of the expression itself as html)
     html(t) { const v = this.textOf(t, true); return typeof v == 'string' ? fillHtml(v, this.names) : v }
@@ -215,7 +215,7 @@ class Store {
     // of a transform, and again after them, e.g. of a global of a scale of
     // dates to utc, `keepVisible` keeps the entries shown or hidden of the
     // dims prepared again
-    applyFormElements(keepVisible = true) {
+    applyControls(keepVisible = true) {
         const changedColumns = new Set();
         const transform = () => {
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files, this.def.options?.locale);
@@ -226,7 +226,7 @@ class Store {
         };
         const source = sourceRows(this.rows, this.columns);
         const changed = [];
-        // a second pass if a global of a form element of a column was none of
+        // a second pass if a global of a control of a column was none of
         // its new values and is the last one now, see below
         for (let pass = 0; pass < 2; pass++) {
             const before = sourceRows(this.rows, this.columns);
@@ -237,7 +237,7 @@ class Store {
             transform();
             Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))
                 .forEach(n => changed.push(n));
-            // the values of form elements of columns of transforms computed
+            // the values of controls of columns of transforms computed
             // again, e.g. the classes of other edges of a bin, and their names
             // of another language; a global which is none of them anymore is
             // the last one (not one of the page), e.g. of a filter
@@ -294,7 +294,7 @@ class Store {
         applyGlobals(this.def, this.globals);
         // the entries of the legends of the dims prepared again are the
         // ones of the definition and of the state, not the ones before
-        this.applyFormElements(false);
+        this.applyControls(false);
         applyState(this.def, { visible: state?.visible });
         this.changed();
     }
@@ -304,7 +304,7 @@ class Store {
     setGlobals(globals) {
         this.globals = globals;
         applyGlobals(this.def, globals);
-        this.applyFormElements();
+        this.applyControls();
         this.changed();
     }
 

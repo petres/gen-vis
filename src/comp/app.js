@@ -464,7 +464,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         return { exporting, mount, width, fixed };
     };
 
-    // the visualisation as a PNG (a Blob) without the form elements, of a
+    // the visualisation as a PNG (a Blob) without the controls, of a
     // copy of the width of the images, see utils/export.js
     const image = async () => {
         const { exporting, mount, width, fixed } = await imageSource();

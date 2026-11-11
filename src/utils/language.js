@@ -9,9 +9,9 @@ import { categoryKeys, isCategorical } from '@/utils/normalize';
  * The definition language of gen-vis 5 (see docs/definition.md) translated
  * into the form the engine reads (the one of 4.x normalized, see
  * utils/normalize.js: `options`, `dims`, `marks` with `props`,
- * `formElements`): the top-level options into `options`, the shorthands
+ * `controls`): the top-level options into `options`, the shorthands
  * of the `dims` written out, `marks` with their channels into marks with the
- * `props` of the scaled positions, `controls` into `formElements`, the hover columns into
+ * `props` of the scaled positions, the values of the `controls` as entries, the hover columns into
  * the `hover` of the dims, `stack` and `dodge` of marks into the parts of
  * the dims and the props, the string syntax of expressions into their
  * objects. `translate` is pure, JSON to JSON; the rows are not known, the
@@ -671,7 +671,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
  * an object is the entry itself (the merge of the entries of a parent and
  * a child, see arrayMerge of utils/def.js). `entriesOf` are the entries of
  * a list of `values` with their `id` and `name`, the text of the value by
- * default, as the form elements of the engine have them (e.g. the fields
+ * default, as the engine reads them (e.g. the fields
  * `@year:name` of the selected entry, see namesOfGlobals of
  * utils/resolve.js), other values (e.g. the column of the values of the
  * data) as they are.
@@ -680,13 +680,14 @@ const entryOf = v => isObject(v) ? v : { value: v };
 const entriesOf = values => Array.isArray(values)
     ? values.map(entryOf).map(e => ({ ...e, id: e.id ?? String(e.value), name: e.name ?? String(e.value) })) : values;
 
-// the control of 5.0 as a form element of the engine
+// a control as the engine reads it: its id is its global by default, its
+// values are entries, see entriesOf
 const control = (c, i) => {
     if (!isObject(c))
         throw new Error(`controls[${i}]: expected a control, e.g. { "type": "select", "global": "year", "values": [...] }`);
     const { global, values, ...rest } = c;
-    const e = { ...rest, ref: global };
-    e.id ??= e.ref;
+    const e = { ...rest, global };
+    e.id ??= e.global;
     e.values = entriesOf(values);
     return e;
 };
@@ -797,7 +798,7 @@ const translated = raw => {
     if (def.filter !== undefined)
         out.filter = def.filter;
     if (Array.isArray(def.controls))
-        out.formElements = def.controls.map(control);
+        out.controls = def.controls.map(control);
     else if (def.controls !== undefined)
         throw new Error('controls: expected a list of controls');
 
@@ -907,7 +908,5 @@ const authoredPath = path => String(path)
     .replace(/^marks\[(\d+)\]\.props\./, 'marks[$1].')
     .replace(/^options\.footer\b/, 'source')
     .replace(/^options\./, '')
-    .replace(/^formElements\[(\d+)\]\.ref\b/, 'controls[$1].global')
-    .replace(/^formElements/, 'controls')
     .replace(/^facets\.dim\b/, 'facets.by')
     .replace(/^facets\.rows\b/, 'facets.by.rows');

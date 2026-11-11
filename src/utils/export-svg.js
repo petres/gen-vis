@@ -495,7 +495,7 @@ const compose = (root, B, unit, asked) => {
     };
 
     // the elements of the HTML in the order they are painted (without
-    // z-index and positioned elements above the others), the form elements
+    // z-index and positioned elements above the others), the controls
     // are not drawn
     const skipped = ['INPUT', 'SELECT', 'BUTTON', 'TEXTAREA', 'SCRIPT', 'STYLE', 'TEMPLATE'];
     const walk = (target, e, opacity, isRoot) => {

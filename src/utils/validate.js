@@ -748,14 +748,14 @@ const checkAnnotations = ctx => {
     });
 };
 
-// the controls (the form elements of the engine) and their entries
-const checkFormElements = ({ formElements, warn }) => {
-    formElements.forEach(([i, e]) => {
-        const path = `formElements[${i}]`;
+// the controls and their entries
+const checkControls = ({ controls, warn }) => {
+    controls.forEach(([i, e]) => {
+        const path = `controls[${i}]`;
         // parts of entries are merged into the ones of a parent (by their
         // id), the merged ones are complete
-        if (typeof e.ref != 'string')
-            warn(`${path}.ref`, `no global`);
+        if (typeof e.global != 'string')
+            warn(`${path}.global`, `no global`);
         // a list of entries or the values of a column of the data
         if (!Array.isArray(e.values) && typeof e.values?.column != 'string')
             warn(`${path}.values`, `expected a list of entries or the column of the values, e.g. { "column": "year" }`);
@@ -821,7 +821,7 @@ const checkFacets = ({ def, dims, names, warn }) => {
 // the templates of the columns, the texts and the hover
 const checkTexts = ({ def, dims, globals, warn, annotations }) => {
     // column templates, e.g. "{values}{share}", need the globals, also the
-    // ones of form elements, e.g. of the values of a column
+    // ones of controls, e.g. of the values of a column
     Object.entries(dims).forEach(([n, m]) => templateRefs(m.column).filter(r => !globals.has(r)).forEach(r =>
         warn(`dims.${n}.column`, `unknown global '${r}' in the column template`)));
     // and the ones of the texts, e.g. "Durchschnitt {base} = 100" of the subtitle
@@ -1093,7 +1093,7 @@ const checkData = ({ raw, dims, rows, columns, warn, source }) => {
 };
 
 // the context of the checks of the parts of a definition: the dims, the
-// form elements, the marks and the annotations which are objects (the others
+// controls, the marks and the annotations which are objects (the others
 // are warnings), the coordinate system and the names of the references
 const context = (def, warn, rows, columns = null) => {
     // the entries which are objects, the others are warnings, e.g. null
@@ -1109,8 +1109,8 @@ const context = (def, warn, rows, columns = null) => {
                 warn(`dims.${n}.${k}`, `expected an object, e.g. {}`);
             return false;
         }))]));
-    // the form elements with their index
-    const formElements = objects([...(def.formElements ?? []).entries()], i => `formElements[${i}]`, 'a form element');
+    // the controls with their index
+    const controls = objects([...(def.controls ?? []).entries()], i => `controls[${i}]`, 'a control');
 
     // the coordinate systems known at the time of the check, also registered ones
     const coordName = def.options?.coord ?? 'cartesian';
@@ -1119,12 +1119,12 @@ const context = (def, warn, rows, columns = null) => {
     const coord = coords[coordName] ?? coords.cartesian;
 
     // the names of the references, see docs/definition.md "Expressions" > "Names": everywhere the globals
-    // (also the ones of form elements) and the width of the visualisation, in
+    // (also the ones of controls) and the width of the visualisation, in
     // a facet its sizes, in a mark the props of its categories and the rows,
     // in a range the sizes of the coordinate system, e.g. `radius`
     const globals = new Set([
         ...Object.keys(def.globals ?? {}),
-        ...formElements.map(([, e]) => e.ref).filter(r => typeof r == 'string'),
+        ...controls.map(([, e]) => e.global).filter(r => typeof r == 'string'),
     ]);
     // a global also as `globals.<name>`, e.g. of a global a dim of the same name shadows
     const globalNames = [...globals, ...[...globals].map(g => `globals.${g}`), 'totalWidth'];
@@ -1149,7 +1149,7 @@ const context = (def, warn, rows, columns = null) => {
         rows: new RowNames([...facetNames, 'row:index', ...Object.entries(dims).flatMap(([n, m]) => rowNames(n, m ?? {}))], columns),
     };
     return {
-        def, warn, rows, columns, dims, formElements, globals, names, coord, coordName,
+        def, warn, rows, columns, dims, controls, globals, names, coord, coordName,
         orientations: Object.keys(coord.ranges),
         marks: objects([...[].concat(def.marks ?? []).entries()], i => `marks[${i}]`, 'a mark, e.g. { "type": "svg:circle", "props": {} }'),
         annotations: objects([...[].concat(def.annotations ?? []).entries()], i => `annotations[${i}]`, 'an annotation, e.g. { "type": "line", "y": 0 }'),
@@ -1184,7 +1184,7 @@ const checkDef = (def, normalized, rows, extra = {}) => {
     const warnings = [];
     const warn = (path, message) => warnings.push([path, message]);
     const ctx = { ...context(normalized, warn, rows, extra.columns), raw: def, ...extra };
-    [checkDims, checkMarks, checkGeo, checkFilters, checkAnnotations, checkFormElements, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
+    [checkDims, checkMarks, checkGeo, checkFilters, checkAnnotations, checkControls, checkFacets, checkTexts, checkOptions, checkTransforms, checkData]
         .forEach(check => check(ctx));
     return warnings;
 };
@@ -1237,7 +1237,6 @@ const defaultProps = (def, normalized, marks = []) => {
 // a warning of the engine's form in the words of the definition: the paths
 // (see authoredPath) and the names of its parts, dims, marks and controls
 const authoredText = m => m
-    .replace(/\bform elements\b/g, 'controls').replace(/\bform element\b/g, 'control')
     .replace(/\boptions\.hover\b/g, 'hover').replace(/\boptions\.height\b/g, 'height');
 const authored = ([p, m]) => [authoredPath(p), authoredText(m)];
 

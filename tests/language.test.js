@@ -28,7 +28,7 @@ describe('the language of 5.0', () => {
             // x of no type beside a continuous y is no band (e.g. years), only a vertical dim beside a continuous x is one
             { type: 'svg:circle', by: ['land'], props: { r: 4, cx: '@x:scaled:center', cy: '@y:scaled' } },
         ]);
-        expect(def.formElements).toBeUndefined();
+        expect(def.controls).toBeUndefined();
     });
 
     test('stacked bars, facets and the hover columns', () => {
@@ -90,7 +90,7 @@ describe('the language of 5.0', () => {
             ],
         });
         expect(def.filter).toEqual({ '==': ['@Jahr', '@year'] });
-        expect(def.formElements).toEqual([{ id: 'year', type: 'slider', ref: 'year', name: 'Jahr', values: { column: 'Jahr' }, inImage: false }]);
+        expect(def.controls).toEqual([{ id: 'year', type: 'slider', global: 'year', name: 'Jahr', values: { column: 'Jahr' }, inImage: false }]);
         expect(def.marks[0]).toEqual({ type: 'cartesian:bar', by: [], highlight: { fill: '#5BC5F2' }, props: { fill: '#1E4F77', y: '@y:scaled', x1: '@x:scaled' } });
         expect(def.marks[1].props).toEqual({ text: '@x:formatted', 'font-size': 11, x: '@x:scaled', y: '@y:scaled:center', dx: 4, 'text-anchor': 'start', 'dominant-baseline': 'middle', fill: null });
     });
@@ -151,7 +151,6 @@ describe('the language of 5.0', () => {
         expect(isDefinition5({ data: 'x.csv' })).toBe(true);
         expect(authoredPath('marks[1].props.fill')).toBe('marks[1].fill');
         expect(authoredPath('options.footer')).toBe('source');
-        expect(authoredPath('formElements[0].ref')).toBe('controls[0].global');
         expect(authoredPath('facets.rows')).toBe('facets.by.rows');
         expect(authoredPath('facets.dim')).toBe('facets.by');
         expect(authoredPath('facets.cols')).toBe('facets.cols');
@@ -259,8 +258,8 @@ describe('the dims of the channels (review of 5.0)', () => {
 });
 
 test('a control of 5.0 sets its global, `ref` is no key of it (review of 5.0)', () => {
-    expect(translate({ controls: [{ type: 'radio', global: 'a', values: ['x'] }] }).formElements[0]).toMatchObject({ ref: 'a', id: 'a' });
-    expect(translate({ controls: [{ type: 'radio', ref: 'a', values: ['x'] }] }).formElements[0].ref).toBeUndefined();
+    expect(translate({ controls: [{ type: 'radio', global: 'a', values: ['x'] }] }).controls[0]).toMatchObject({ global: 'a', id: 'a' });
+    expect(translate({ controls: [{ type: 'radio', ref: 'a', values: ['x'] }] }).controls[0].global).toBeUndefined();
 });
 
 test('stack of arcs: of categories around the circle the radius (a rose), else the angle (a pie)', () => {

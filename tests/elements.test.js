@@ -31,9 +31,9 @@ describe('the names of the values of a column', () => {
             formElements: [{ id: 'month', ref: 'month', type: 'slider', values: { column: 'month', ...f } }],
             mapping: { m: { column: 'month', type: 'categorical' }, y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:circle' } });
         await store.init({ def: def({ format: '%B %Y' }), data });
-        expect(store.def.formElements[0].values.map(e => [e.value, e.name])).toEqual([['2026-09', 'September 2026'], ['2026-10', 'Oktober 2026']]);
+        expect(store.def.controls[0].values.map(e => [e.value, e.name])).toEqual([['2026-09', 'September 2026'], ['2026-10', 'Oktober 2026']]);
         await store.init({ def: def({ names: 'label' }), data });
-        expect(store.def.formElements[0].values.map(e => e.name)).toEqual(['Sept.', 'Okt.']);
+        expect(store.def.controls[0].values.map(e => e.name)).toEqual(['Sept.', 'Okt.']);
     });
 });
 
