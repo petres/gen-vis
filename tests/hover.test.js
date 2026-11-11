@@ -8,14 +8,16 @@ import { targetOf } from '@/utils/dom';
 
 useDom();
 
+// a legend of names only: the circles of the chart are the ones of the points
 const lineDef = (options = {}) => ({
-    options: { width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 }, ...options },
-    mapping: {
-        x: { column: 'year', type: 'numeric', scale: { orientation: 'horizontal' }, axis: { position: 'bottom' } },
-        y: { column: 'value', type: 'numeric', scale: { orientation: 'vertical' }, axis: { position: 'left' }, hover: { format: ',.1f' } },
-        c: { column: 'land', type: 'categorical', legend: {}, hover: {}, categories: { Wien: { color: 'red' }, Tirol: { color: 'blue' } } },
+    width: 600, height: 300, margins: { top: 10, right: 10, bottom: 40, left: 40 },
+    dims: {
+        x: { column: 'year', type: 'numeric' },
+        y: { column: 'value', type: 'numeric', hover: { format: ',.1f' } },
+        c: { column: 'land', legend: { symbol: null }, hover: {}, categories: { Wien: 'red', Tirol: 'blue' } },
     },
-    plot: [{ type: 'svg:circle', by: ['c'], props: { fill: '@color', r: 3, cx: '@x:scaled', cy: '@y:scaled' } }],
+    marks: [{ type: 'point', by: 'c', r: 3 }],
+    ...options,
 });
 
 const move = async (el, x, y = 100) => {
@@ -90,9 +92,9 @@ describe('the legend', () => {
         const def = lineDef();
         def.globals = { from: 2020 };
         def.filter = { x: { range: ['@from', null] } };
-        def.mapping.c.legend = { onlyData: true };
-        def.mapping.c.categories.Salzburg = { color: 'green' };
-        def.formElements = [{ id: 'from', name: 'Ab', ref: 'from', type: 'radio', values: [
+        def.dims.c.legend = { onlyData: true };
+        def.dims.c.categories.Salzburg = 'green';
+        def.controls = [{ id: 'from', name: 'Ab', global: 'from', type: 'radio', values: [
             { id: 'a', name: '2020', value: 2020 }, { id: 'b', name: '2022', value: 2022 },
         ] }];
         const data = 'year,value,land\n2020,1,Wien\n2022,2,Wien\n2022,3,Tirol\n2021,5,Salzburg';
@@ -215,8 +217,8 @@ describe('accessibility', () => {
 
     test('the scale of a color legend is an image with the name of the legend', async () => {
         const def = lineDef();
-        def.mapping.v = { name: 'Wert', column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} };
-        def.plot[0].props.fill = '@v:scaled';
+        def.dims.v = { name: 'Wert', column: 'value', type: 'numeric', scale: { type: 'sequential', interpolator: 'Blues' }, legend: {} };
+        def.marks[0].fill = 'v';
         const el = await mount({ def, data });
         const scale = el.querySelector('.vis-color-legend svg');
         expect([scale.getAttribute('role'), scale.getAttribute('aria-label')]).toEqual(['img', 'Wert']);
