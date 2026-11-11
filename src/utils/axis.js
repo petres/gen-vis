@@ -177,13 +177,15 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
  * stroke-opacity), the tick marks (`marks`, false without them, their
  * `size` across the line of the axis, the labels are moved by it, the part
  * of it inside the plot area, `inset`, the css variable
- * --gen-vis-tick-inset, null of the one of the styles, 4 pixels of bottom
- * and right axes, 5 of top and left ones, and their `props`), the length of the tick marks without a `size` of their own, also
+ * --gen-vis-tick-inset, null of the one of the styles (`styleInset`, the
+ * one of the chart, read once with its sizes, see measure of comp/vis.js,
+ * without one 4 pixels of bottom and right axes, 5 of top and left ones),
+ * and their `props`), the length of the tick marks without a `size` of their own, also
  * the space of the labels without tick marks (`markSize`, the built-in
  * default of axes without one) and the size of the plot area (`width`,
  * `height`).
  */
-const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height, at = null, labelShift = 0 }) => {
+const drawAxis = (ga, { name, position, scale, values, format, labels, padding, rotate, domain, marks, markSize, width, height, at = null, labelShift = 0, styleInset = null }) => {
     // an axis at a value of the other axis is in the plot area (vis-axis-at)
     setAttr(ga, "class", `vis-axis vis-axis-${position}${at === null ? '' : ' vis-axis-at'}`);
     setAttr(ga, "data-dim", name);
@@ -203,10 +205,9 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     // of the plot area (their length without the inset, of the definition,
     // a style of the page or the built-in one), also without marks
     const size = marks?.size ?? markSize ?? builtInDefaults.axis.tickMarks.size;
-    // the style only without one of the definition (a style recalculation)
-    const styled = Number.isFinite(marks?.inset) || typeof getComputedStyle != 'function' || !ga.isConnected ? NaN
-        : parseFloat(getComputedStyle(ga).getPropertyValue('--gen-vis-tick-inset'));
-    const inset = Number.isFinite(marks?.inset) ? marks.inset : (Number.isFinite(styled) ? styled : tickInset[position] ?? 0);
+    // (the style is the one of the chart: the one of the element of the
+    // axis would be a style recalculation between the writes of every draw)
+    const inset = Number.isFinite(marks?.inset) ? marks.inset : (Number.isFinite(styleInset) ? styleInset : tickInset[position] ?? 0);
     ticks(ga, moving, position, scale, { values, format, tickSizeInner: size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding),
         labelSize: size - inset });
     // the props of the line and of the labels at once, the animations of

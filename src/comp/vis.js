@@ -288,6 +288,10 @@ const createVis = app => {
         store.fontFamily = typeof getComputedStyle == 'function' ? getComputedStyle(fontProbe).fontFamily || null : null;
         // the size of the texts of the marks without one of their own (they inherit it), see textBoxes of layout.js
         store.fontSize = parseFloat(styles?.fontSize) || null;
+        // the part of the tick marks inside the plot area of the styles of the
+        // page (--gen-vis-tick-inset), null without one, see drawAxis of utils/axis.js
+        const inset = parseFloat(styles?.getPropertyValue('--gen-vis-tick-inset'));
+        store.tickInset = Number.isFinite(inset) ? inset : null;
         // the margins of the styles of the page, a length in pixels or "auto"
         // (measured), e.g. --gen-vis-margin-left: 60px of a house style
         store.styleMargins = styles ? Object.fromEntries(['top', 'right', 'bottom', 'left'].map(side => {

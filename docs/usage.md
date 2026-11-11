@@ -511,7 +511,7 @@ legend), `--gen-vis-button-color` (`#B8BDC4`), `--gen-vis-button-hover-color`
 (`#5F6670`), `--gen-vis-button-disabled-color` (`#E3E5E8`, of the buttons
 of the page with the class `vis-button`), `--gen-vis-focus-color` (`#4269D0`, the first color of
 observable10, the entries of legends and the facets) and
-`--gen-vis-error-color` (`#B42318`); of sizes `--gen-vis-tick-inset` (the part of the tick marks inside the plot area, see [`tickMarks`](definition.md#axes)) and the margins of a house style, `--gen-vis-margin-top`, `-right`, `-bottom` and `-left` (a length in pixels or `auto`, see [margins](definition.md#margins)) and `--gen-vis-legend-symbol-middle` (`0.36em`, the middle of the legend symbols above the baseline of their names). The default look: Inter, which the
+`--gen-vis-error-color` (`#B42318`); of sizes `--gen-vis-tick-inset` (the part of the tick marks inside the plot area, see [`tickMarks`](definition.md#axes); of the chart or an element around it, the labels are placed by the one of the chart, an axis of its own inset has `tickMarks.inset`) and the margins of a house style, `--gen-vis-margin-top`, `-right`, `-bottom` and `-left` (a length in pixels or `auto`, see [margins](definition.md#margins)) and `--gen-vis-legend-symbol-middle` (`0.36em`, the middle of the legend symbols above the baseline of their names). The default look: Inter, which the
 package brings (see [the font](#the-font)), figures of the same width
 in the hover (`tabular-nums`), grey axes, light grid lines, a hover card; the colors of
 categories without colors are d3's `observable10`. The colors of annotations are only the ones

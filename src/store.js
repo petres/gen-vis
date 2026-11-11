@@ -65,6 +65,8 @@ class Store {
     fontFamily = null;
     // the margins of the styles of the page (--gen-vis-margin-left, ...), set by the measure of the visualisation
     styleMargins = null;
+    // the part of the tick marks inside the plot area of the styles of the page (--gen-vis-tick-inset), null without one
+    tickInset = null;
     runs = 0;
     // the number of the definitions loaded, a new one is drawn anew, while it
     // is loaded the one before is shown, see comp/app.js

@@ -1191,6 +1191,26 @@ describe('the defaults of the parts', () => {
         expect(polarAxes(await mount({ def: polarDef(), data: lineData }))).toEqual({ mark: [-150, -156], label: -159, radial: -3, title: -166 });
     });
 
+    test('the inset of the styles of the page (--gen-vis-tick-inset) of the chart or an element above it, the definition wins', async () => {
+        const styled = async def => {
+            const wrapper = document.body.appendChild(document.createElement('div'));
+            wrapper.style.setProperty('--gen-vis-tick-inset', '0px');
+            const { createGenVis } = await import('@/index.js');
+            const el = wrapper.appendChild(document.createElement('div'));
+            createGenVis(el, { def, data: lineData });
+            await rendered(el);
+            await nextTick();
+            return el;
+        };
+        // the labels after the marks of 9 pixels, all outside, and the padding of 3
+        const el = await styled(lineDef());
+        expect([label(el, 'bottom', 'y'), label(el, 'left', 'x')]).toEqual(['12', '-12']);
+        const def = lineDef();
+        def.mapping.x.axis.tickMarks = { inset: 2 };
+        const own = await styled(def);
+        expect([label(own, 'bottom', 'y'), label(own, 'left', 'x')]).toEqual(['10', '-12']);
+    });
+
     test('of all axes, cartesian and polar, the values of the definition win', async () => {
         const defaults = { axis: { padding: 1, tickMarks: { size: 4 }, title: { offset: 20 } } };
         const def = lineDef();

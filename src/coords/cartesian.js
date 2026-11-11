@@ -171,6 +171,7 @@ const axes = ctx => {
                 domain: domainProps(ctx, i),
                 marks: tickMarks(ctx, i, d.tickMarks),
                 markSize: d.tickMarks?.size,
+                styleInset: store.tickInset,
                 width: innerWidth,
                 height: innerHeight,
                 at: cross,
