@@ -173,3 +173,18 @@ describe('a pie of negative values', () => {
         }
     });
 });
+
+describe('marks without a position are not drawn', () => {
+    test('0 of a log scale of the radius: no point, no arc and no text', async () => {
+        const def = { coord: 'polar', dims: { x: { column: 'k', type: 'categorical' }, y: { column: 'v', scale: { type: 'log' } } },
+            marks: [{ type: 'point' }, { type: 'arc', y: 'y' }, { type: 'label', text: '@y' }] };
+        const el = await mount({ def, data: 'k,v\na,0\nb,10\nc,100' });
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBe(2);
+        expect(el.querySelectorAll('g.vis-mark path').length).toBe(2);
+        expect(el.querySelectorAll('g.vis-mark text').length).toBe(2);
+        expect(el.querySelector('.vis-svg').outerHTML).not.toMatch(/NaN|Infinity|undefined/);
+        expect(errors.length).toBe(1);
+        expect(errors[0]).toContain('are not drawn (0)');
+        errors.length = 0;
+    });
+});

@@ -131,14 +131,13 @@ const types = {
                 [start, end] = [a - width/2, a + width/2];
             }
             const [inner, outer] = radiusRange(ctx);
+            const [r0, r1] = [clampRadius(v.innerRadius ?? inner, inner), clampRadius(v.outerRadius ?? outer, inner)];
+            // no arc without a position, e.g. of 0 of a log scale
+            if (!finite(start, end, r0, r1))
+                return null;
             const d = arc()
                 .padAngle(v.padAngle ?? 0)
-                .cornerRadius(v.cornerRadius ?? 0)({
-                    startAngle: start,
-                    endAngle: end,
-                    innerRadius: clampRadius(v.innerRadius ?? inner, inner),
-                    outerRadius: clampRadius(v.outerRadius ?? outer, inner),
-                });
+                .cornerRadius(v.cornerRadius ?? 0)({ startAngle: start, endAngle: end, innerRadius: r0, outerRadius: r1 });
             const props = Object.fromEntries(Object.entries(v).filter(([k]) => !arcProps.includes(k)));
             return { ...props, d };
         }),

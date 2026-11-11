@@ -628,3 +628,33 @@ describe('lines and areas of a band scale', () => {
         expect(errors).toEqual([]);
     });
 });
+
+describe('marks without a position are not drawn', () => {
+    const noNaN = el => expect(el.querySelector('.vis-svg').outerHTML).not.toMatch(/NaN|Infinity|undefined/);
+
+    test('0 of a log scale: no bar, no point and no label, a gap of the line', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical' }, y: { column: 'v', scale: { type: 'log' } } },
+            marks: [{ type: 'bar' }, { type: 'point' }, { type: 'label', text: '@y' }, { type: 'line' }] };
+        const el = await mount({ def, data: 'k,v\na,0\nb,10\nc,100' });
+        expect(rects(el).map(r => r[itemOf][rowOf].x)).toEqual(['b', 'c']);
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBe(2);
+        expect(texts(el).length).toBe(2);
+        expect(el.querySelector('g.vis-mark path').getAttribute('d')).toMatch(/^M[\d.,]+L[\d.,]+$/);
+        noNaN(el);
+        expect(errors.length).toBe(1);
+        expect(errors[0]).toContain('1 of 3 values of dim \'y\' are not drawn (0)');
+        errors.length = 0;
+    });
+
+    test('a category which is not in a fixed domain of a band scale', async () => {
+        const def = { dims: { x: { column: 'k', type: 'categorical', scale: { domain: ['a', 'b'] } }, y: 'v' },
+            marks: [{ type: 'bar' }, { type: 'point' }, { type: 'label', text: '@y' }, { type: 'rule' }] };
+        const el = await mount({ def, data: 'k,v\na,1\nb,2\nc,3' });
+        expect(rects(el).map(r => r[itemOf][rowOf].x)).toEqual(['a', 'b']);
+        expect(el.querySelectorAll('g.vis-mark circle').length).toBe(2);
+        expect(texts(el).length).toBe(2);
+        expect(lines(el).length).toBe(2);
+        noNaN(el);
+        expect(errors).toEqual([]);
+    });
+});

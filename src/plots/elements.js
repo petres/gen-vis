@@ -105,11 +105,20 @@ const perGroup = (groups, d) => ({
     items: groups.map(g => ({ ...g.attrs, ...groupAttrs(g), ...(g.vars ?? {}), ...(d ? { d: d(g) } : {}), [keyOf]: groupKey(g) })),
 });
 
+// the props of the position and the size of an element per row
+const placing = ['x', 'y', 'x1', 'x2', 'y1', 'y2', 'cx', 'cy', 'width', 'height'];
+
+// the values of an element have a place: no prop of its position or size is
+// a number which is not finite or without a value, e.g. of 0 of a log scale
+// or of a category which is not in a fixed domain (null is no attribute)
+const placed = v => placing.every(k => !(k in v) || v[k] === null || (typeof v[k] == 'number' ? Number.isFinite(v[k]) : v[k] !== undefined));
+
 // the layer of an element of `element` per row, without the rows of missing
-// values, `translate(values, row, group)` changes the values of the props of
-// a row, the elements of the draw before are updated, the ones of the same
-// rows or of the same `key(values)`, e.g. the feature of a map in another
-// year, see drawLayer of utils/draw.js
+// values and the ones without a position (see placed, also the ones
+// `translate` returns null of), `translate(values, row, group)` changes the
+// values of the props of a row, the elements of the draw before are updated,
+// the ones of the same rows or of the same `key(values)`, e.g. the feature
+// of a map in another year, see drawLayer of utils/draw.js
 const perRow = (groups, element, translate = v => v, key) => ({
     element,
     key,
@@ -118,11 +127,13 @@ const perRow = (groups, element, translate = v => v, key) => ({
         // the custom properties of the highlight of the group, set on its element, see setGroupData
         vars: g.vars,
         items: g.rows.filter(g.complete).map(row => {
-            // the row of the element, e.g. for the highlight of a row
             const v = translate(g.at(row), row, g);
+            if (!v || !placed(v))
+                return null;
+            // the row of the element, e.g. for the highlight of a row
             v[rowOf] = row;
             return v;
-        }),
+        }).filter(Boolean),
     })),
 });
 
