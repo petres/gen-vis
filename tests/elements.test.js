@@ -27,9 +27,9 @@ describe('the names of the values of a column', () => {
         const { createStore } = await import('@/store');
         const store = createStore();
         const data = 'month,label,value\n2026-09,Sept.,1\n2026-10,Okt.,2';
-        const def = f => ({ options: { locale: 'de' }, globals: { month: '2026-10' }, filter: { m: '@month' },
-            formElements: [{ id: 'month', ref: 'month', type: 'slider', values: { column: 'month', ...f } }],
-            mapping: { m: { column: 'month', type: 'categorical' }, y: { column: 'value', type: 'numeric' } }, plot: { type: 'svg:circle' } });
+        const def = f => ({ locale: 'de', globals: { month: '2026-10' }, filter: { m: '@globals.month' },
+            controls: [{ id: 'month', global: 'month', type: 'slider', values: { column: 'month', ...f } }],
+            dims: { m: { column: 'month', type: 'categorical' }, y: { column: 'value', type: 'numeric' } }, marks: { type: 'point' } });
         await store.init({ def: def({ format: '%B %Y' }), data });
         expect(store.def.controls[0].values.map(e => [e.value, e.name])).toEqual([['2026-09', 'September 2026'], ['2026-10', 'Oktober 2026']]);
         await store.init({ def: def({ names: 'label' }), data });
