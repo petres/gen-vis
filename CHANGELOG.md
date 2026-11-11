@@ -403,11 +403,15 @@ them.
 - **Blank lines of CSV and TSV are no rows**, the header is the first line
   which is none.
 - **The HTML of a definition is cleaned**: the `source` (footer) and the
-  templates of the hover keep the tags a, b, i, em, strong, u, s, br, span,
-  sub, sup, small, code, p and div, the attributes title, class, style
-  (properties of the text, the box and a grid or flex, nothing positioned
-  or loaded) and of links href (http, https, mailto, relative), target and
-  rel (`noopener` added); other tags keep only their text.
+  templates of the hover keep the tags of texts (b, i, em, strong, u, s,
+  br, span, sub, sup, small, code, p, div), of links (a), of tables (table,
+  caption, colgroup, col, thead, tbody, tfoot, tr, th, td) and of lists
+  (ul, ol, li), the attributes title, class, style (properties of the
+  text, the box and a grid or flex, nothing positioned or loaded), of
+  links href (http, https, mailto, relative), target and rel (`noopener`
+  added), of cells colspan and rowspan (th also scope), of col and
+  colgroup span, of ol start and reversed; other tags keep only their
+  text.
 
 ### Margins
 
@@ -888,6 +892,9 @@ Security, the events and the exports:
   value which could leave its rule (`;{}`, comments, quotes, urls other
   than `url(#id)`) is left out with a warning naming the mark (could hide
   the page).
+- The name of the total of the hover (`hover.total`) is in the column of
+  the names of the rows, after their swatches (it was in the column of
+  the swatches).
 - An error thrown by a listener of an event (`on`, `onHover`, …) is
   reported as an uncaught error of the page (`reportError`); the other
   listeners still run and the chart stays drawn (an error of

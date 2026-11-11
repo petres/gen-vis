@@ -2893,6 +2893,24 @@ describe('accessibility and the data', () => {
         expect(errors).toEqual([]);
     });
 
+    test('tables and lists of the html of the definition are kept, e.g. a table of the hover', async () => {
+        const def = lineDef({
+            source: '<ul><li>a</li><li onclick="x">b</li></ul><ol start="3"><li>c</li></ol>',
+            hover: { row: '<table class="vis-hover-table"><tr><th scope="row" colspan="1">{c}</th><td style="text-align:right" rowspan="1" onclick="x">{y}</td></tr></table>' },
+        });
+        const el = await mount({ def, data: lineData });
+        expect(el.querySelector('.vis-footer-content span').innerHTML).toBe('<ul><li>a</li><li>b</li></ul><ol start="3"><li>c</li></ol>');
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 40, clientY: 150 }));
+        await nextTick();
+        const row = el.querySelector('.vis-hover-row');
+        expect(row.querySelectorAll('table.vis-hover-table tr th, table.vis-hover-table tr td')).toHaveLength(2);
+        expect(row.querySelector('th').getAttribute('scope')).toBe('row');
+        expect(row.querySelector('td').style.textAlign).toBe('right');
+        expect(row.querySelector('td').getAttribute('rowspan')).toBe('1');
+        expect(row.querySelector('[onclick]')).toBeNull();
+        expect(errors).toEqual([]);
+    });
+
     test('the footer of the slot is the cleaned html', async () => {
         let given = null;
         await mount({ def: lineDef({ source: '<b onclick="x">Quelle</b><img src=x>' }), data: lineData, slots: { footer: ({ footer }) => { given = footer; return null; } } });
@@ -4066,12 +4084,16 @@ describe('the total of the stacked values in the hover', () => {
         expect(el.querySelectorAll('.vis-hover td[data-dim="half"]')).toHaveLength(0);
         // the rows of the table are the rows before the total
         expect(total.previousElementSibling.classList.contains('vis-hover-entry')).toBe(true);
+        // the name is in the column of the names of the rows, after their swatches
+        const entry = [...total.previousElementSibling.querySelectorAll('td')];
+        expect(entry[0].classList.contains('vis-swatch')).toBe(true);
+        expect([...total.querySelectorAll('td')].findIndex(t => t.textContent == 'Gesamt')).toBe(1);
         // true: the name of the locale
         def.hover.total = true;
         const named = await mount({ def, data });
         named.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 100, clientY: 100 }));
         await nextTick();
-        expect(named.querySelector('.vis-hover tr.vis-hover-total td').textContent).toBe('Gesamt');
+        expect(named.querySelectorAll('.vis-hover tr.vis-hover-total td')[1].textContent).toBe('Gesamt');
     });
 
     test('a row which is not stacked is not the nearest one in a segment of a stack', async () => {

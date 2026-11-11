@@ -108,12 +108,21 @@ const setText = (node, v) => {
 };
 
 // the tags of the html of a definition (the footer, the templates of the
-// hover), the attributes of all of them and the ones of links; the elements
-// of `dropped` are removed with their content, the ones of other tags
-// without, their texts stay
-const tags = new Set(['a', 'b', 'i', 'em', 'strong', 'u', 's', 'br', 'span', 'sub', 'sup', 'small', 'code', 'p', 'div']);
+// hover: texts, links, tables and lists), the attributes of all of them and
+// the ones of some tags, e.g. links; the elements of `dropped` are removed
+// with their content, the ones of other tags without, their texts stay
+const tags = new Set(['a', 'b', 'i', 'em', 'strong', 'u', 's', 'br', 'span', 'sub', 'sup', 'small', 'code', 'p', 'div',
+    'table', 'caption', 'colgroup', 'col', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td', 'ul', 'ol', 'li']);
 const attributes = new Set(['title', 'class', 'style']);
-const linkAttributes = new Set(['href', 'target', 'rel']);
+const cellAttributes = new Set(['colspan', 'rowspan']);
+const tagAttributes = {
+    a: new Set(['href', 'target', 'rel']),
+    td: cellAttributes,
+    th: new Set([...cellAttributes, 'scope']),
+    col: new Set(['span']),
+    colgroup: new Set(['span']),
+    ol: new Set(['start', 'reversed']),
+};
 const dropped = new Set(['script', 'style', 'template', 'iframe', 'object', 'embed', 'noscript', 'textarea', 'title', 'select', 'svg', 'math']);
 
 // the properties of the styles of the html of a definition (of the text,
@@ -132,13 +141,14 @@ const safeUrl = url => {
 };
 
 // the attributes of an element of the html of a definition: the ones of
-// `attributes` and of links, styles of styleProperty, a link with a target
-// opens without access to the page (rel="noopener")
+// `attributes` and of its tag (tagAttributes), styles of styleProperty, a
+// link with a target opens without access to the page (rel="noopener")
 const cleanAttributes = e => {
     const link = e.localName == 'a';
+    const own = tagAttributes[e.localName];
     [...e.attributes].forEach(a => {
         const name = a.name.toLowerCase();
-        if (!(attributes.has(name) || (link && linkAttributes.has(name))) || (name == 'href' && !safeUrl(a.value)))
+        if (!(attributes.has(name) || own?.has(name)) || (name == 'href' && !safeUrl(a.value)))
             e.removeAttribute(a.name);
     });
     if (e.hasAttribute('style')) {

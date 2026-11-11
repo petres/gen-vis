@@ -94,7 +94,8 @@ const createHover = (store, slots) => {
         const at = value < 0 ? width - 1 : value;
         tr.replaceChildren(...Array.from({ length: width }, (_, i) => {
             const td = document.createElement('td');
-            if (i == 0)
+            // the name in the column of the names, after the swatches
+            if (i == Math.max(0, Math.min(swatched, at - 1)))
                 td.textContent = store.text(t === true ? store.locale.texts.total : String(t));
             if (i == at) {
                 td.setAttribute('class', 'vis-value');

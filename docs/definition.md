@@ -120,12 +120,16 @@ browser](extensions.md#checks-outside-the-browser); a definition which can
 not be drawn, e.g. a dim which is no object, is an error which names the
 part. Only the `source` and the templates of the hover are HTML, e.g. the
 link of a source, the values of the globals and of the data in them are
-text. The HTML runs no script: it has only the tags `a`, `b`, `i`, `em`,
-`strong`, `u`, `s`, `br`, `span`, `sub`, `sup`, `small`, `code`, `p` and
-`div` (of other tags only their text stays, `script`, `style`, `svg` and
-the like are removed with their content), the attributes `title`, `class`
-and `style`, of links `href` (`http:`, `https:`, `mailto:` or a relative
-url), `target` and `rel` (a link with a `target` gets `rel="noopener"`); a
+text. The HTML runs no script: it has only the tags of texts (`b`, `i`,
+`em`, `strong`, `u`, `s`, `br`, `span`, `sub`, `sup`, `small`, `code`, `p`,
+`div`), of links (`a`), of tables (`table`, `caption`, `colgroup`, `col`,
+`thead`, `tbody`, `tfoot`, `tr`, `th`, `td`) and of lists (`ul`, `ol`,
+`li`); of other tags only their text stays, `script`, `style`, `svg` and
+the like are removed with their content. It has the attributes `title`,
+`class` and `style`, of links `href` (`http:`, `https:`, `mailto:` or a
+relative url), `target` and `rel` (a link with a `target` gets
+`rel="noopener"`), of cells `colspan` and `rowspan` (`th` also `scope`),
+of `col` and `colgroup` `span`, of `ol` `start` and `reversed`; a
 `style` keeps the properties of the text, of the box and of a grid or a
 flex of the children (e.g. `color`, `font-weight`, `font-size`,
 `text-align`, `margin`, `padding`, `border`, `width`, `display: grid`,
