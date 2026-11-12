@@ -159,7 +159,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 
 | Prop       | Attribute       | Description |
 |------------|-----------------|-------------|
-| `defFile`  | `data-def-file` | url of the definition; with `def` the url of its file, its parents and data are relative to it (e.g. a definition edited on a page) |
+| `defFile`  | `data-def-file` | url of the definition; with `def` the url of its file, its parents and data are relative to it (e.g. a definition edited on a page). A definition file needs the [`$schema`](definition.md#schema) of gen-vis 5 (in itself or a parent), a `def` object may have none: a file outlives the page and may be one of gen-vis 4, an object is written with the code of the page |
 | `def`      | `data-def`      | the definition, an object or a JSON string |
 | `data`     | `data-data`     | the data as rows, a CSV/JSON string or bytes (an `ArrayBuffer` or `Uint8Array`, parquet or the text of CSV/JSON), if not given it is loaded from the `data` url of the definition |
 | `debug`    | `data-debug`    | shows the prepared definition, with the warnings of `check` |
