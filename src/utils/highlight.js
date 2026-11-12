@@ -156,6 +156,18 @@ const unclass = (node, name) => {
         node.removeAttribute('class');
 };
 
+// the elements in `node` per row, in their order (the index is built once
+// per draw, at the first highlight, not per change of the hover)
+const rowIndex = node => {
+    const index = new Map();
+    node.querySelectorAll('*').forEach(n => {
+        const row = n[itemOf]?.[rowOf];
+        if (row !== undefined)
+            index.get(row)?.push(n) ?? index.set(row, [n]);
+    });
+    return index;
+};
+
 /**
  * The highlight of the elements of a facet, see above: `markDefs` are the
  * marks of the definition, `nodeOf(mark)` the element of a mark, `inner`
@@ -177,10 +189,12 @@ const highlighter = (markDefs, nodeOf, inner) => {
             mark,
             node,
             // the groups of the mark and the elements per group, e.g. the path of a line
-            groups: node ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
+            groups: node && attrs.length > 0 ? [...node.querySelectorAll('*')].filter(g => attrs.some(a => g.hasAttribute(a))).map(node => ({
                 node,
                 keys: Object.fromEntries(mark.by.map((c, i) => [c, node.getAttribute(attrs[i])])),
             })) : [],
+            // of a mark without groups its elements per row, e.g. the bars
+            rows: node && mark.by.length == 0 ? rowIndex(node) : null,
         };
     });
 
@@ -199,11 +213,11 @@ const highlighter = (markDefs, nodeOf, inner) => {
         if (!dataEntry)
             return found;
         index ??= build();
-        index.forEach(({ mark, node, groups: all }) => {
+        index.forEach(({ mark, groups: all, rows }) => {
             // a mark without groups: the elements of the row, e.g. the bar under the pointer
             if (mark.by.length == 0) {
-                const rows = node ? [...node.querySelectorAll('*')].filter(n => n[itemOf]?.[rowOf] === dataEntry) : [];
-                rows.forEach(n => {
+                // not the ones removed since, e.g. at the end of their exit
+                (rows?.get(dataEntry) ?? []).filter(n => n.isConnected).forEach(n => {
                     found.targets.push(n);
                     found.groups.push(n.closest('g.vis-group') ?? n);
                 });

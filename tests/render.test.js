@@ -877,6 +877,33 @@ describe('the highlight of a row', () => {
         expect(marked()).toHaveLength(2);
         expect(errors).toEqual([]);
     });
+
+    test('the elements of a mark without `by` are indexed by row once per draw, not searched per change of the hover', async () => {
+        const def = lineDef();
+        def.marks = [{ type: 'point', r: 3, highlight: { r: 6 } }];
+        const el = await mount({ def, data: lineData });
+        const query = Element.prototype.querySelectorAll;
+        let searched = 0;
+        Element.prototype.querySelectorAll = function (selector) {
+            if (selector == '*' && this.matches('g.vis-mark'))
+                searched++;
+            return query.call(this, selector);
+        };
+        onTestFinished(() => Element.prototype.querySelectorAll = query);
+        const marked = () => highlighted(el, 'g.vis-mark circle').map(c => c.getAttribute('cx'));
+        const events = el.querySelector('rect.vis-events');
+        const cxs = [];
+        for (const x of [0, 180, 360, 540, 0]) {
+            events.dispatchEvent(pointer('pointermove', { clientX: x, clientY: 150 }));
+            await nextTick();
+            expect(marked().length).toBeGreaterThan(0);
+            cxs.push(marked()[0]);
+        }
+        expect(new Set(cxs).size).toBeGreaterThan(2);
+        expect(cxs[4]).toBe(cxs[0]);
+        expect(searched).toBe(1);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the data of a mark', () => {
