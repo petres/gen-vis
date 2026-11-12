@@ -800,6 +800,13 @@ describe('the order of the categories of a scale', () => {
             data: 'k,v,t\na,1,10\na,2,9\na,3,Total' });
         expect([...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key)).toEqual(['9', '10', 'Total']);
     });
+
+    test('by a date dim: by the dates (timestamps), not by their texts', async () => {
+        const ticks = async d => [...(await mount({ def: { width: 400, dims: { x: { column: 'k', scale: { order: { by: 'd' } } }, d, y: 'v' }, marks: [{ type: 'bar' }] },
+            data: 'k,d,v\nA,01.04.2024,3\nB,30.03.2024,1\nC,5.12.2023,2\nD,10.01.2025,3' })).querySelectorAll('[data-dim="x"] .tick text')].map(t => t.textContent);
+        expect(await ticks('d')).toEqual(['C', 'B', 'A', 'D']);
+        expect(await ticks({ column: 'd', type: 'date' })).toEqual(['C', 'B', 'A', 'D']);
+    });
 });
 
 describe('a format of a dim as an expression of the value', () => {
