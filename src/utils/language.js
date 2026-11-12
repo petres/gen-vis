@@ -293,6 +293,29 @@ const anchors = {
 // the anchors of labels of bars of negative values, beyond their ends
 const mirrored = { end: 'start', start: 'end', top: 'bottom', bottom: 'top' };
 
+// `{name}` of a global in a text of a mark is its value, as in the titles:
+// the text is the expression of its parts (`@globals.name`, which no dim
+// shadows), others are kept, e.g. `{x}` of no global, so a text can have
+// braces
+const templateName = /\{([\p{L}\p{N}_]+)\}/gu;
+const templated = (text, globals) => {
+    const parts = [];
+    // (a part of the text is no reference, e.g. "@" or "=")
+    const add = t => t !== '' && parts.push(/^[@=]/.test(t) ? { literal: t } : t);
+    let last = 0;
+    for (const m of text.matchAll(templateName)) {
+        if (!globals.has(m[1]))
+            continue;
+        add(text.slice(last, m.index));
+        parts.push(`@globals.${m[1]}`);
+        last = m.index + m[0].length;
+    }
+    if (last == 0)
+        return text;
+    add(text.slice(last));
+    return { cat: parts };
+};
+
 /**
  * A mark as the engine reads it: its channels as the `props` of the scaled
  * positions, `dims` are the dims of the definition (implicit dims of columns are added),
@@ -301,8 +324,10 @@ const mirrored = { end: 'start', start: 'end', top: 'bottom', bottom: 'top' };
  * the radius of circles (0 of the scale, see translate), `coord` is the
  * coordinate system.
  */
-const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], bases = new Set()) => {
+const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], bases = new Set(), globals = new Set()) => {
     const { p, props } = markParts(raw, i);
+    if (typeof props.text == 'string')
+        props.text = templated(props.text, globals);
     const implicit = (channel, column) => {
         if (!implicitDims.some(d => d.path == `marks[${i}].${channel}`))
             implicitDims.push({ path: `marks[${i}].${channel}`, column });
@@ -850,7 +875,9 @@ const translated = raw => {
     });
     const stacks = [];
     const bases = new Set();
-    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used, implicit, bases));
+    const globals = new Set([...Object.keys(isObject(def.globals) ? def.globals : {}),
+        ...(Array.isArray(def.controls) ? def.controls.map(c => c?.global).filter(g => typeof g == 'string') : [])]);
+    const marks = rawMarks.map((m, i) => mark(m, i, dims, coord, stacks, used, implicit, bases, globals));
     if (isObject(facets) && def.facets.scales == 'shared')
         facets.scales = sharedScales(dims);
     used.forEach(n => {

@@ -2571,7 +2571,9 @@ the names of the dims and of their categories (e.g. of the legends, the
 hover and the facets), the titles of the axes, the labels and texts of
 annotations, `class`, the templates of the hover, the strings of the
 transforms (not the url of a lookup), e.g. `"subtitle": "Durchschnitt {base}
-= 100"`. The `column` of a dim is a template too, e.g. the values and their
+= 100"`, and the `text` of a mark which is no expression (of the globals,
+`{name}`, also where a dim has the name, e.g. `"text": "Ziel {target}"`,
+the same as `"=cat('Ziel ', @globals.target)"`). The `column` of a dim is a template too, e.g. the values and their
 shares in the columns `twh`, `co2`, `twh.share` and `co2.share` of two
 controls:
 

@@ -1,8 +1,8 @@
 // @vitest-environment jsdom
 // the marks of 5.0 drawn of real rows: dodged bars, labels with an anchor,
 // cells and rules of ranges, see utils/language.js
-import { describe, test, expect } from 'vitest';
-import { errors, useDom, mount } from './dom.js';
+import { describe, test, expect, vi } from 'vitest';
+import { errors, useDom, mount, mountVis } from './dom.js';
 import { itemOf } from '@/utils/dom';
 import { rowOf } from '@/utils/draw';
 
@@ -236,6 +236,18 @@ describe('labels with an anchor', () => {
         expect(points.map(at)).toEqual([[null, '-4', 'middle', 'auto'], [null, '-4', 'middle', 'auto']]);
         const given = texts(await mount({ def: { dims: { x: 'k', y: 'v' }, marks: [{ type: 'bar' }, { type: 'label', anchor: 'top', dy: -2, text: '@y' }] }, data: 'k,v\na,5\nb,-3' }));
         expect(given.map(at)).toEqual([[null, '-2', 'middle', 'auto'], [null, '-2', 'middle', 'auto']]);
+        expect(errors).toEqual([]);
+    });
+});
+
+describe('templates in the text of a mark', () => {
+    test('{name} of a global is its value (as in titles), also where a dim has its name, after a change of the global; other braces stay', async () => {
+        const { el, vis } = await mountVis({ def: { globals: { target: 5, unit: '%' }, dims: { x: 'x', y: 'v', target: 'v' },
+            marks: [{ type: 'point' }, { type: 'text', text: 'Ziel {target}{unit}, {x} @{unit}', x: 10, y: 10 }] }, data: 'x,v\n1,2\n2,3' });
+        const text = () => [...el.querySelectorAll('g.vis-mark text')].map(t => t.textContent);
+        expect(text()).toEqual(['Ziel 5%, {x} @%']);
+        vis.update({ globals: { target: 7 } });
+        await vi.waitFor(() => expect(text()).toEqual(['Ziel 7%, {x} @%']));
         expect(errors).toEqual([]);
     });
 });
