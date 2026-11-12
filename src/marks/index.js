@@ -5,6 +5,7 @@ import cartesian from "@/marks/cartesian";
 import geo from "@/marks/geo";
 import annotations from "@/marks/annotations";
 import { defaults } from "@/marks/defaults";
+import { publicType } from "@/marks/public";
 
 /**
  * The mark types by name, the `type` of a mark:
@@ -53,6 +54,10 @@ const polar = {
 const markTypes = { ...elements, ...cartesian, ...polar, ...geo, ...annotations };
 Object.entries(defaults).forEach(([name, d]) => markTypes[name].defaults = d);
 
+// the types of the package get the context of the facet with its store, the
+// ones of a page the context with the store of the mark types, see
+// marks/public.js; a type of the package under another name is itself
+const builtIn = new WeakSet(Object.values(markTypes));
 const registerMarkType = (name, type) => {
-    markTypes[name] = type;
+    markTypes[name] = builtIn.has(type) || typeof type?.marks != 'function' ? type : publicType(type);
 };

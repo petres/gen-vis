@@ -279,10 +279,44 @@ export interface Layer {
     fit?: boolean;
 }
 
+/** The store of a registered mark type: the parts of the chart for mark types, read-only, see docs/extensions.md. */
+export interface MarkStore {
+    /** The prepared definition. */
+    readonly def: Readonly<Record<string, any>>;
+    /** All rows of the chart, never changed. */
+    readonly rows: readonly Row[];
+    /** The formatters of the locale of the chart. */
+    readonly locale: Readonly<Record<string, any>>;
+    /** The names of the references of the chart: the globals and `totalWidth`. */
+    readonly scope: Readonly<Record<string, unknown>>;
+    /** A dim of the prepared definition. */
+    dim(name: string): Readonly<Record<string, any>> | undefined;
+    /** The props of a category of a dim, undefined of other values. */
+    prop(name: string, key: unknown): Readonly<Record<string, any>> | undefined;
+    /** The formatter of a d3 format in the locale of the chart, of times if the dim `name` is one of dates. */
+    format(format: unknown, name?: string): (value: unknown) => string;
+    /** A text of the definition with the values of the globals. */
+    text(text: unknown): string;
+}
+
+/** The context of a mark type, the facet, see docs/extensions.md; it can not be written. */
+export interface MarkContext {
+    readonly store: MarkStore;
+    /** The svg element `g` of the marks and axes of the facet. */
+    readonly inner: SVGGElement;
+    readonly rows: readonly Row[];
+    /** The scales by the names of the dims. */
+    readonly scales: Readonly<Record<string, any>>;
+    readonly scope: Readonly<Record<string, unknown>>;
+    readonly innerWidth: number;
+    readonly innerHeight: number;
+    readonly [part: string]: any;
+}
+
 /** A mark type, see docs/extensions.md and src/marks/index.js. */
 export interface MarkType {
     /** The shapes of the groups of rows of a mark (`mark` with its attributes and channels as `props`), null draws nothing. */
-    marks(groups: MarkGroup[], mark: Record<string, any>, ctx: Record<string, any>): Layer | null;
+    marks(groups: MarkGroup[], mark: Record<string, any>, ctx: MarkContext): Layer | null;
     update?: boolean;
     curve?: boolean;
     coords?: string[];

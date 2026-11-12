@@ -2034,6 +2034,47 @@ describe('extensions', () => {
         delete markTypes['test:groups'];
     });
 
+    test('the store of the mark type of a page: the parts for mark types, read-only', async () => {
+        let seen;
+        const type = { marks: (groups, mark, ctx) => { seen = ctx; return null; } };
+        registerMarkType('test:store', type);
+        const def = lineDef({ title: 'Title of {t}', globals: { t: 'now' } });
+        def.marks = { type: 'test:store', by: 'c' };
+        const el = await mount({ def, data: lineData });
+        const { store } = seen;
+        expect(Object.keys(store).sort()).toEqual(['def', 'dim', 'format', 'locale', 'prop', 'rows', 'scope', 'text']);
+        // the parts read as the ones of the store
+        expect(Object.keys(store.dim('c').categories)).toEqual(['Wien', 'Tirol']);
+        expect(store.def.marks[0].type).toBe('test:store');
+        expect(store.prop('c', 'Wien').color).toBe('red');
+        expect(store.format(',.1f', 'y')(1234.5)).toBe('1.234,5');
+        expect(store.text('Title of {t}')).toBe('Title of now');
+        expect(store.rows).toHaveLength(8);
+        expect(store.scope.t).toBe('now');
+        // the same view of the same object, e.g. as a key
+        expect(store.dim('c')).toBe(store.def.dims.c);
+        // no part can be written: the store, the definition, a dim, a category, the context
+        expect(() => { store.def = {}; }).toThrow(TypeError);
+        expect(() => { store.extra = 1; }).toThrow(TypeError);
+        expect(() => { store.def.title = 'x'; }).toThrow('the store of a mark type is read-only');
+        expect(() => { store.def.marks.push({}); }).toThrow('read-only');
+        expect(() => { store.dim('c').categories.Wien.color = 'green'; }).toThrow('read-only');
+        expect(() => { delete store.def.dims.c; }).toThrow('read-only');
+        expect(() => { seen.store = null; }).toThrow(TypeError);
+        expect(() => { seen.extra = 1; }).toThrow(TypeError);
+        expect(el.querySelector('.vis-title').textContent).toBe('Title of now');
+        // the type as registered is not changed, a type of the package under another name has its own context
+        expect(Object.keys(type)).toEqual(['marks']);
+        registerMarkType('test:line', markTypes['cartesian:line']);
+        expect(markTypes['test:line']).toBe(markTypes['cartesian:line']);
+        const line = lineDef();
+        line.marks = { type: 'test:line', by: 'c' };
+        expect((await mount({ def: line, data: lineData })).querySelectorAll('g.vis-mark path')).toHaveLength(2);
+        expect(errors).toEqual([]);
+        delete markTypes['test:store'];
+        delete markTypes['test:line'];
+    });
+
     test('an unknown coordinate system is an error', async () => {
         const el = await mount({ def: lineDef({ coord: 'spherical' }), data: lineData });
         expect(el.querySelector('.vis-error').textContent).toBe(`coord: unknown coordinate system 'spherical', expected one of 'cartesian', 'polar', 'geo'`);

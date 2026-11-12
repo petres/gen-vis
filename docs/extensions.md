@@ -61,7 +61,7 @@ element, by default its row or its index, `class` is a class of the group of
 the mark and `fit` cuts or wraps the texts with a `max-width`, null draws
 nothing, see `drawLayer` of `src/utils/draw.js`.
 
-`ctx` is the facet: the `store`, `inner` (the svg element `g` of its marks
+`ctx` is the facet: the `store` (see below), `inner` (the svg element `g` of its marks
 and axes, a DOM element, its origin is the one of the coordinate system),
 the `key` of the facet, its `rows`, the
 `scales` by the names of the dims, `axis` (the names of the dims of
@@ -71,8 +71,26 @@ stacked value), `scope` (the names of the references of the facet, see
 (the sizes of the coordinate system, e.g. its `radius`), of maps also the
 `projection` and the `path`. `curve: true` passes the `curve` of the mark,
 `coords` limits a type to coordinate systems, e.g. `cartesian:bar` to
-`cartesian`. The types of `MarkType`, `MarkGroup` and `Layer` are in the
-package.
+`cartesian`. The types of `MarkType`, `MarkGroup`, `MarkContext`,
+`MarkStore` and `Layer` are in the package.
+
+The `store` of a registered mark type has the parts of the chart which are
+for mark types, all read-only (a write is a `TypeError`, also of the context
+itself):
+
+| Part | |
+|------|---|
+| `def` | the prepared definition, e.g. `def.marks` or an option of the chart |
+| `dim(name)` | a dim of the prepared definition, e.g. its `name` and its `categories` |
+| `prop(name, key)` | the props of a category of a dim, e.g. its `color` and its `name`, undefined of other values |
+| `format(format, name)` | the formatter of a d3 format in the locale of the chart, of times if the dim `name` is one of dates |
+| `text(text)` | a text of the definition with the values of the globals |
+| `locale` | the formatters of the locale of the chart |
+| `rows` | all rows of the chart (the ones of the facet are `ctx.rows`); rows are never changed |
+| `scope` | the names of the references of the chart: the globals and `totalWidth` |
+
+Other parts of the store of the package are not parts of it: they can
+change with any version.
 
 A new view, e.g. of a toggle of a legend, a control or a new width, is
 drawn into the elements of the one before, only the attributes which change
@@ -97,6 +115,11 @@ the pointer events to the element `parent` and returns it,
 `raise(ctx)` moves elements of `ctx.inner`. `load()` of a
 coordinate system loads its parts with its first chart, e.g. the ones of maps
 (`src/coords/geo.js`), again with the next one if it failed.
+
+A coordinate system works with the parts of the package themselves: its
+`ctx.store` is the store of the package, which is no stable interface. A
+coordinate system of a page is written against one version of the package
+and can need changes with a minor version of 5.x; the mark types above do not.
 
 ## Schemes of colors
 
