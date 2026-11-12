@@ -1,7 +1,7 @@
 // the rows shown as a table: the cells of the CSV (see csvOf of
 // utils/export.js) and the table of the button `table` instead of the
 // plots, loaded with its first click, see comp/vis.js
-export { tableOf, drawTable, maxRows };
+export { tableOf, drawTable };
 
 import { extent } from "@/utils/d3";
 import { columnValues } from "@/utils/data";

@@ -1,7 +1,7 @@
 // the labels inside the bands of an area mark (`"place": { "in": "<id>" }`
 // of svg:text and polar:text), loaded for definitions with them, see
 // utils/lazy.js and the marks of marks/elements.js and marks/polar.js
-export { placeInside, bandProfile, bestSpots, chooseSpots };
+export { placeInside, bestSpots, chooseSpots };
 
 import { line, lineRadial } from 'd3-shape';
 import { areaPoints, curve, finite, propScale, bandOffset } from '@/marks/elements';

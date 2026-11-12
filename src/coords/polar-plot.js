@@ -1,6 +1,6 @@
 // the axes, the annotations and the hover of polar plots and their mark
 // types, loaded with the first polar plot, see coords/polar.js
-export { angleOf, radiusRange, markTypes };
+export { radiusRange, markTypes };
 
 import * as d3 from "@/utils/d3";
 import { arc as arcShape, lineRadial, pointRadial } from 'd3-shape';

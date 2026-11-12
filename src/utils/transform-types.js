@@ -1,6 +1,6 @@
 // the computation of the transforms, loaded for definitions with transforms, see
 // utils/transform.js
-export { applyTransforms, transformTypes, randomOf };
+export { applyTransforms, transformTypes };
 
 import { quantile } from "d3-array";
 import { dateReader, toNumber } from "@/utils/data";

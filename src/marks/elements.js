@@ -26,6 +26,7 @@ const once = f => {
 
 // the dim of a prop of a mark (`path`, e.g. `d.x`) and its scale: of a
 // reference to its scaled value, also in an expression, e.g. "@x:scaled"
+// of dodged bars
 const propDim = (mark, ctx, path) => {
     const value = path.split('.').reduce((p, k) => p?.[k], mark?.props);
     const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
@@ -149,12 +150,7 @@ const areaPoints = (groups, mark, ctx, keys) => {
 
 // the scale of the dim a prop of a mark refers to, e.g. the one of `x`
 // of "@x:scaled" or of `d.angle`, undefined if it is no reference
-const propScale = (mark, ctx, path) => {
-    const value = path.split('.').reduce((p, k) => p?.[k], mark.props);
-    // a reference, or the scaled position in an expression, e.g. "@x:scaled" of dodged bars
-    const ref = refOf(value) ?? refNames(value).find(n => n.split(':')[1] == 'scaled');
-    return ref === undefined ? undefined : ctx.scales[ref.split(':')[0]];
-};
+const propScale = (mark, ctx, path) => propDim(mark, ctx, path)?.scale;
 
 // the offset of the center of the band of a position of a path (`path`, e.g.
 // `d.x` of a line): of the scaled value of a dim of a band scale

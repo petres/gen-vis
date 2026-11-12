@@ -1,7 +1,7 @@
 export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, elementOf, directOf, childrenOf, shapeOf, replaceRow, drawLayer, motion, withMotion, reducedMotion, dataAttribute, fitText };
 
 import * as d3 from "@/utils/d3";
-import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
+import { animate, create, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
 import { textWidth as canvasWidth } from '@/utils/measure';
 
 // (the other curves are loaded for the definitions which name one, see loadMore of utils/d3.js)
@@ -45,10 +45,6 @@ const writeValue = (node, k, v) => {
         node.setAttribute(k, v);
 };
 
-// an element moving with a transition is at its end at once, e.g. before
-// the values of its highlight replace its values, so it keeps the new ones
-const finish = node => finishAnimation(node, 'vis');
-
 // the transition of the elements of a draw in milliseconds, 0 without, see
 // `transition` of the definition and comp/facet.js
 const motion = { duration: 0 };
@@ -91,7 +87,7 @@ const shapes = Symbol('shapes');
 // attributes an element has move to their values, e.g. of the draw before,
 // new ones are set at once, a transition of the draw before stops where it
 // is. The end values of a transition are the ones of its animation (see
-// targetOf of utils/dom.js), see finish. Values with css variables are
+// targetOf of utils/dom.js). Values with css variables are
 // styles, set at once, see writeValue. A path (`d`) moves only to one of
 // the same commands (see samePath), another one is set at once; an
 // attribute with a shape (`shapeOf` of the values) moves by the values of

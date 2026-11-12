@@ -1,4 +1,4 @@
-export { layout, axisNames, visibleKeys, markRows, markGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
+export { layout, axisNames, markRows, markGroups, withColor, unknownOf, gridOf, facetDims, inFacet };
 
 import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, sourceRows, stack, withoutConditions } from "@/utils/data";
 import * as d3 from "@/utils/d3";

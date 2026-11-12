@@ -571,7 +571,8 @@ const filterRows = (rows, spec, dims, scope = {}, { columns = null, path = 'filt
  * or "01.06.2020". `converted` are the names of the references which replace
  * the values converted at the row, see rowResolver; kept per expression.
  */
-const dateComparisons = ['==', '!=', '<', '<=', '>', '>='];
+// the operators of comparisons, see also withoutConditions
+const comparisons = ['==', '!=', '<', '<=', '>', '>='];
 const convertedOf = new WeakMap();
 const datesAsDates = (spec, dims) => {
     if (!isObject(spec) && !Array.isArray(spec))
@@ -594,7 +595,7 @@ const datesAsDates = (spec, dims) => {
             return raw;
         const args = raw[op];
         const list = Array.isArray(args) ? args : [args];
-        if (dateComparisons.includes(op)) {
+        if (comparisons.includes(op)) {
             const m = list.map(dateOf).find(Boolean);
             if (m) {
                 return { [op]: list.map(a => {
@@ -627,7 +628,6 @@ const typesKey = dims => Object.keys(dims).filter(n => dims[n]?.type == 'date').
  * scale which ignores the filter of a slider (`domainIgnores`), see
  * domainRows of layout.js; the conditions of an object without their keys.
  */
-const comparisons = ['==', '!=', '<', '<=', '>', '>='];
 const withoutConditions = (spec, names) => {
     if (isObject(spec) && !isOperator(spec))
         return Object.fromEntries(Object.entries(spec).filter(([k]) => !names.includes(k)));

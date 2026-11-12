@@ -1,6 +1,6 @@
 // the images (PNG, SVG) and the CSV of a visualisation, loaded with the
 // first one, see comp/app.js, the SVG is composed by utils/export-svg.js
-export { selection, staticCopy, parts, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, csvCell, defaultWidth, padding };
+export { selection, staticCopy, selectParts, partsBox, backgroundOf, renderImage, renderSvg, saveFile, csvOf, csvCell, defaultWidth, padding };
 
 import { facetBy } from "@/utils/normalize";
 import * as d3 from "@/utils/d3";

@@ -73,9 +73,9 @@ const change = (node, attrs, moving) => {
 
 // the ticks of the `values` of the `scale` with the labels `format(value)`
 // into the element of the axis `ga`, `moving` with the animation of the
-// draw, the sizes of the ticks are the ones of `tickSizeInner`,
-// `tickSizeOuter` and `tickPadding`
-const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickSizeOuter, tickPadding, labelSize = tickSizeInner }) => {
+// draw, the sizes of the ticks are the ones of `tickSizeInner` and
+// `tickPadding` (no outer ticks: the line of the axis is straight)
+const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickPadding, labelSize = tickSizeInner }) => {
     const offset = pixelOffset();
     const k = orient == "top" || orient == "left" ? -1 : 1;
     const x = orient == "left" || orient == "right" ? "x" : "y";
@@ -137,8 +137,8 @@ const ticks = (ga, moving, orient, scale, { values, format, tickSizeInner, tickS
 
     change(path, {
         d: orient == "left" || orient == "right"
-            ? (tickSizeOuter ? "M" + k * tickSizeOuter + "," + range0 + "H" + offset + "V" + range1 + "H" + k * tickSizeOuter : "M" + offset + "," + range0 + "V" + range1)
-            : (tickSizeOuter ? "M" + range0 + "," + k * tickSizeOuter + "V" + offset + "H" + range1 + "V" + k * tickSizeOuter : "M" + range0 + "," + offset + "H" + range1),
+            ? "M" + offset + "," + range0 + "V" + range1
+            : "M" + range0 + "," + offset + "H" + range1,
     }, moving);
 
     tick.forEach(node => {
@@ -208,7 +208,7 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     // (the style is the one of the chart: the one of the element of the
     // axis would be a style recalculation between the writes of every draw)
     const inset = Number.isFinite(marks?.inset) ? marks.inset : (Number.isFinite(styleInset) ? styleInset : tickInset[position] ?? 0);
-    ticks(ga, moving, position, scale, { values, format, tickSizeInner: size, tickSizeOuter: 0, tickPadding: +(padding ?? builtInDefaults.axis.padding),
+    ticks(ga, moving, position, scale, { values, format, tickSizeInner: size, tickPadding: +(padding ?? builtInDefaults.axis.padding),
         labelSize: size - inset });
     // the props of the line and of the labels at once, the animations of
     // the path and of the texts (their positions) go on
