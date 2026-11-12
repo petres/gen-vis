@@ -320,13 +320,15 @@ const createVis = (app, failed = null) => {
     // their sizes are measured again, e.g. of the headers of the rows of a
     // grid and the width beside legends
     // only of the fonts of the visualisation, not of other charts or of the
-    // page (the families of its font, e.g. Inter of the 600 weight)
+    // page (the families of its font, e.g. Inter of the 600 weight): the
+    // font of its texts, the styles set it on them, not on the root (see
+    // styles.css), the one of fontProbe
     const fontsLoaded = event => guard(() => {
         if (removed)
             return;
         const families = event?.fontfaces?.map(f => f.family.replace(/^["']|["']$/g, '').toLowerCase());
         if (families?.length && typeof getComputedStyle == 'function') {
-            const used = getComputedStyle(root).fontFamily.toLowerCase();
+            const used = getComputedStyle(fontProbe).fontFamily.toLowerCase();
             if (!families.some(f => used.includes(f)))
                 return;
         }

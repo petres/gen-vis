@@ -2524,6 +2524,41 @@ describe('locale and font', () => {
     });
 });
 
+// review of 5.0: the font was looked up on the root, which has the one of the page, so nothing was measured again
+describe('a web font loaded after the draw', () => {
+    test('the chart is measured again if it is the font of its texts, not for other fonts', async () => {
+        const fonts = new EventTarget();
+        const before = Object.getOwnPropertyDescriptor(document, 'fonts');
+        Object.defineProperty(document, 'fonts', { configurable: true, value: fonts });
+        // the font of the texts of the chart (styles.css), the root has the one of the page
+        const computed = window.getComputedStyle;
+        let measured = 0;
+        window.getComputedStyle = (e, pseudo) => {
+            const cs = computed(e, pseudo);
+            if (e.classList?.contains('vis'))
+                measured++;
+            const family = e.closest?.('.vis') && e !== e.closest('.vis') ? 'Inter, sans-serif' : 'serif';
+            return new Proxy(cs, { get: (t, k) => k == 'fontFamily' ? family : typeof t[k] == 'function' ? t[k].bind(t) : t[k] });
+        };
+        onTestFinished(() => {
+            window.getComputedStyle = computed;
+            before ? Object.defineProperty(document, 'fonts', before) : delete document.fonts;
+        });
+        await mount({ def: lineDef(), data: lineData });
+        const loaded = family => {
+            const e = new Event('loadingdone');
+            e.fontfaces = [{ family }];
+            fonts.dispatchEvent(e);
+        };
+        measured = 0;
+        loaded('Georgia');
+        expect(measured).toBe(0);
+        loaded('"Inter"');
+        expect(measured).toBe(1);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('touch', () => {
     const touch = (type, init = {}) => pointer(type, { pointerType: 'touch', clientX: 300, clientY: 150, ...init });
 
