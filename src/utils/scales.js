@@ -156,8 +156,7 @@ const sortCategories = (values, rows, name, order) => {
     if (order === undefined)
         return values;
     if (order == 'ascending' || order == 'descending') {
-        const c = comparison(values);
-        return [...values].sort(order == 'descending' ? (a, b) => c(b, a) : c);
+        return [...values].sort(comparison(values, order == 'descending'));
     }
     const by = order?.by;
     if (typeof by != 'string')
@@ -168,8 +167,8 @@ const sortCategories = (values, rows, name, order) => {
             first.set(r[name], r[by]);
     });
     const keyed = values.filter(v => first.has(v));
-    const c = comparison(keyed.map(v => first.get(v)));
-    keyed.sort((a, b) => order.descending ? c(first.get(b), first.get(a)) : c(first.get(a), first.get(b)));
+    const c = comparison(keyed.map(v => first.get(v)), order.descending);
+    keyed.sort((a, b) => c(first.get(a), first.get(b)));
     return [...keyed, ...values.filter(v => !first.has(v))];
 };
 

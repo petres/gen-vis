@@ -755,6 +755,18 @@ describe('the order of the categories of a scale', () => {
         // the groups in the order of their first category
         expect(domain({ by: 'x', descending: true }, { by: 'g' })).toEqual(['a', 'd', 'b', 'c']);
     });
+
+    test('ascending and descending: numbers by their value also with a text among them, the texts after them', async () => {
+        const { makeScale } = await import('@/utils/scales');
+        const rows = ['10', 'Total', '9', '100'].map(y => ({ y }));
+        const domain = order => makeScale('y', { type: 'categorical', scale: { type: 'band', domain: [null, null], range: [0, 100], order } }, rows).domain();
+        expect(domain('ascending')).toEqual(['9', '10', '100', 'Total']);
+        expect(domain('descending')).toEqual(['100', '10', '9', 'Total']);
+        // the keys of a legend of the data
+        const el = await mount({ def: { width: 400, dims: { x: { column: 'k', type: 'categorical' }, y: 'v', t: { column: 't', legend: {}, order: 'ascending' } }, marks: [{ type: 'bar', by: 't', stack: true }] },
+            data: 'k,v,t\na,1,10\na,2,9\na,3,Total' });
+        expect([...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key)).toEqual(['9', '10', 'Total']);
+    });
 });
 
 describe('a format of a dim as an expression of the value', () => {

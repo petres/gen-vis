@@ -67,6 +67,9 @@ describe('the props of categories', () => {
         expect(prepared({ categories, order: 'descending' }).keys).toEqual(['2026', '2025', '2024']);
         expect(prepared({ categories: { b: {}, c: {}, a: {} }, order: 'ascending' }).keys).toEqual(['a', 'b', 'c']);
         expect(prepared({ categories: { 9: {}, 10: {}, 100: {} }, order: 'descending' }).keys).toEqual(['100', '10', '9']);
+        // numbers by their value also with a text among them, the texts after them
+        expect(prepared({ categories: { Total: {}, 10: {}, 9: {}, Mean: {} }, order: 'ascending' }).keys).toEqual(['9', '10', 'Mean', 'Total']);
+        expect(prepared({ categories: { Total: {}, 10: {}, 9: {}, Mean: {} }, order: 'descending' }).keys).toEqual(['10', '9', 'Total', 'Mean']);
         // the listed keys first, unknown ones are left out
         expect(prepared({ categories: { a: {}, b: {}, c: {} }, order: ['c', 'x', 'a'] }).keys).toEqual(['c', 'a', 'b']);
     });

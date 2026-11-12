@@ -20,12 +20,18 @@ const ownValue = (row, name) => row !== null && row !== undefined && Object.hasO
 const numericText = v => typeof v == 'number' || (typeof v == 'string' && v.trim() !== '' && !isNaN(+v));
 
 // categories compared as numbers if both are numbers, e.g. "9" before "10",
-// otherwise as texts
-const compareCategories = (a, b) => numericText(a) && numericText(b) ? a - b : String(a).localeCompare(String(b));
+// as texts if both are texts, numbers before texts, e.g. "Total" after "10"
+// (an order of all of them, also of mixed ones)
+const compareCategories = (a, b) => {
+    const [x, y] = [numericText(a), numericText(b)];
+    return x && y ? a - b : x != y ? (x ? -1 : 1) : String(a).localeCompare(String(b));
+};
 
-// the comparison of the values of a list, as numbers if all of them are
-// numbers, otherwise as texts, e.g. of the categories of a scale
-const comparison = values => values.every(numericText) ? (a, b) => a - b : (a, b) => String(a).localeCompare(String(b));
+// the comparison of values ascending or `descending`, numbers by their
+// value, texts after them (also descending), e.g. the categories "10", "9"
+// and "Total" of a scale: 9, 10, Total and 10, 9, Total
+const comparison = (values, descending = false) => !descending ? compareCategories
+    : (a, b) => numericText(a) == numericText(b) ? compareCategories(b, a) : compareCategories(a, b);
 
 // a decimal number, also with an exponent and spaces around it, e.g. " 12 ",
 // "-.5" or "1e3", not the other texts of Number, e.g. "0x10" or "Infinity"

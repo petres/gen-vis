@@ -189,8 +189,7 @@ const mergeAll = parts => mergeParts(parts, { arrayMerge, customMerge, leafMerge
 
 // keys of categories ascending or descending, numbers by their value
 const sortKeys = (keys, descending) => {
-    const compare = comparison(keys);
-    return [...keys].sort(descending ? (a, b) => compare(b, a) : compare);
+    return [...keys].sort(comparison(keys, descending));
 };
 
 /**

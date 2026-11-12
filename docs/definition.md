@@ -1126,7 +1126,8 @@ a text is the color, `"Wien": "#C3423F"` is `"Wien": {"color": "#C3423F"}`:
   stacks and of a band, point or ordinal scale, not the order of the rows.
   Keys which are integers, e.g. years, are ordered ascending by JavaScript,
   first. `order` sets the order: `"ascending"`, `"descending"` (numbers by
-  their value, e.g. the newest year first), `"rows"` (all of them in the
+  their value, e.g. the newest year first, texts after them, also
+  descending, e.g. `10`, `9`, `Total`), `"rows"` (all of them in the
   order of the rows of the data, also the listed ones, e.g. a total with a
   color of its own among the categories of the data, whose colors of a
   scheme stay the ones of their order) or a list of keys, which are
