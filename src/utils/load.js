@@ -404,6 +404,10 @@ const loadRows = async (defOrg, url, data) => {
     let format = defOrg.dataFormat;
     let rows;
     let warn;
+    // the rows of the definition itself, as the ones of the attribute
+    const own = data === null && Array.isArray(defOrg.data);
+    if (own)
+        data = defOrg.data;
     if (data === null) {
         if (!defOrg.data)
             throw new Error('No data given, neither in the definition nor as attribute.');
@@ -413,8 +417,9 @@ const loadRows = async (defOrg, url, data) => {
         // (the rows of a url are shared by the charts of its file, see fetchRows)
         rows = await fetchRows(dataUrl, format, usedColumns(defOrg), warn);
     } else {
-        warn = dataWarning(url, 'of the attribute');
-        rows = raw(await readData(data, format, 'of the attribute', usedColumns(defOrg), warn));
+        const source = own ? 'of the definition' : 'of the attribute';
+        warn = dataWarning(url, source);
+        rows = raw(await readData(data, format, source, usedColumns(defOrg), warn));
     }
     // a chart of no rows is blank, a text of `empty` says why; not of rows
     // of the page, e.g. none while they are loaded

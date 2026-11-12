@@ -541,7 +541,7 @@ const schema = {
     properties: {
         $schema: string(`The version of the definition language, the schema of gen-vis 5 (${schemaUrl}, also of jsdelivr, a full version, e.g. @5.0.0, or node_modules/@preschen/gen-vis/schema.json of the installed package), a definition file needs it, in itself or in a parent; a definition of gen-vis 4 is not read.`),
         parent: oneOf([{ type: 'string' }, array(string())], 'Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. A match of a global (of globals or of a control) without a default is a switch over the value of the other parts.'),
-        data: string('Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat.'),
+        data: cases([[isArray, array({ type: 'object' })]], { type: 'string' }, 'Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat; or the rows themselves, a list of objects, e.g. of a small table.'),
         dataFormat,
         transform: cases([[isArray, array(ref('transform'))]], ref('transform'), `Columns computed of the data, e.g. an index of a base year, in their order, see ${docs}#transform.`),
         filter: ref('filter'),

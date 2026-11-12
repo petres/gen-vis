@@ -193,9 +193,13 @@ export interface GenVisDefinition {
      */
     parent?: string | string[];
     /**
-     * Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat.
+     * Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat; or the rows themselves, a list of objects, e.g. of a small table.
      */
-    data?: string;
+    data?:
+        | {
+              [k: string]: unknown;
+          }[]
+        | string;
     /**
      * The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content.
      */

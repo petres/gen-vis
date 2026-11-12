@@ -286,6 +286,14 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('the rows of the definition itself (data of a list), as the ones of the attribute', async () => {
+        const def = { dims: { x: { column: 'a', type: 'categorical' }, y: 'b' }, marks: { type: 'bar' }, data: [{ a: 'x', b: 1 }, { a: 'y', b: '3' }] };
+        const el = await mount({ def });
+        expect(el.querySelectorAll('rect.vis-mark, g.vis-mark-bar rect, .vis-marks rect').length).toBeGreaterThan(0);
+        expect([...el.querySelectorAll('g.vis-axis-bottom g.tick text')].map(t => t.textContent)).toEqual(['x', 'y']);
+        expect(errors).toEqual([]);
+    });
+
     test('categories of the data, colored by a scheme', async () => {
         const def = lineDef();
         def.dims.c = { ...def.dims.c, fromData: true, scheme: 'Tableau10', categories: { Tirol: {} } };

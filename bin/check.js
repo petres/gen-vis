@@ -107,6 +107,9 @@ export const createChecker = async ({ root = null, allow = [], schemes = [] } = 
     const rowsOf = async (def, url, data, dirs, warn, note) => {
         let file = data ?? null;
         if (file === null) {
+            // the rows of the definition itself
+            if (Array.isArray(def.data))
+                return def.data;
             if (typeof def.data != 'string')
                 return null;
             // a template of the globals, e.g. "{region}.csv", of their values

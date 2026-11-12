@@ -217,6 +217,11 @@ reads it):
 { "data": "/api/prices?year=2024", "dataFormat": "json" }
 ```
 
+`data` can also be the rows themselves, a list of objects, e.g. of a small
+table, read as the rows of the prop `data` of the page (the values as they
+are, no expressions): `"data": [{"land": "Wien", "value": 1.9}, {"land":
+"Tirol", "value": 0.8}]`.
+
 Parquet is read with [hyparquet](https://github.com/hyparam/hyparquet) (no
 wasm), it is only loaded for parquet data. Only the columns the definition
 can use are read: the ones of the dims (also of every value of the

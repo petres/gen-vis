@@ -15,8 +15,10 @@
             "description": "Url of the definition this one is deep merged into, relative to this definition, or a list of them (mixins) merged in their order, later ones override earlier ones. Lists are replaced, lists of entries with ids (marks, controls and their entries) are merged by them. A match of a global (of globals or of a control) without a default is a switch over the value of the other parts."
         },
         "data": {
-            "type": "string",
-            "description": "Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat."
+            "if": { "type": "array" },
+            "then": { "type": "array", "items": { "type": "object" } },
+            "else": { "type": "string" },
+            "description": "Url of the data, relative to the definition, CSV, TSV, JSON or parquet, by the extension or dataFormat; or the rows themselves, a list of objects, e.g. of a small table."
         },
         "dataFormat": {
             "enum": ["csv", "tsv", "json", "parquet"],
