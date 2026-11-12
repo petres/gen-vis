@@ -1843,6 +1843,26 @@ describe('legend symbols at the middle of the capitals of the name', () => {
         expect(aligns()[0][2]).toBe('calc(var(--gen-vis-legend-symbol-middle, 0.36em) - 8px)');
         expect(errors).toEqual([]);
     });
+
+    test('the font of the names is read once per draw of the legend, not per entry', async () => {
+        const def = lineDef();
+        def.dims.c.categories = { Wien: 'red', Tirol: 'blue', Salzburg: 'green' };
+        const el = await mount({ def, data: lineData });
+        const computed = window.getComputedStyle;
+        let read = 0;
+        window.getComputedStyle = (e, pseudo) => {
+            if (e.tagName == 'SPAN' && e.closest('.vis-legend-entry'))
+                read++;
+            return computed(e, pseudo);
+        };
+        onTestFinished(() => window.getComputedStyle = computed);
+        el.querySelector('.vis-legend-entry').dispatchEvent(new MouseEvent('click', { bubbles: true, detail: 1 }));
+        await nextTick();
+        expect(read).toBe(1);
+        // every name as wide as its bold one
+        expect([...el.querySelectorAll('.vis-legend-entry span')].map(s => s.style.minWidth)).toEqual(['36px', '44px', '71px']);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('the order and the ranks of categories', () => {

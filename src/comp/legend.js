@@ -146,6 +146,7 @@ const createLegend = (vis, legend) => {
         // with `onlyData` without the ones which are not in the rows
         const entries = categories().filter(key => !inData || inData.has(key)).map(key => ({ key, props: m.categoryProps[key] }));
         const scope = store.scope;
+        const names = [];
         join(list, entries, { key: e => e.key, create: createEntry }).forEach((div, i) => {
             const entry = entries[i];
             // the props of the entry with its default colors, see withColor of
@@ -174,11 +175,18 @@ const createLegend = (vis, legend) => {
             span ??= div.appendChild(el('span'));
             const name = store.text(filled.name);
             setText(span, name);
-            // as wide as the bold name of the highlight, so no entry moves, see styles.css
-            const cs = typeof getComputedStyle == 'function' && span.isConnected ? getComputedStyle(span) : null;
-            if (cs?.fontSize)
-                span.style.minWidth = `${Math.ceil(textWidth(name, `600 ${cs.fontSize} ${cs.fontFamily}`))}px`;
+            names.push([span, name]);
         });
+        // as wide as the bold name of the highlight, so no entry moves, see
+        // styles.css; the font of the names is the one of the legend, read
+        // once after the writes of the entries (a read between them is a
+        // style recalculation per entry, also per frame of a slider)
+        const first = names[0]?.[0];
+        const cs = typeof getComputedStyle == 'function' && first?.isConnected ? getComputedStyle(first) : null;
+        if (cs?.fontSize) {
+            const font = `600 ${cs.fontSize} ${cs.fontFamily}`;
+            names.forEach(([span, name]) => span.style.minWidth = `${Math.ceil(textWidth(name, font))}px`);
+        }
     };
 
     return { el: root, update };
