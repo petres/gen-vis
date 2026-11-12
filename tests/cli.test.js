@@ -425,6 +425,13 @@ describe.skipIf(!browser)('gen-vis export', () => {
         expect(r.stderr).toMatch(new RegExp(`gen-vis: ${typo}: warning: marks\\[0\\]: none of its \\d+ rows is drawn, \\d+ without a value of dim '\\w+' \\(column 'Jahrr' is not in the data\\)`));
         expect(r.stderr).not.toContain('gen-vis.local');
         expect(existsSync(out)).toBe(true);
+        // an error names the path of the file, not the url of the page
+        const missing = path.join(dir, 'missing-data.json');
+        writeFileSync(missing, JSON.stringify(bevDef(dir, d => ({ ...d, data: 'nofile.csv' }))));
+        const failed = await run(['export', missing, out, '--no-check']);
+        expect(failed.code).toBe(1);
+        expect(failed.stderr).toContain(`Could not load '${path.join(dir, 'nofile.csv')}': 404`);
+        expect(failed.stderr).not.toContain('gen-vis.local');
         const quiet = await run(['export', typo, out, '--no-check']);
         expect(quiet.stderr).not.toContain('check:');
         expect(quiet.stderr).toContain('none of its');

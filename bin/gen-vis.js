@@ -5,6 +5,7 @@
 import { parseArgs } from 'node:util';
 import { existsSync, readFileSync } from 'node:fs';
 import path from 'node:path';
+import { fileURLToPath } from 'node:url';
 import { createExporter, formats } from './export.js';
 import { createChecker } from './check.js';
 import { stopBrowsers } from './cdp.js';
@@ -62,6 +63,26 @@ prints a line per warning, "<def.json>: <path>: <message>"; the exit code is
                           it, repeatable (its colors are optional, e.g. --scheme wifo-blue)
   --strict                exit code 1 of a warning
 `;
+
+// the urls of the files of the export page in a message as their paths,
+// relative to the working directory if they are in it, e.g.
+// "http://gen-vis.local/fs/home/a/def.json" is "def.json", a site-absolute
+// one (of --root) as it is written, e.g. "/geo/europe.json"
+const filePaths = text => String(text).replace(/http:\/\/gen-vis\.local(\/fs)?(\/[^\s'"]*)/g, (url, fs, p) => {
+    if (p.startsWith('/__gen-vis/'))
+        return url;
+    if (!fs)
+        return p;
+    let file;
+    try {
+        file = fileURLToPath(`file://${p}`);
+    } catch {
+        // e.g. an encoded "/", no file
+        return url;
+    }
+    const relative = path.relative(process.cwd(), file);
+    return relative && !relative.startsWith('..') && !path.isAbsolute(relative) ? relative : file;
+});
 
 const fail = (message, code = 2) => {
     process.stderr.write(`gen-vis: ${message}\n`);
@@ -212,16 +233,16 @@ const exportCommand = async args => {
                 if (o.strict && warnings.length)
                     throw new Error(`${warnings.length} warning${warnings.length > 1 ? 's' : ''} of the check (--strict), no output is written`);
                 const r = await exporter.exportChart(def, outputs, options);
-                r.messages.forEach(m => note(`${def}: ${m}`));
+                r.messages.forEach(m => note(`${def}: ${filePaths(m)}`));
                 // the size of the chart in CSS pixels, of a PNG also its pixels
                 const png = r.png ? `, PNG ${r.png.width}x${r.png.height} px` : '';
                 process.stdout.write(`${def} -> ${outputs.join(', ')} (${Math.round(r.width)}x${Math.round(r.height)} CSS px${png}, ${((performance.now() - start) / 1000).toFixed(2)} s)\n`);
             } catch (error) {
                 failed++;
-                (error.messages ?? []).forEach(m => note(`${def}: ${m}`));
+                (error.messages ?? []).forEach(m => note(`${def}: ${filePaths(m)}`));
                 // a site-absolute path, e.g. "/geo/europe.json", is a file of --root
                 const absolute = !o.root && /gen-vis\.local\/(?!fs\/|__gen-vis\/)\S*': 404/.test(error.message);
-                note(`${def}: ${error.message}${absolute ? ' (a site-absolute path: set --root to the site\'s directory)' : ''}`);
+                note(`${def}: ${filePaths(error.message)}${absolute ? ' (a site-absolute path: set --root to the site\'s directory)' : ''}`);
             }
         }
     } finally {
