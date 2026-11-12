@@ -570,6 +570,14 @@ const makeScale = (name, dim, rows, { dims = {}, coord = {}, scope = {}, stackOf
             return values[Math.max(0, Math.min(values.length - 1, i))];
         };
     }
+    // the dates of the data have times of the day, not only days, e.g. of
+    // hourly data: their default format has the time (see valueFormat of
+    // utils/locale.js), read at the first label or hover
+    if (dim.type == 'date' && !period && !dim.interval) {
+        const day = scaleDef.type == 'utc' ? d3.utcDay : d3.timeDay;
+        let times = null;
+        s.times = () => times ??= found.values.some(v => +day.floor(v) != v);
+    }
     if (scaleDef.type == 'threshold' && scaleDef.closed == 'right')
         return rightClosed(s);
     // the categories in groups with a space between them, e.g. the rows of

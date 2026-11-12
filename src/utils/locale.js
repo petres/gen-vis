@@ -216,13 +216,14 @@ const getLocale = (locale = 'de') => {
             return null;
         },
         // the default format of the values of the hover and of labels: dates
-        // as the date of the locale, numbers with its decimal mark and up to
+        // as the date of the locale (and the time of dates of times of the
+        // day, see makeScale), numbers with its decimal mark and up to
         // 6 decimals without trailing zeros, with thousands separators if the
         // domain of the scale reaches 10 000, so years are e.g. 2024, other
         // values as they are
         valueFormat(dim, scale) {
             if (dim.type == 'date')
-                return (dim.scale?.type == 'utc' ? time.utcFormat : time.format)(periodFormats[periodName(dim.interval)] ?? '%x');
+                return (dim.scale?.type == 'utc' ? time.utcFormat : time.format)(periodFormats[periodName(dim.interval)] ?? (scale?.times?.() ? periodFormats.minute : '%x'));
             if (dim.type != 'numeric')
                 return v => v;
             const plain = number.format('.6~f');

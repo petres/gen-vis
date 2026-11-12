@@ -1269,7 +1269,9 @@ an entry with it is bold, e.g. of a total,
 [`hover`](#hover) of the dims which are in it by default:
 
 - `format`: the format of its value, by default the one of the axis or of
-  the dim, without one dates are the date of the locale and numbers have
+  the dim, without one dates are the date of the locale (`%x`; with the
+  time, `%x %H:%M`, if a date of the data has a time of the day, e.g. of
+  hourly values; of an `interval` the format of its period) and numbers have
   its decimal mark and up to 6 decimals (without trailing zeros),
   thousands separators only if the domain reaches 10 000, so years are
   e.g. `2024`.

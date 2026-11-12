@@ -2590,6 +2590,16 @@ describe('locale and font', () => {
         expect(getLocale().valueFormat({ type: 'categorical' })('Wien')).toBe('Wien');
     });
 
+    test('dates of times of the day have the time by default (they were all the date of their day)', async () => {
+        const labels = async data => [...(await mount({ def: { dims: { x: 'd', y: 'v' }, marks: [{ type: 'line' }, { type: 'label', text: '@x:formatted', anchor: 'top' }] }, data }))
+            .querySelectorAll('g.vis-mark text')].map(t => t.textContent);
+        expect(await labels('d,v\n2024-01-01 06:00,1\n2024-01-01 18:00,2')).toEqual(['01.01.2024 06:00', '01.01.2024 18:00']);
+        // days stay dates, also of a utc scale
+        expect(await labels('d,v\n2024-01-01,1\n2024-01-02,2')).toEqual(['01.01.2024', '02.01.2024']);
+        const utc = await mount({ def: { dims: { x: { column: 'd', scale: { type: 'utc' } }, y: 'v' }, marks: [{ type: 'label', text: '@x:formatted' }] }, data: 'd,v\n2024-01-01,1\n2024-01-02 12:30,2' });
+        expect([...utc.querySelectorAll('g.vis-mark text')].map(t => t.textContent)).toEqual(['01.01.2024 00:00', '02.01.2024 12:30']);
+    });
+
     test('the font', async () => {
         const el = await mount({ def: lineDef({ fontFamily: 'Arial' }), data: lineData });
         expect(el.querySelector('.vis').style.getPropertyValue('--gen-vis-font-family')).toBe('Arial');
