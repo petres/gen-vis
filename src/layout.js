@@ -540,6 +540,13 @@ const convertValue = (dim, v) => Array.isArray(v)
 // facet of a new width, see layout
 const markRowsKept = new WeakMap();
 const onceRows = new WeakMap();
+// the row of no values of a mark once per facet (of the rows of the facet),
+// the same one in every draw, so its element is kept
+const onceRowOf = rows => {
+    if (!onceRows.has(rows))
+        onceRows.set(rows, [{}]);
+    return onceRows.get(rows);
+};
 const keptMarkRows = (store, mark, facet) => {
     // the values of the names of the filter which are ones of the scope of
     // the facet, e.g. globals (also as `globals.year`) and sizes, the others
@@ -575,11 +582,8 @@ const keptMarkRows = (store, mark, facet) => {
 const markRows = (store, mark, facet) => {
     // one row without values per facet, e.g. a header or a unit label at
     // the edges of the plot area (@plot:top), the same one of a facet
-    if (mark.once) {
-        if (!onceRows.has(facet.rows))
-            onceRows.set(facet.rows, [{}]);
-        return onceRows.get(facet.rows);
-    }
+    if (mark.once)
+        return onceRowOf(facet.rows);
     if (!mark.data && mark.filter)
         return keptMarkRows(store, mark, facet);
     const filtered = rows => filterRows(rows, mark.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, mark)}.filter`, unknown: unknownOf(store) });
@@ -875,6 +879,17 @@ const absentColumn = (store, column) => {
     return rows.some(r => r && Object.hasOwn(r, column)) ? '' : ` (column '${column}' is not in the data)`;
 };
 
+// the types of marks whose elements are only the ones of their props, one
+// per row; a mark of them whose props are the same for all rows (no
+// reference to a dim or a column, only constants, globals and sizes of the
+// facet, e.g. a rule at a value, `{ "type": "rule", "y": 5 }`) and which
+// has no `by` draws one element, of the rows of its filter if there are any,
+// as with `once` ("once": false keeps one per row); not of rows of its own
+// (`data`) or of texts which `dodge` or `place` by their rows
+const perRowTypes = new Set(['cartesian:rule', 'cartesian:bar', 'svg:circle', 'svg:line', 'svg:rect', 'svg:text', 'polar:circle', 'polar:text', 'geo:circle', 'geo:text']);
+const sameForAll = mark => perRowTypes.has(mark.type) && mark.once === undefined && mark.by.length == 0
+    && mark.data === undefined && !mark.dodge && mark.place === undefined;
+
 const markGroups = (mark, rows, ctx) => {
     const dims = ctx.store.def.dims;
     const needed = [...new Set(refNames(mark.props).filter(n => !ofScale.test(n.split(':').slice(1).join(':')))
@@ -900,7 +915,8 @@ const markGroups = (mark, rows, ctx) => {
         return {
             categories: g.group,
             props,
-            rows: mark.select === undefined ? g.entries : selected(g.entries.filter(complete), mark.select, dims, mark, ctx),
+            rows: at.constant && sameForAll(mark) ? (g.entries.length ? onceRowOf(ctx.rows) : [])
+                : mark.select === undefined ? g.entries : selected(g.entries.filter(complete), mark.select, dims, mark, ctx),
             at,
             prop: name => at.entries.get(name) ?? constant(undefined),
             attrs: Object.fromEntries([...at.entries].filter(([, f]) => f.constant).map(([k, f]) => [k, f()])),

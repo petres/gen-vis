@@ -771,7 +771,7 @@ describe('annotations', () => {
 
     test('null is no value, references to globals and templates', async () => {
         const def = annotated([
-            { type: 'text', x: null, y: '@target', text: 'Ziel {target}' },
+            { type: 'text', x: null, y: '@target', text: "=cat('Ziel ', @target)" },
             { type: 'line', x: null, y: '@target', label: 'Ziel {target}' },
         ]);
         def.globals = { target: 2 };
@@ -3945,6 +3945,34 @@ describe('rules', () => {
         const h = el.querySelector('[data-mark="h"] line');
         expect(['x1', 'x2'].map(a => h.getAttribute(a))).toEqual(['0', '100']);
         expect(h.getAttribute('y1')).toBe(h.getAttribute('y2'));
+        expect(errors).toEqual([]);
+    });
+
+    test('a mark whose props are the same for all rows is drawn once, as with once', async () => {
+        const def = lineDef();
+        def.globals = { show: true, target: 3 };
+        def.marks = [
+            { type: 'rule', id: 'at', y: 2, 'stroke-opacity': 0.2, highlight: { 'stroke-width': 3 } },
+            { type: 'rule', id: 'global', y: '=@innerHeight / 2', x2: '@innerWidth' },
+            { type: 'text', id: 'label', x: '@plot:right', y: '@plot:top', text: "=cat('Ziel ', @target)" },
+            { type: 'rule', id: 'shown', y: 1, filter: '@show' },
+            { type: 'rule', id: 'none', y: 1, filter: '@value > 100' },
+            { type: 'rule', id: 'rows', y: 2, once: false },
+            // of the rows: a dim, a text of a dim, `by`, rows of its own
+            { type: 'rule', id: 'value', y: 'y' },
+            { type: 'text', id: 'texts', x: 1, y: 1, text: '@c' },
+            { type: 'rule', id: 'by', y: 2, by: 'c' },
+            { type: 'rule', id: 'data', y: 2, data: [{}, {}] },
+        ];
+        const el = await mount({ def, data: lineData });
+        const count = id => el.querySelectorAll(`[data-mark="${id}"] line, [data-mark="${id}"] text`).length;
+        expect(Object.fromEntries(['at', 'global', 'label', 'shown', 'none', 'rows', 'value', 'texts', 'by', 'data'].map(id => [id, count(id)])))
+            .toEqual({ at: 1, global: 1, label: 1, shown: 1, none: 0, rows: 8, value: 7, texts: 8, by: 8, data: 2 });
+        expect(el.querySelector('[data-mark="label"] text').textContent).toBe('Ziel 3');
+        // the hover and its highlight leave it as it is
+        el.querySelector('rect.vis-events').dispatchEvent(pointer('pointermove', { clientX: 300, clientY: 100 }));
+        await nextTick();
+        expect(count('at')).toBe(1);
         expect(errors).toEqual([]);
     });
 });

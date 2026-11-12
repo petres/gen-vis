@@ -366,7 +366,7 @@ const definitions = {
             order: option(['x', 'y', 'rows'], 'Lines and areas (and the first and the last row of select): the order of the points, along x (the angle of polar charts) by default, along y if y is categorical and x is not; along a categorical dim in the order of its categories, a continuous one ascending; rows keeps the order of the rows, e.g. of a connected scatter plot.'),
             layer: option(['below', 'above'], 'below: below the axes and grid lines, above: above the other marks, between them by default.'),
             facet: { description: 'The facets of the mark, a key or a list of them, all by default; of a grid also the values of the dims of its rows and columns, e.g. { "group": "Bau" } (a column, a row or a cell).' },
-            once: boolean('One element per facet, of no row: its attributes are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name".'),
+            once: boolean('One element per facet, of no row: its attributes are the names of the facet, e.g. a header or a unit label at the edge of the plot area, "y": "@plot:top", "text": "@facet:name". A mark whose channels and attributes are the same for all rows (no reference to a dim or a column) and without "by" is drawn once without it, e.g. a rule at a value; false draws it once per row.'),
             place: anyOf([
                 option(['pole', 'centroid'], 'geo:text: a label at the pole of inaccessibility of the largest polygon of its feature, the point farthest from its edges (default), or at its centroid.', { default: 'pole' }),
                 object({

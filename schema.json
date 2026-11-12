@@ -1682,7 +1682,7 @@
                 },
                 "once": {
                     "type": "boolean",
-                    "description": "One element per facet, of no row: its attributes are the names of the facet, e.g. a header or a unit label at the edge of the plot area, \"y\": \"@plot:top\", \"text\": \"@facet:name\"."
+                    "description": "One element per facet, of no row: its attributes are the names of the facet, e.g. a header or a unit label at the edge of the plot area, \"y\": \"@plot:top\", \"text\": \"@facet:name\". A mark whose channels and attributes are the same for all rows (no reference to a dim or a column) and without \"by\" is drawn once without it, e.g. a rule at a value; false draws it once per row."
                 },
                 "place": {
                     "anyOf": [

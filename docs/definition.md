@@ -1377,7 +1377,8 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
   (`@y:scaled:100`) of `x0` and `y0` of bars and areas, of `y` of bars and
   of every channel of rules (`x`, `y` and the ends `x1`, `x2`, `y1`,
   `y2`) and of `x` and `y` of points and texts of cartesian charts, e.g.
-  the base of bars, a rule at a target, `{"type": "rule", "y": 100}`, one
+  the base of bars, a rule at a target, `{"type": "rule", "y": 100}` (one
+  line, see [`once`](#the-other-keys-of-a-mark)), one
   from 0, `"x1": 0`, or a label at 250 of x, `"x": 250`; other numbers are
   pixels, an expression of pixels at these channels is e.g.
   `"=literal(10)"`.
@@ -1754,7 +1755,15 @@ them (from 0), e.g. the counts of the categories at the top right:
   its attributes are the names of the facet, e.g. a header or a unit label
   at the edges of the plot area, `{"type": "text", "once": true, "x":
   "@plot:left", "y": "=@plot:top - 6", "text": "in €"}`; the key and the
-  name of the facet are `@facet` and `@facet:name`.
+  name of the facet are `@facet` and `@facet:name`. A rule, a bar, a point
+  or a text (and the `svg` elements) whose channels and attributes are the
+  same for all rows (no reference to a dim or a column, only numbers,
+  texts, globals and the sizes of the facet, e.g. `{"type": "rule", "y":
+  5}`) and which has no `by`, no `data` of its own, no `dodge` and no
+  `place` is drawn once per facet too, not once per row (identical elements
+  on top of each other, whose opacity would add up); with a `filter` once
+  if the filter keeps a row, e.g. `"filter": "@globals.show"`. `"once":
+  false` draws it once per row.
 - `layer`: `below` draws the mark below the axes and grid lines, e.g. a
   background, `above` above the other marks, e.g. labels, by default the
   marks are drawn between them in their order. `before`: right before the
