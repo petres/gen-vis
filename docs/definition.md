@@ -1241,7 +1241,10 @@ A dim with a scale but without categories has the colors of its scale as
 legend, a gradient or the classes, the ticks of a gradient at the positions
 of their colors, e.g. of a sqrt scale steps of 1, 2 and 5 with more space
 for the small values, `format` of the values, by default the one of the
-hover, `missing` an entry beside them, e.g. of the regions of a map without
+hover (without one the limits of classes have the digits of the step of
+the ticks of an axis and more to tell them apart, the ones of a
+`threshold` scale as given, e.g. `0,25`, `0,50`, `0,75`), `missing` an
+entry beside them, e.g. of the regions of a map without
 a value (`{"name": "keine Daten", "color": "#DADADA"}`, the color of the
 base of a map). The scale of the colors is horizontal or vertical
 (`orientation`, the high values at the top, also an expression of

@@ -1367,6 +1367,23 @@ describe('maps', () => {
         expect([...el.querySelectorAll('.vis-color-legend text')].map(t => t.textContent)).toEqual(['2,0', '3,5']);
     });
 
+    test('the limits of a threshold scale as given, with the digits to tell them apart (0,25 was 0,3)', async () => {
+        const labels = async (scale, legend = {}) => {
+            const def = mapDef();
+            def.dims.value.scale = scale;
+            def.dims.value.legend = { ...def.dims.value.legend, ...legend };
+            // (no format of the hover, which is the one of the legend then)
+            delete def.dims.value.hover;
+            return [...(await mount({ def, data: mapData })).querySelectorAll('.vis-color-legend text')].map(t => t.textContent);
+        };
+        expect(await labels({ type: 'threshold', domain: [0.25, 0.5, 0.75], scheme: 'Greens' })).toEqual(['0,25', '0,50', '0,75']);
+        expect(await labels({ type: 'threshold', domain: [1, 1.5, 12000], scheme: 'Greens' })).toEqual(['1,0', '1,5', '12.000,0']);
+        expect(await labels({ type: 'threshold', domain: [0.125, 0.25], scheme: 'Greens' }, { classes: true })).toEqual(['< 0,125', '0,125–0,250', '≥ 0,250']);
+        // a format of the legend is the one given
+        expect(await labels({ type: 'threshold', domain: [0.25, 0.5], scheme: 'Greens' }, { format: '.0%' })).toEqual(['25%', '50%']);
+        expect(errors).toEqual([]);
+    });
+
     test('a label per class of a threshold scale, open ends', async () => {
         const def = mapDef();
         def.dims.value.scale = { type: 'threshold', domain: [2, 3.5], scheme: 'Greens' };

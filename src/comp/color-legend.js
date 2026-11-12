@@ -56,6 +56,22 @@ const fixedFormat = (locale, ticks) => {
     return locale.number.format(`,.${small ? d3.precisionFixed(small) : 0}~f`);
 };
 
+// the format of the limits of classes: as the ticks of an axis (the
+// precision of their step), with more digits until the limits are told
+// apart, of a threshold scale (`exact`) until they are the ones given, e.g.
+// 0.25 of 0.25, 0.5 and 0.75 (not 0.3 of the step 0.1), at most 6 digits
+const limitFormat = (locale, limits, exact) => {
+    const [lo, hi] = d3.extent(limits);
+    const grouping = Math.max(Math.abs(lo), Math.abs(hi)) >= 10000 ? ',' : '';
+    const first = lo < hi ? Math.max(0, d3.precisionFixed(d3.tickStep(lo, hi, 4))) : 0;
+    for (let digits = first; ; digits++) {
+        const format = locale.number.format(`${grouping}.${digits}f`);
+        const kept = !exact || limits.every(v => Math.abs(+v.toFixed(digits) - v) <= 1e-9*Math.max(1, Math.abs(v)));
+        if (digits >= Math.max(first, 6) || (kept && new Set(limits.map(format)).size == limits.length))
+            return format;
+    }
+};
+
 /**
  * The legend of the colors of a scale without orientation of the dim
  * `legend`, a gradient of a continuous scale, the classes of a threshold,
@@ -143,7 +159,9 @@ function createColorLegend(vis, legend) {
             // a box per class, the limits between them
             const colors = s.range();
             const limits = colors.slice(1).map(c => s.invertExtent(c)[0]);
-            const format = formatter(limits);
+            // (the limits of a threshold scale are given, the ones of
+            // quantize and quantile scales computed)
+            const format = given || limits.length == 0 ? formatter(limits) : limitFormat(store.locale, limits, !s.quantiles && !s.thresholds);
             const right = m.scale?.closed == 'right';
             const text = i => i == 0 ? `${right ? '≤' : '<'} ${format(limits[0])}`
                 : i == colors.length - 1 ? `${right ? '>' : '≥'} ${format(limits.at(-1))}`
