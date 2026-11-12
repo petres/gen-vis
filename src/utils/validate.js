@@ -1062,8 +1062,10 @@ const checkTransforms = ({ def, globals, warn, rows }) => {
                 [['key', key], ['value', value]].filter(([, c]) => typeof c == 'string' && before.has(c) && !folded.has(c) && !isTemplate(c))
                     .forEach(([k, c]) => warn(`${path}.${k}`, `the column '${c}' of the rows is replaced by the ${k}s of the folded columns, e.g. "${k}": "${k == 'key' ? 'name' : 'amount'}"`));
             }
+        } else if (t.type == 'aggregate' && t.column === undefined && [t.op].flat().every(op => op == 'count' || isTemplate(op))) {
+            // a count without a column counts the rows
         } else if (typeof t.column != 'string')
-            warn(`${path}.column`, `the column of the values is needed`);
+            warn(`${path}.column`, t.type == 'aggregate' ? `the column of the values is needed, e.g. "column": "value" (a count without one counts the rows)` : `the column of the values is needed`);
         if (t.type == 'bin' && t.edges === undefined && t.step === undefined)
             warn(`${path}.edges`, `the edges of the classes are needed, e.g. [{ "from": 50, "to": 250, "step": 5 }, 143], or a 'step'`);
         if (t.replace !== undefined && !['bin', 'fold'].includes(t.type))

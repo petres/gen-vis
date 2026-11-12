@@ -83,6 +83,10 @@ const checkOp = t => {
     const ops = [t.op].flat();
     if (ops.length == 0 || ops.some(op => !aggregateOps.includes(op)))
         throw new Error(`aggregate: the op is one of ${aggregateOps.map(o => `'${o}'`).join(', ')}, or a list of them`);
+    // a count without a column counts the rows, the other ops need the values
+    const valued = ops.find(op => op != 'count');
+    if (t.column === undefined && valued !== undefined)
+        throw new Error(`aggregate: the op '${valued}' needs the 'column' of the values, e.g. "column": "value" (a count without one counts the rows)`);
     ops.forEach(op => probabilityOf(op, t));
     if (Array.isArray(t.op) ? t.as !== undefined && (!Array.isArray(t.as) || t.as.length != t.op.length || t.as.some(c => typeof c != 'string')) : Array.isArray(t.as))
         throw new Error(`aggregate: 'as' is a list of the names of the columns of a list of ops, one per op, e.g. "op": ["min", "max"], "as": ["lo", "hi"]`);
@@ -622,7 +626,7 @@ const aggregateRows = (t, { n, get, numbers, groups }) => {
     const rows = all.map(g => {
         const first = g.reduce((a, b) => Math.min(a, b), Infinity);
         const keys = Object.fromEntries(by.map(c => [c, get(first, c) ?? null]));
-        const values = g.map(numbers).filter(v => v !== null);
+        const values = t.column === undefined ? g : g.map(numbers).filter(v => v !== null);
         return { ...keys, ...Object.fromEntries(ops.map((op, j) => [names[j], aggregateOf(op, values, t)])) };
     });
     // the aggregate replaces a column of the groups of its name
@@ -680,7 +684,8 @@ const aggregateOfGroups = (t, { n, numbers, groups }) => {
     const ops = [t.op].flat();
     const results = ops.map(() => new Array(n).fill(null));
     groups.forEach(g => {
-        const values = g.map(numbers).filter(v => v !== null);
+        // (of a count without a column the rows)
+        const values = t.column === undefined ? g : g.map(numbers).filter(v => v !== null);
         ops.forEach((op, j) => {
             const value = aggregateOf(op, values, t);
             g.forEach(i => results[j][i] = value);
@@ -884,7 +889,7 @@ const applyTransforms = (rows, transforms = [], globals = {}, utc = new Set(), b
             continue;
         }
         // the columns of the transform, of an aggregate of several ops one per op
-        const added = result.columns ?? [[t.as ?? t.column, result]];
+        const added = result.columns ?? [[madeBy(t)[0], result]];
         added.forEach(([name, values]) => {
             // the values of all rows, none of the ones of the filters before
             const all = index ? new Array(base.length).fill(null) : values;

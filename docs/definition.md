@@ -395,7 +395,8 @@ column:
   the rows named as the `key` or the `value` is replaced by it, the warning
   of the transform says so.
 - `aggregate`: an aggregate of the values of `column` of the group (`op`):
-  `sum`, `mean`, `min`, `max`, `count` (the number of values), `median`,
+  `sum`, `mean`, `min`, `max`, `count` (the number of values, without a
+  `column` the number of rows, named `count` by default), `median`,
   `q1` and `q3` (the lower and the upper quartile), `quantile` (of `p`, from
   0 to 1, e.g. `"p": 0.9`), `first` or `last` (in the order of `order`),
   missing values are left out. The median, the quartiles and the quantiles

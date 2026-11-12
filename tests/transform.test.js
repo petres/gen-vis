@@ -368,6 +368,16 @@ describe('fold, aggregate and window', () => {
         expect(() => applyTransforms(rows, { type: 'aggregate', column: 'value', op: 'total' })).toThrow('aggregate: the op is one of');
     });
 
+    test('aggregate: a count without a column counts the rows (also of missing values), named count; other ops need a column', () => {
+        expect(rowsOf(rows, { type: 'aggregate', by: 'type', op: 'count', rows: true })).toEqual([{ type: 'gas', count: 3 }, { type: 'oil', count: 3 }]);
+        expect(column({ type: 'aggregate', by: 'type', op: 'count', as: 'n' }, 'n')).toEqual([3, 3, 3, 3, 3, 3]);
+        expect(() => applyTransforms(rows, { type: 'aggregate', by: 'type', op: 'sum' })).toThrow("aggregate: the op 'sum' needs the 'column' of the values");
+        const def = { dims: { x: 'type', y: 'n' }, marks: { type: 'bar' } };
+        expect(validateDef({ ...def, transform: { type: 'aggregate', by: 'type', op: 'count', rows: true, as: 'n' } }, rows)).toEqual([]);
+        expect(validateDef({ ...def, transform: { type: 'aggregate', by: 'type', op: 'sum', rows: true, as: 'n' } })).toEqual([
+            `transform[0].column: the column of the values is needed, e.g. "column": "value" (a count without one counts the rows)`]);
+    });
+
     test('aggregate: quartiles and quantiles, as the median, also of rows (a box plot) and of a window', () => {
         // gas 10, 30, 40; oil 5, 15
         expect(column({ type: 'aggregate', column: 'value', by: 'type', op: 'q1', as: 'q' }, 'q')).toEqual([20, 20, 20, 7.5, 7.5, 7.5]);

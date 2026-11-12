@@ -19,8 +19,9 @@ const list = transforms => [transforms ?? []].flat();
 // the columns of the values of a transform which adds columns: `as` (by
 // default `column`, which it replaces); of an aggregate of a list of ops
 // (e.g. ["q1", "median", "q3"]) a column per op, `as` the list of their
-// names, by default the names of the ops
-const madeBy = t => t.type == 'aggregate' && Array.isArray(t.op) ? t.op.map((op, j) => Array.isArray(t.as) ? t.as[j] : op) : [t.as ?? t.column];
+// names, by default the names of the ops (of a count without a column `count`)
+const madeBy = t => t.type == 'aggregate' && Array.isArray(t.op) ? t.op.map((op, j) => Array.isArray(t.as) ? t.as[j] : op)
+    : [t.as ?? t.column ?? (t.type == 'aggregate' ? t.op : undefined)];
 
 let types = null;
 const loadTransforms = async () => types ??= await lazy.transform();
