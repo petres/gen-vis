@@ -1,4 +1,4 @@
-export { itemOf, create, setAttr, getAttr, scriptAttr, scriptElement, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
+export { itemOf, create, setAttr, getAttr, scriptAttr, scriptElement, loadsElsewhere, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd };
 
 import { interpolate, interpolateTransformSvg } from 'd3-interpolate';
 
@@ -45,11 +45,44 @@ const create = tag => {
     return document.createElementNS(q?.space ?? namespaces.svg, local);
 };
 
-// an attribute which runs script, of a definition, e.g. of the props of a
-// mark or of a legend: a handler (e.g. onclick) or a link of javascript:,
-// vbscript: or data: (other than of an image), they are not set
-const scriptAttr = (name, value) => /^(?:[\w-]+:)?on/i.test(name)
-    || (/^(?:[\w-]+:)?(?:href|src|action|formaction)$/i.test(name) && /^(?:javascript|vbscript|data(?!:image\/)):/i.test(String(value).replace(/[\u0000-\u0020]/g, '')));
+// a url of the page: relative or of its origin, of data: or of an element
+// of the document (#id), see loadsElsewhere
+const ofPage = url => {
+    const u = url.replace(/[\u0000-\u0020]/g, '');
+    if (u === '' || u.startsWith('#') || /^data:/i.test(u))
+        return true;
+    try {
+        return typeof location != 'undefined' && new URL(u, document.baseURI).origin === location.origin;
+    } catch {
+        return false;
+    }
+};
+
+// a value of an attribute or a style of a definition which loads a file of
+// another origin, e.g. to track the viewers of a chart of someone else, or
+// into its images: a url() which is not one of the page (see ofPage),
+// the other functions of css which load images, escapes of css which could
+// hide them (only in a value with a function)
+const loadsElsewhere = value => {
+    const v = String(value);
+    if (!v.includes('('))
+        return false;
+    if (/\\|(?:image|image-set|cross-fade|src)\s*\(/i.test(v))
+        return true;
+    const urls = [...v.matchAll(/url\s*\(\s*(?:"([^"]*)"|'([^']*)'|([^)'"\s]*))\s*\)/gi)];
+    return urls.length != (v.match(/url\s*\(/gi) ?? []).length || urls.some(m => !ofPage(m[1] ?? m[2] ?? m[3]));
+};
+
+// an attribute of a definition, e.g. of the props of a mark or of a legend,
+// which runs script or loads a file of another origin, they are not set: a
+// handler (e.g. onclick), a link of javascript:, vbscript: or data: (other
+// than of an image), a link of another element than `a` (`tag`, e.g. of
+// image or use) to another origin, or a value which loads one, see
+// loadsElsewhere (not texts, e.g. title)
+const scriptAttr = (name, value, tag = null) => /^(?:[\w-]+:)?on/i.test(name)
+    || (/^(?:[\w-]+:)?(?:href|src|action|formaction)$/i.test(name) && (/^(?:javascript|vbscript|data(?!:image\/)):/i.test(String(value).replace(/[\u0000-\u0020]/g, ''))
+        || (String(tag).toLowerCase() != 'a' && !ofPage(String(value)))))
+    || (!/^(?:data-|aria-|title$)/i.test(name) && loadsElsewhere(value));
 
 // the value of an attribute of an element, also of a name with a namespace,
 // null without one
@@ -62,7 +95,7 @@ const getAttr = (node, name) => {
 // `xlink:href`, null and undefined remove it
 const setAttr = (node, name, value) => {
     const q = qualified(name);
-    if (value === null || value === undefined || scriptAttr(name, value))
+    if (value === null || value === undefined || scriptAttr(name, value, node.localName))
         q ? node.removeAttributeNS(q.space, q.local) : node.removeAttribute(name);
     else
         q ? node.setAttributeNS(q.space, q.local, value) : node.setAttribute(name, value);

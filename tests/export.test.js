@@ -104,6 +104,26 @@ describe('the width of an export', () => {
 });
 
 describe('exportSvg', () => {
+    // review of 5.0: a definition made the page and its images load files of other origins
+    test('no images and no files of other origins, also of the symbols and the props of a legend', async () => {
+        const d = def();
+        d.dims.c.legend = { props: { style: 'color: red; background: url(http://evil.example/leg.png)' }, symbol: { size: 16, elements: [
+            { type: 'image', props: { href: 'data:image/png;base64,AAAA', width: 16, height: 16 } },
+            { type: 'image', props: { href: 'http://evil.example/sym.png', width: 16, height: 16 } },
+            { type: 'use', props: { href: 'http://evil.example/u.svg#x' } },
+            { type: 'circle', props: { r: 5, style: 'fill: url(http://evil.example/st.png)', stroke: 'url(http://evil.example/s.svg#a)' } }] } };
+        d.marks[0].style = 'stroke: red; background: url(http://evil.example/mark.png)';
+        const vis = await chart({ def: d });
+        const html = vis.el.innerHTML;
+        expect(html).not.toMatch(/evil\.example/);
+        expect(vis.el.querySelector('.vis-legend-entry').getAttribute('style') ?? '').toBe('');
+        // the image of data: is drawn on the page, not in the file
+        expect(vis.el.querySelectorAll('.vis-legend image')).not.toHaveLength(0);
+        const svg = await vis.exportSvg();
+        expect(svg).not.toMatch(/evil\.example|<image|<use\b/);
+        expect(errors).toEqual([]);
+    });
+
     test('an SVG of its own, without HTML, classes, styles and css variables', async () => {
         const vis = await chart();
         const svg = await vis.exportSvg();

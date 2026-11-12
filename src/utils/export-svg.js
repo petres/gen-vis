@@ -220,7 +220,7 @@ const inlineSvg = (orig, copy, parent, shifts, halos) => {
     if (copy.hasAttribute('href'))
         copy.setAttributeNS(xlink, 'xlink:href', copy.getAttribute('href'));
     dropped.forEach(a => copy.removeAttribute(a));
-    [...copy.attributes].filter(a => a.name.startsWith('data-') || a.name.startsWith('aria-') || scriptAttr(a.name, a.value)).forEach(a => copy.removeAttribute(a.name));
+    [...copy.attributes].filter(a => a.name.startsWith('data-') || a.name.startsWith('aria-') || scriptAttr(a.name, a.value, tag)).forEach(a => copy.removeAttribute(a.name));
     if (cs.textTransform && cs.textTransform != 'none' && (tag == 'text' || tag == 'tspan'))
         copy.childNodes.forEach(n => {
             if (n.nodeType == Node.TEXT_NODE)
@@ -467,8 +467,10 @@ const compose = (root, B, unit, asked) => {
         const unpin = pinnedArrows(s);
         inlineSvg(s, copy, {}, baselineShifts(s), halos);
         unpin();
-        // no script of the page in the file, e.g. of a slot (see scriptElement)
-        [...copy.querySelectorAll('*')].filter(e => scriptElement(e.localName)).forEach(e => e.remove());
+        // no script of the page in the file, e.g. of a slot (see scriptElement),
+        // no images and no uses of other files, e.g. of a symbol of a legend
+        [...copy.querySelectorAll('*')].filter(e => scriptElement(e.localName) || /^(?:image|feimage)$/i.test(e.localName)
+            || (e.localName == 'use' && !(e.getAttribute('href') ?? e.getAttributeNS(xlink, 'href') ?? '').startsWith('#'))).forEach(e => e.remove());
         splitHalos(halos);
         const g = svgEl('g');
         // the opacity of the svg element itself is in the one of the walk

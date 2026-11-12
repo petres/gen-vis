@@ -34,7 +34,7 @@ const writeValue = (node, k, v) => {
         node.style.removeProperty(k);
         node[styles].delete(k);
     }
-    if (v === null || v === undefined || scriptAttr(k, v))
+    if (v === null || v === undefined || scriptAttr(k, v, node.localName))
         node.removeAttribute(k);
     else if (isStyle(k, v)) {
         node.style.setProperty(k, v);

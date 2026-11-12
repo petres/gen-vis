@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 import { describe, test, expect, vi } from 'vitest';
-import { itemOf, create, setAttr, getAttr, scriptAttr, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd } from '@/utils/dom';
+import { itemOf, create, setAttr, getAttr, scriptAttr, loadsElsewhere, join, pointer, cubicInOut, animate, interrupt, interruptAll, finish, targetOf, onEnd } from '@/utils/dom';
 
 const svg = () => document.body.appendChild(create('svg'));
 const wait = ms => new Promise(r => setTimeout(r, ms));
@@ -40,6 +40,39 @@ describe('attributes and elements which run script', () => {
         setAttr(node, 'xlink:href', 'data:image/png;base64,AAAA');
         expect(node.attributes).toHaveLength(2);
         expect(scriptAttr('opacity', 'javascript:x')).toBe(false);
+    });
+
+    // review of 5.0: styles of legends, marks and symbols, image and use loaded files of other origins
+    test('nothing of another origin is loaded: no url() of it, no link of an image or a use to it', () => {
+        expect(loadsElsewhere('fill: url(http://evil.example/a.png)')).toBe(true);
+        expect(loadsElsewhere("background: url( 'https://evil.example/a.png' )")).toBe(true);
+        expect(loadsElsewhere('url(//evil.example/a.svg#x)')).toBe(true);
+        expect(loadsElsewhere('background: u\\72l(http://evil.example/a.png)')).toBe(true);
+        expect(loadsElsewhere('background: image-set("http://evil.example/a.png" 1x)')).toBe(true);
+        expect(loadsElsewhere('url("http://evil.example/a)b")')).toBe(true);
+        // of the page: an element, data:, relative or of its origin
+        expect(loadsElsewhere('url(#gradient)')).toBe(false);
+        expect(loadsElsewhere('fill: url("data:image/png;base64,AAAA")')).toBe(false);
+        expect(loadsElsewhere('url(img/a.png)')).toBe(false);
+        expect(loadsElsewhere(`url(${location.origin}/a.png)`)).toBe(false);
+        expect(loadsElsewhere('translate(10, 20) rotate(5)')).toBe(false);
+        const image = create('image');
+        setAttr(image, 'href', 'http://evil.example/a.png');
+        setAttr(image, 'xlink:href', 'https://evil.example/a.png');
+        setAttr(image, 'style', 'fill: red; background: url(http://evil.example/a.png)');
+        setAttr(image, 'stroke', 'url(http://evil.example/a.svg#x)');
+        expect(image.attributes).toHaveLength(0);
+        setAttr(image, 'href', 'data:image/png;base64,AAAA');
+        setAttr(image, 'stroke', 'url(#x)');
+        expect(image.attributes).toHaveLength(2);
+        const use = create('use');
+        setAttr(use, 'href', 'http://evil.example/u.svg#x');
+        expect(use.hasAttribute('href')).toBe(false);
+        // links are no loads, texts no styles
+        const a = create('a');
+        setAttr(a, 'href', 'https://example.org/');
+        setAttr(a, 'title', 'Bilder (url(x) image(s))');
+        expect(a.attributes).toHaveLength(2);
     });
 
     test('no elements of script', () => {

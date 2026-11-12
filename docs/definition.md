@@ -136,7 +136,11 @@ flex of the children (e.g. `color`, `font-weight`, `font-size`,
 `text-align`, `margin`, `padding`, `border`, `width`, `display: grid`,
 `column-gap`), not the position (`position`, `top`, `transform` and the like)
 and nothing which loads a file (`url()`). The props of marks and legends
-set no handlers of events (`on...`) and no links of `javascript:`, the
+set no handlers of events (`on...`) and no links of `javascript:`, load
+nothing of another origin (no `url()` of one in a value or a `style`, no
+`href` of an `image` or a `use` to one; relative urls, the ones of the
+page, `data:` and `url(#id)` stay; the SVG of the
+[export](export.md) has no images and no uses of other files), the
 symbols of the legends draw no `script`, `foreignObject`, `iframe`,
 `style` or animations of SVG, and the props of the
 [highlight](#highlight-and-others) are names of CSS properties with values

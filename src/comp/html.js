@@ -1,6 +1,6 @@
 export { el, patch, setText, setHtml, cleanHtml, slotNodes, takeRange, place, emitter };
 
-import { scriptAttr } from "@/utils/dom";
+import { loadsElsewhere, scriptAttr } from "@/utils/dom";
 
 // the html elements of the visualisation without a framework: an element
 // with its attributes (el), the attributes of an element patched (patch),
@@ -13,9 +13,10 @@ const patched = Symbol('patched');
 const booleans = new Set(['hidden', 'disabled', 'checked', 'selected']);
 
 // a property of the styles, `null` and `undefined` remove it, the css
-// variables by their name, the others also in camel case, e.g. `minHeight`
+// variables by their name, the others also in camel case, e.g. `minHeight`,
+// a value which loads a file of another origin is none, see loadsElsewhere
 const setProperty = (style, name, value) => {
-    value = value === null || value === undefined ? '' : String(value);
+    value = value === null || value === undefined || loadsElsewhere(value) ? '' : String(value);
     if (name.includes('-'))
         style.setProperty(name, value);
     else
@@ -23,14 +24,15 @@ const setProperty = (style, name, value) => {
 };
 
 /**
- * The styles of an element: a string is all of them (`cssText`), an object
+ * The styles of an element: a string is all of them (`cssText`, none of
+ * one which loads a file of another origin, see loadsElsewhere), an object
  * the properties by their names (the ones of the object before which it
  * does not have anymore are removed), null none.
  */
 const setStyle = (node, style, before) => {
     if (typeof style == 'string') {
         if (before !== style)
-            node.style.cssText = style;
+            node.style.cssText = loadsElsewhere(style) ? '' : style;
         return;
     }
     if (before && typeof before == 'object')
@@ -82,7 +84,7 @@ const patch = (node, attrs) => {
 
 // (an attribute which runs script, e.g. onclick of the props of a legend, is not set)
 const set = (node, name, v) => {
-    if (v === null || v === undefined || scriptAttr(name, v))
+    if (v === null || v === undefined || scriptAttr(name, v, node.localName))
         node.removeAttribute(name);
     else if (node.getAttribute(name) !== String(v))
         node.setAttribute(name, v);
