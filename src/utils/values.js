@@ -1,6 +1,6 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { escapeHtml, isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy };
+export { escapeHtml, isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy, hashOf };
 
 // an object of a definition, e.g. a dim, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
@@ -69,3 +69,12 @@ const truthy = v => typeof v == 'string' ? !falseText.test(v) : (Array.isArray(v
 // a text as html, e.g. a value of a global in a template of html
 const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
 const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);
+
+// a short hash of a text (FNV-1a of 32 bits) in base 36, e.g. of the ids of
+// an export or of the key of a definition
+const hashOf = text => {
+    let h = 0x811c9dc5;
+    for (let i = 0; i < text.length; i++)
+        h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
+    return (h >>> 0).toString(36);
+};

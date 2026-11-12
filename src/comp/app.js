@@ -2,6 +2,7 @@ export { createGenVis, propNames };
 
 import { createStore } from '@/store.js';
 import { sameValue } from "@/utils/def";
+import { hashOf } from "@/utils/values";
 import { copyImage } from '@/utils/clipboard.js';
 import { lazy } from '@/utils/lazy';
 import { pixelsOf } from '@/utils/warn';
@@ -340,15 +341,18 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     // the definition of the visualisation, the key of its height; not with
     // its width, which would force a layout of the page at the mount of
     // every chart, the height of the same definition at another width is
-    // only a guess of the space, the real one follows with the draw
-    const sourceKey = () => props.defFile ?? (typeof props.def == 'string' ? props.def : JSON.stringify(props.def));
+    // only a guess of the space, the real one follows with the draw; of an
+    // inline one a hash and the length of its text, not the text, the map
+    // keeps 500 (a collision is only a wrong guess of the space)
+    const sourceKey = (json = typeof props.def == 'string' ? props.def : JSON.stringify(props.def)) =>
+        props.defFile ?? (json === undefined ? 'undefined' : `${hashOf(json)}:${json.length}`);
 
     const init = async () => {
         // the props are used when it is near the viewport
         if (observer || removed)
             return;
-        heightKey = sourceKey();
         loadedDef = props.def && typeof props.def == 'object' ? JSON.stringify(props.def) : null;
+        heightKey = sourceKey(loadedDef ?? undefined);
         // the definition loaded before is not shown when it is ready
         if (props.def === null && props.defFile === null) {
             store.cancel();

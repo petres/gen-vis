@@ -19,6 +19,7 @@
 export { composeSvg, units };
 
 import { scriptAttr, scriptElement } from "@/utils/dom";
+import { hashOf } from "@/utils/values";
 
 const ns = 'http://www.w3.org/2000/svg';
 const xlink = 'http://www.w3.org/1999/xlink';
@@ -539,14 +540,6 @@ const compose = (root, B, unit, asked) => {
         out.prepend(defs);
     prefixIds(out);
     return new XMLSerializer().serializeToString(out);
-};
-
-// a short hash of a text (FNV-1a of 32 bits) in base 36
-const hashOf = text => {
-    let h = 0x811c9dc5;
-    for (let i = 0; i < text.length; i++)
-        h = Math.imul(h ^ text.charCodeAt(i), 0x01000193);
-    return (h >>> 0).toString(36);
 };
 
 // the ids of an svg (e.g. of the clips and the gradients) and their

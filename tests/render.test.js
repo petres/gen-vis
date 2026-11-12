@@ -3346,6 +3346,12 @@ describe('layout shifts', () => {
         await nextTick();
         expect(outer(again).style.minHeight).toBe('');
 
+        // the same definition as a text (the key is a hash of the text)
+        const text = document.body.appendChild(document.createElement('div'));
+        createGenVis(text, { def: JSON.stringify(def), data: lineData });
+        await nextTick();
+        expect(outer(text).style.minHeight).toBe('400px');
+
         // another definition has no space of its own
         const other = document.body.appendChild(document.createElement('div'));
         createGenVis(other, { def: lineDef({ title: 'Andere' }), data: lineData });
