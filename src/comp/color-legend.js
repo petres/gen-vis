@@ -129,7 +129,7 @@ function createColorLegend(vis, legend) {
         const given = formatOf(m, 'legend');
         const formatter = values => given
             ? store.format(given, legend)
-            : store.locale.tickFormat(d3.scaleLinear(d3.extent(values)), 'linear', 4);
+            : store.locale.tickFormat(d3.scaleLinear().domain(d3.extent(values)), 'linear', 4);
         // the ticks of the definition, the ones in the domain
         const fixed = domain => opts.values?.filter(v => v >= d3.min(domain) && v <= d3.max(domain));
         if (!s.ticks && !s.invertExtent && !s.interpolator) {

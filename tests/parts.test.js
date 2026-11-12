@@ -504,6 +504,17 @@ describe('legends', () => {
         expect(svg.querySelector('linearGradient').getAttribute('y1')).toBe('1');
         expect(errors).toEqual([]);
     });
+
+    test('the labels of a color legend without a format: the precision and the separators of the domain of the values', async () => {
+        const heat = (v, scale = { type: 'sequential', interpolator: 'Blues' }) => ({ def: { width: 600, dims: { x: { column: 'k', type: 'categorical' }, y: { column: 't', type: 'categorical' },
+            val: { column: 'v', scale, legend: {} } }, marks: [{ type: 'cell', fill: 'val' }] }, data: `k,t,v\na,p,${v[0]}\nb,p,${v[1]}` });
+        const texts = async (...args) => [...(await mount(heat(...args))).querySelectorAll('.vis-legends text')].map(t => t.textContent.trim());
+        expect(await texts([0.001, 0.005])).toEqual(['0,001', '0,002', '0,003', '0,004', '0,005']);
+        expect(await texts([10000, 50000])).toContain('10.000');
+        expect(await texts([1, 5])).toContain('2');
+        expect(await texts([1, 50000], { type: 'threshold', domain: [1000, 25000], range: ['#eee', '#999', '#333'] })).toEqual(['1.000', '25.000']);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('texts', () => {
