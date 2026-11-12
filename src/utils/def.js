@@ -367,7 +367,7 @@ const prepareDim = (m, name, dataKeys = () => [], marks = [], symbols = {}, rank
         if (m[k] === null || m[k] === false)
             delete m[k];
         else if (m[k] !== undefined)
-            object(m[k], `dims.${name}.${k}`, 'an object, e.g. {}');
+            object(m[k], `dims.${name}.${k}`, k == 'scale' ? 'an object, e.g. {}' : 'an object, e.g. {}, true (of the defaults), null or false (none)');
     });
     if (hasCategories(m)) {
         // the props of a category (`categoryProps`, by its key): the color of

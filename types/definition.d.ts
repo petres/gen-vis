@@ -126,6 +126,10 @@ export type Locale =
  */
 export type Pair = [number | null, number | null];
 /**
+ * null or false removes the part, e.g. the one of a parent.
+ */
+export type Removed = null | false;
+/**
  * A value of a dim, e.g. a date of a string, a reference "@name", e.g. to a global, or an expression, null is taken from the data.
  */
 export type DomainValue = number | string | null | Expression;
@@ -137,9 +141,9 @@ export type DomainValue = number | string | null | Expression;
  */
 export type Pair1 = [number | null, number | null];
 /**
- * null or false removes the part, e.g. the one of a parent.
+ * true is the part of the defaults ({}), null or false removes the part, e.g. the one of a parent.
  */
-export type Removed = null | false;
+export type Switch = true | null | false;
 /**
  * The symbol before the name of a category: auto (the default) of the marks of the categories (a box of their bars or areas, a line of their lines, a dot of their points), line, rect or circle in its color with the style of the first mark of its kind of the categories (e.g. the dash and the width of the lines), or the svg elements, drawn in a box of width x height pixels (size both, by default the one of the defaults of the chart, 16) from 0, 0, at the middle of the capitals of the name; null (or an object without elements) is none, e.g. instead of the one of a parent.
  */
@@ -251,7 +255,10 @@ export interface GenVisDefinition {
      * A text instead of the marks if there are no rows, e.g. of a filter, a template of the globals.
      */
     empty?: string | InLanguages | Expression;
-    hover?: Hover;
+    /**
+     * The hover, false (or null) switches it off.
+     */
+    hover?: Hover | Removed;
     highlight?: Highlight;
     /**
      * Css font-family, by default the css variable --gen-vis-font-family or Inter (in the package).
@@ -761,9 +768,9 @@ export interface Dim {
      */
     interval?: string;
     scale?: Scale | Removed;
-    axis?: Axis | Removed;
-    legend?: Legend | Removed;
-    hover?: DimHover | Removed;
+    axis?: Axis | Switch;
+    legend?: Legend | Switch;
+    hover?: DimHover | Switch;
     /**
      * The domain of the scale, see scale.domain, e.g. [0, null].
      */
@@ -1047,21 +1054,26 @@ export interface Axis {
      * Lines at the ticks; also `grid` of the dim.
      */
     grid?: boolean;
-    title?: {
-        name?: string | InLanguages;
-        /**
-         * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).
-         */
-        offset?: number;
-        /**
-         * Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.
-         */
-        position?: `=${string}` | ('side' | 'top');
-        /**
-         * Of a title at the top: its distance above the range of the scale, 8 pixels by default.
-         */
-        gap?: number;
-    };
+    /**
+     * The title of the axis, a text is its name, e.g. "Revenue" is { "name": "Revenue" }.
+     */
+    title?:
+        | string
+        | {
+              name?: string | InLanguages;
+              /**
+               * The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).
+               */
+              offset?: number;
+              /**
+               * Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.
+               */
+              position?: `=${string}` | ('side' | 'top');
+              /**
+               * Of a title at the top: its distance above the range of the scale, 8 pixels by default.
+               */
+              gap?: number;
+          };
     /**
      * The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults).
      */

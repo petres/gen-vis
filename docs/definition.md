@@ -697,7 +697,8 @@ A dim is a column of the data with a name, its type, its scale, its axis,
 its legend, its categories and its part of the hover; the marks and all
 other parts of the definition refer to it by its name. A text is the
 column, `"x": "Jahr"` is `"x": {"column": "Jahr"}`. `null` (or `false`)
-removes a dim or a part of a dim of a parent, e.g. `"hover": null`.
+removes a dim or a part of a dim of a parent, e.g. `"hover": null`;
+`true` is an `axis`, a `legend` or a `hover` of the defaults, as `{}`.
 
 ```json
 {
@@ -1052,7 +1053,7 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   and their `props`, as the ones of `domain`, radial axes have none.
 - `grid` (also of the dim): lines at the ticks.
 - `title`: `{"name", "offset"}`, its text and the distance from the
-  axis, by default 8 pixels inside the edge of the margin, of a radial axis
+  axis (a text is its name, `"title": "Jahr"` is `{"name": "Jahr"}`), by default 8 pixels inside the edge of the margin, of a radial axis
   16 pixels outside of the circle; in the middle of the range of the scale,
   rotated beside a left or right axis, `"position": "side"`, the default;
   of a left or right axis `"position": "top"` puts it horizontal above the
@@ -2122,6 +2123,9 @@ See `data/sprit-nuts/def.json`, `data/rechtsform/def-stacked-p.json` and
 `data/energy/weather/temperature-polar.json`.
 
 ## `hover`
+
+`"hover": false` (or `null`) switches the hover of the chart off, also its
+keys.
 
 The hover shows the rows of the position under the pointer: of the
 vertical axis at the horizontal position of the pointer, of horizontal bars

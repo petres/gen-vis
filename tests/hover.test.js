@@ -78,6 +78,14 @@ describe('the nearest position of the hover', () => {
         expect(errors).toEqual([]);
     });
 
+    test('a position of no values, e.g. of a column which is none of the data: no hover, no error', async () => {
+        const el = await mount({ def: { ...lineDef(), dims: undefined, marks: { type: 'point', x: 'yaer', y: 'value' } }, data: 'year,value\n2020,1\n2021,2' });
+        await move(el, 260);
+        expect(title(el)).toBeUndefined();
+        // the warnings of the draw, no error of the hover
+        expect(errors).toEqual([expect.stringMatching(/marks\[0\]\.x: no dim and no column 'yaer'/), expect.stringMatching(/none of its 2 rows is drawn/)]);
+    });
+
     test('a position whose rows the filter of the hover removes is skipped', async () => {
         const def = lineDef({ hover: { filter: { c: 'Wien' } } });
         const el = await mount({ def, data: 'year,value,land\n2020,1,Wien\n2021,2,Tirol\n2022,3,Wien' });
@@ -181,6 +189,25 @@ describe('the parts of the hover', () => {
         expect(positionsInOrder([{ key: 3 }, { key: 1 }], scaleLinear(), null).map(p => p.key)).toEqual([1, 3]);
         expect(positionsInOrder([{ key: 'b' }, { key: 'a' }], undefined, k => k.toUpperCase()).map(p => p.key)).toEqual(['a', 'b']);
         expect([clamp(-1, 3), clamp(1, 3), clamp(Infinity, 3)]).toEqual([0, 1, 2]);
+    });
+});
+
+describe('no hover', () => {
+    test('"hover": false or null switches the hover off, also its keys', async () => {
+        const data = 'year,value,land\n2020,1,Wien\n2021,2,Wien';
+        for (const hover of [false, null]) {
+            const el = await mount({ def: lineDef({ hover }), data });
+            el.querySelector('svg.vis-svg').dispatchEvent(pointer('pointermove', { clientX: 260, clientY: 100 }));
+            await nextTick();
+            expect(el.querySelector('.vis-hover')).toBeNull();
+            expect(el.querySelector('svg.vis-svg').getAttribute('tabindex')).toBeNull();
+            expect(el.querySelector('svg.vis-svg').getAttribute('role')).toBe('img');
+            expect(el.querySelectorAll('circle').length).toBe(2);
+        }
+        const el = await mount({ def: lineDef(), data });
+        await move(el, 260);
+        expect(title(el)).toBe('2020');
+        expect(errors).toEqual([]);
     });
 });
 

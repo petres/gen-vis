@@ -91,7 +91,8 @@ The parts are merged in their order, a later part overrides an earlier one
 `null` is kept by the merge, the parts of a definition which it removes treat
 it as missing: a dim (`"dims": {"y": null}`), the parts `scale`, `axis`,
 `legend` and `hover` of a dim (also `false`), `geo`, `filter`, `facets`,
-`marks`, `annotations` and `transform`.
+`marks`, `annotations` and `transform`; `"hover": null` (or `false`) of the
+top level switches the hover off.
 
 (The JS implementation is `src/utils/merge.js`, `mergeAll` of
 `src/utils/def.js` with the keys of the arrays and the merge of the

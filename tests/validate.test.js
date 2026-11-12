@@ -54,7 +54,7 @@ test('the conditions of a filter: values, not, range and expressions, not other 
     // a plain name may be a column of the data, of the rows given the columns are known
     expect(validateDef({ ...base(), filter: '@x >= @lo' })).toEqual([]);
     expect(validateDef({ ...base(), filter: '@x >= @lo and @kind != 1' }, [{ year: 2020, value: 1, land: 'Wien', kind: 'a' }]))
-        .toEqual([expect.stringMatching(/^filter\.and\[0\]\.>=\[1\]: unknown reference 'lo'/)]);
+        .toEqual([`filter: expression "@x >= @lo and @kind != 1": unknown reference 'lo'`]);
 });
 
 test('the symbols of legends, the order and the ranks of categories', () => {
@@ -287,7 +287,8 @@ describe('validateDef', () => {
         def.margins = { left: { steps: ['@innerWidth', {}] } };
         expect(validateDef(def)).toEqual([
             "marks[0].r.match[1].Wien: unknown reference 'nope'",
-            "marks[0].cx.+[0].*[0]: unknown reference 'unknown'",
+            // a part of an expression of the string syntax at its key, with its text
+            `marks[0].cx: expression "=(@unknown * 2) + 2": unknown reference 'unknown'`,
             `marks[0].cy.match: expected a value, its cases and a default, e.g. ["@level", { "header": 4.5 }, 0]`,
             "margins.left.steps[0]: unknown reference 'innerWidth', expected one of 'totalWidth'",
         ]);
@@ -344,14 +345,14 @@ describe('validateDef', () => {
         const def = base();
         // null removes a dim, e.g. of a parent
         def.dims.removed = null;
-        def.dims.y.hover = true;
+        def.dims.y.hover = 1;
         def.dims.x.scale = { type: 'implicit' };
         def.marks = [{ ...def.marks, by: 'c' }, { ...def.marks, by: [1] }];
         def.annotations = [null];
         def.controls = [{ id: 'g', name: 'G', global: 'g', type: 'radio', values: [{ id: 'a', name: 'A' }] }, { id: 'h', name: 'H', global: 'h', type: 'radio' }];
         def.locale = 5;
         expect(validateDef(def)).toEqual([
-            'dims.y.hover: expected an object, e.g. {}',
+            'dims.y.hover: expected an object, e.g. {}, true (of the defaults), null or false (none)',
             `annotations[0]: expected an annotation, e.g. { "type": "line", "y": 0 }`,
             "dims.x.scale.type: unknown scale 'implicit', e.g. 'linear', 'time' or 'band'",
             'marks[1].by: expected a dim or a list of dims, e.g. ["land"]',
@@ -445,7 +446,7 @@ describe('validateDef', () => {
             "marks[0].data-y0: unknown reference 'y:start:scaled'",
             "filter.c: unknown reference 'h', expected one of 'g', 'totalWidth'",
             "annotations[0].props.stroke: unknown reference 'color'",
-            "height.steps[0]: unknown reference 'innerWidth', expected one of 'g', 'totalWidth'",
+            `height: expression "=steps(@innerWidth, {0: 300})": unknown reference 'innerWidth', expected one of 'g', 'totalWidth'`,
         ]);
 
         // stacked values and the radius of polar charts
@@ -949,10 +950,10 @@ describe('validateDef in the words of 5.0, the keys of marks and the data', () =
         await loadTransforms();
         const def = { ...base(), filter: '@kind != "x"', marks: { ...base().marks, filter: '@share > 0.1' } };
         expect(validateDef(def)).toEqual([]);
-        expect(validateDef(def, rows)).toEqual([expect.stringMatching(/^marks\[0\]\.filter\.>\[0\]: unknown reference 'share'/)]);
+        expect(validateDef(def, rows)).toEqual([expect.stringMatching(/^marks\[0\]\.filter: expression "@share > 0.1": unknown reference 'share'/)]);
         expect(validateDef({ ...def, transform: { type: 'share', column: 'value', by: 'year', as: 'share' } }, rows)).toEqual([]);
         // a part of a dim is no column
-        expect(validateDef({ ...base(), filter: '@x:nope > 1' })).toEqual([expect.stringMatching(/^filter\.>\[0\]: unknown reference 'x:nope'/)]);
+        expect(validateDef({ ...base(), filter: '@x:nope > 1' })).toEqual([expect.stringMatching(/^filter: expression "@x:nope > 1": unknown reference 'x:nope'/)]);
     });
 
     test('the data: the column of a dim, a channel of no dim and no column, texts of a numeric dim, a by of a column', () => {
@@ -1074,7 +1075,7 @@ describe('mistakes which give a wrong or an empty chart without a message', () =
             marks: { type: 'line', 'data-v': "=format(@y, '.1z')" }, transform: { type: 'format', column: 'month', format: '%W%', as: 'w' } }))).toEqual([
             `dims.x.axis.format: '%b %J' is no d3 time format (unknown directive '%J'), e.g. "%b %Y"`,
             `dims.y.format: ',.2q' is no d3 format of numbers (unknown type 'q'), e.g. ",.0f"`,
-            `marks[0].data-v.format: '.1z' is no d3 format of numbers (unknown type 'z'), e.g. ",.0f"`,
+            `marks[0].data-v: expression "=format(@y, '.1z')": '.1z' is no d3 format of numbers (unknown type 'z'), e.g. ",.0f"`,
             `transform[0].format: '%W%' is no d3 time format (a '%' at the end without a directive), e.g. "%W" (the week of the year) or "%u" (the weekday)`,
         ]);
         expect(validateDef(def({ dims: { x: { column: 'month', type: 'date', format: 'H%K %Y', hover: { format: '%-d. %B' } }, y: { column: 'revenue', format: '.1%' }, region: 'region' } }))).toEqual([]);
@@ -1102,5 +1103,32 @@ describe('mistakes which give a wrong or an empty chart without a message', () =
             dims: { x: 'year', y: 'revenue', region: 'region' }, marks: { type: 'bar', by: 'region', stack: true } });
         expect(validateDef(stacked, rows)).toEqual([
             `marks[0]: the bars are vertical on the continuous scale of the dim 'x', they need a 'width' in pixels, a categorical dim of their position or an "interval" of dates`]);
+    });
+});
+
+describe('the messages of the check in the words of the definition', () => {
+    test('a text of a size, a title of an axis, true of a legend or a hover, no hover', () => {
+        expect(validateDef({ ...base(), height: '220px', width: '50%' })).toEqual([
+            'height: a number of pixels, e.g. 220, not "220px" (read as 220)',
+            'width: expected a number of pixels, e.g. 800, not "50%", the width of a page is the one of its element (CSS)',
+        ]);
+        expect(validateDef({ ...base(), height: '=@totalWidth * 0.5' })).toEqual([]);
+        const def = base();
+        def.dims.x.axis = { title: 'Jahr' };
+        def.dims.c = { ...def.dims.c, legend: true, hover: true };
+        expect(validateDef({ ...def, hover: false })).toEqual([]);
+        expect(validateDef({ ...def, hover: null })).toEqual([]);
+        expect(validateDef({ ...def, dims: { ...def.dims, x: { ...def.dims.x, axis: { title: '{nope}' } } } })).toEqual([
+            "dims.x.axis.title.name: unknown global 'nope' in the text"]);
+    });
+
+    test('the path of the definition: a part of an expression of the string syntax, a mark of no list, a channel of a column', () => {
+        expect(validateDef({ ...base(), marks: { type: 'line', 'stroke-width': '=@y *' } })).toEqual(['marks[0].stroke-width: expression "=@y *": unexpected end at 5']);
+        expect(validateDef({ ...base(), filter: '@yaer > 2000' }, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
+            `filter: expression "@yaer > 2000": unknown reference 'yaer', did you mean 'year'?`]);
+        // an operator object as written keeps its path
+        expect(validateDef({ ...base(), filter: { '>': ['@x:nope', 1] } })).toEqual([expect.stringMatching(/^filter\.>\[0\]: unknown reference 'x:nope'/)]);
+        expect(validateDef({ marks: { type: 'point', x: 'yaer', y: 'value' } }, [{ year: 2020, value: 1 }])).toEqual([
+            "marks[0].x: 'yaer' is neither a dim nor a column of the data, did you mean 'year'?"]);
     });
 });

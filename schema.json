@@ -104,7 +104,12 @@
             "anyOf": [{ "type": "string" }, { "$ref": "#/definitions/inLanguages" }, { "$ref": "#/definitions/expression" }],
             "description": "A text instead of the marks if there are no rows, e.g. of a filter, a template of the globals."
         },
-        "hover": { "$ref": "#/definitions/hover" },
+        "hover": {
+            "if": { "type": "object" },
+            "then": { "$ref": "#/definitions/hover" },
+            "else": { "$ref": "#/definitions/removed" },
+            "description": "The hover, false (or null) switches it off."
+        },
         "highlight": { "$ref": "#/definitions/highlight" },
         "fontFamily": {
             "type": "string",
@@ -235,6 +240,10 @@
         },
         "none": { "type": "null", "description": "Removes the part of a parent." },
         "removed": { "enum": [null, false], "description": "null or false removes the part, e.g. the one of a parent." },
+        "switch": {
+            "enum": [true, null, false],
+            "description": "true is the part of the defaults ({}), null or false removes the part, e.g. the one of a parent."
+        },
         "key": {
             "anyOf": [{ "type": "string" }, { "type": "number" }],
             "description": "A key of a feature of a map or of a category, compared as a string."
@@ -920,30 +929,35 @@
                 },
                 "grid": { "type": "boolean", "description": "Lines at the ticks; also `grid` of the dim." },
                 "title": {
-                    "type": "object",
-                    "additionalProperties": false,
-                    "properties": {
-                        "name": {
-                            "if": { "type": "string" },
-                            "then": { "type": "string" },
-                            "else": { "$ref": "#/definitions/inLanguages" }
-                        },
-                        "offset": {
-                            "type": "number",
-                            "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)."
-                        },
-                        "position": {
-                            "if": { "type": "string", "pattern": "^=" },
-                            "then": { "type": "string", "pattern": "^=" },
-                            "else": { "enum": ["side", "top"] },
-                            "description": "Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.",
-                            "default": "side"
-                        },
-                        "gap": {
-                            "type": "number",
-                            "description": "Of a title at the top: its distance above the range of the scale, 8 pixels by default."
+                    "if": { "type": "string" },
+                    "then": { "type": "string" },
+                    "else": {
+                        "type": "object",
+                        "additionalProperties": false,
+                        "properties": {
+                            "name": {
+                                "if": { "type": "string" },
+                                "then": { "type": "string" },
+                                "else": { "$ref": "#/definitions/inLanguages" }
+                            },
+                            "offset": {
+                                "type": "number",
+                                "description": "The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults)."
+                            },
+                            "position": {
+                                "if": { "type": "string", "pattern": "^=" },
+                                "then": { "type": "string", "pattern": "^=" },
+                                "else": { "enum": ["side", "top"] },
+                                "description": "Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.",
+                                "default": "side"
+                            },
+                            "gap": {
+                                "type": "number",
+                                "description": "Of a title at the top: its distance above the range of the scale, 8 pixels by default."
+                            }
                         }
-                    }
+                    },
+                    "description": "The title of the axis, a text is its name, e.g. \"Revenue\" is { \"name\": \"Revenue\" }."
                 },
                 "padding": {
                     "type": "number",
@@ -1253,17 +1267,17 @@
                 "axis": {
                     "if": { "type": "object" },
                     "then": { "$ref": "#/definitions/axis" },
-                    "else": { "$ref": "#/definitions/removed" }
+                    "else": { "$ref": "#/definitions/switch" }
                 },
                 "legend": {
                     "if": { "type": "object" },
                     "then": { "$ref": "#/definitions/legend" },
-                    "else": { "$ref": "#/definitions/removed" }
+                    "else": { "$ref": "#/definitions/switch" }
                 },
                 "hover": {
                     "if": { "type": "object" },
                     "then": { "$ref": "#/definitions/dimHover" },
-                    "else": { "$ref": "#/definitions/removed" }
+                    "else": { "$ref": "#/definitions/switch" }
                 },
                 "domain": {
                     "anyOf": [

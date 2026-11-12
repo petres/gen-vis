@@ -56,6 +56,8 @@ const ofGlobals = (node, what) => anyOf([node, expressionText, expression], what
 
 // null or false removes a part of a parent, e.g. an axis
 const removable = (node, description) => cases([[isObject, node]], ref('removed'), description);
+// a part of a dim, `true` its defaults ({}), null or false removes it
+const switchable = (node, description) => cases([[isObject, node]], ref('switch'), description);
 
 const dataFormat = choice(dataFormats, 'The format of the data, by default the one of the extension of its url, without one parquet, CSV or JSON by the content.');
 
@@ -77,6 +79,7 @@ const definitions = {
 
     none: nul('Removes the part of a parent.'),
     removed: choice([null, false], 'null or false removes the part, e.g. the one of a parent.'),
+    switch: choice([true, null, false], 'true is the part of the defaults ({}), null or false removes the part, e.g. the one of a parent.'),
     key: anyOf([{ type: 'string' }, { type: 'number' }], 'A key of a feature of a map or of a category, compared as a string.'),
     pair: array({ anyOf: [{ type: 'number' }, { type: 'null' }] }, undefined, { minItems: 2, maxItems: 2 }),
 
@@ -231,12 +234,12 @@ const definitions = {
         domain: object({ props: props() }, 'The props of the line of the axis (svg attributes, its class is domain, a circle of an angular axis) of the names of the facet, e.g. { "props": { "stroke-opacity": 0.4 } }.'),
         rotate: number('The angle of the labels in degrees, positive counterclockwise, negative clockwise.'),
         grid: boolean('Lines at the ticks; also `grid` of the dim.'),
-        title: object({
+        title: cases([[isString, { type: 'string' }]], object({
             name: text(),
             offset: number('The distance from the axis in pixels, by default of cartesian axes 8 pixels inside the edge of the margin, of radial axes 16 pixels outside of the circle (see the prop defaults).'),
             position: option(['side', 'top'], 'Of a vertical axis: beside it, rotated, in the middle of the range of its scale (side), or horizontal above its range (top), e.g. the unit at the top left, starting at the distance offset from the axis.', { default: 'side' }),
             gap: number('Of a title at the top: its distance above the range of the scale, 8 pixels by default.'),
-        }),
+        }), 'The title of the axis, a text is its name, e.g. "Revenue" is { "name": "Revenue" }.'),
         padding: number('The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults).', { default: 3 }),
     }, 'The axis of a dim of a position, x and y have one by default.'),
 
@@ -306,9 +309,9 @@ const definitions = {
         format: text('The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f"; or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, \',.0f\')" in thousands.'),
         interval: pattern('^\\s*([1-9]\\d*)?\\s*(minute|hour|day|week|month|quarter|half|year)s?\\s*$', 'Of a date dim of a time or utc scale: a value is the period starting at it, minute, hour, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates (the ticks at the starts of the units, e.g. days, not noons); the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats).'),
         scale: removable(ref('scale')),
-        axis: removable(ref('axis')),
-        legend: removable(ref('legend')),
-        hover: removable(ref('dimHover')),
+        axis: switchable(ref('axis')),
+        legend: switchable(ref('legend')),
+        hover: switchable(ref('dimHover')),
         domain: ofGlobals(array(ref('domainValue'), undefined, { minItems: 1 }), 'The domain of the scale, see scale.domain, e.g. [0, null].'),
         zero: boolean('The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`.'),
         nice: anyOf([{ type: 'boolean' }, { type: 'number' }], 'Rounds the ends of the domain of the scale, see scale.nice.'),
@@ -560,7 +563,7 @@ const schema = {
         class: string('The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page.'),
         message: anyOf([{ type: 'string' }, { type: 'null' }, expressionText, expression], 'A text instead of the marks and the legends, a template and an expression of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the marks.'),
         empty: anyOf([{ type: 'string' }, ref('inLanguages'), expression], 'A text instead of the marks if there are no rows, e.g. of a filter, a template of the globals.'),
-        hover: ref('hover'),
+        hover: cases([[isObject, ref('hover')]], ref('removed'), 'The hover, false (or null) switches it off.'),
         highlight: ref('highlight'),
         fontFamily: string('Css font-family, by default the css variable --gen-vis-font-family or Inter (in the package).'),
         dims: map(cases([[isObject, ref('dim')], [isString, string('The column, e.g. "year".')]], ref('none')), 'The dims of the columns of the data by their names, the marks and all other parts of the definition refer to them, a text is the column, null removes a dim, e.g. of a parent.'),

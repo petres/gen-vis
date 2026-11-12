@@ -63,7 +63,7 @@ const createHover = (store, slots) => {
     let title = null;
     let table = null;
 
-    const template = () => store.def.hover ?? {};
+    const template = () => store.def.hover || {};
     // the rows from the top to the bottom, see orderOf of comp/facet-hover.js
     const sortedOf = data => [...(data ?? [])].sort((a, b) => byOrder(a.order, b.order));
 

@@ -145,6 +145,11 @@ const typeOf = (m, name, used) => {
 // system, `axes` if the coordinate system has axes
 const normalizeDim = (raw, orientation, axes = true) => {
     const m = { ...raw };
+    // `true` is a part of the defaults, e.g. "legend": true is {}, a text of
+    // the title of an axis is its name
+    ['axis', 'legend', 'hover'].filter(k => m[k] === true).forEach(k => m[k] = {});
+    if (isObject(m.axis) && typeof m.axis.title == 'string')
+        m.axis = { ...m.axis, title: { name: m.axis.title } };
     const scaled = scaleKeys.filter(k => k in m);
     if (scaled.length > 0) {
         if (m.scale !== null && m.scale !== false)
@@ -246,6 +251,9 @@ const categoryNames = def => new Set([
  */
 const normalize = (raw, { markTypes = {} } = {}) => {
     const def = clone(raw);
+    // no hover: null as false, which the preparation keeps
+    if (def.hover === null)
+        def.hover = false;
     const coord = def.coord ?? 'cartesian';
     if (def.marks !== undefined)
         def.marks = def.marks.map(p => normalizeMark(p, coord, markTypes));

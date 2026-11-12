@@ -276,6 +276,16 @@ describe('rendering', () => {
         expect(errors).toEqual([]);
     });
 
+    test('shorthands of the parts of a dim: a text of the title of an axis is its name, true a legend or a hover of the defaults', async () => {
+        const def = lineDef();
+        def.dims.x.axis.title = 'Jahr';
+        def.dims.c = { column: 'land', legend: true, hover: true };
+        const el = await mount({ def, data: lineData });
+        expect(el.querySelector('.vis-axis-title').textContent).toBe('Jahr');
+        expect([...el.querySelectorAll('.vis-legend-entry')].map(e => e.dataset.key)).toEqual(['Wien', 'Tirol']);
+        expect(errors).toEqual([]);
+    });
+
     test('categories of the data, colored by a scheme', async () => {
         const def = lineDef();
         def.dims.c = { ...def.dims.c, fromData: true, scheme: 'Tableau10', categories: { Tirol: {} } };
@@ -2581,8 +2591,8 @@ describe('fixed bugs', () => {
     test('a definition which can not be drawn is an error of the part', async () => {
         const message = async def => (await mount({ def, data: lineData })).querySelector('.vis-error')?.textContent;
         const def = lineDef();
-        def.dims.y.hover = true;
-        expect(await message(def)).toBe('dims.y.hover: expected an object, e.g. {}');
+        def.dims.y.hover = 1;
+        expect(await message(def)).toBe('dims.y.hover: expected an object, e.g. {}, true (of the defaults), null or false (none)');
         // the facets of a dim which does not exist (of a numeric one its values are the categories)
         expect(await message({ ...lineDef(), facets: { by: 'nope' } })).toBe("facets.by: unknown dim 'nope', the dims are 'x', 'y', 'c'");
         expect(await message({ ...lineDef(), marks: [null] })).toMatch(/^marks\[0\]: expected a mark/);

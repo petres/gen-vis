@@ -508,6 +508,10 @@ const makeScale = (name, dim, rows, { dims = {}, coord = {}, scope = {}, stackOf
     }
 
     s.domain(domain);
+    // every scale has the nearest value, e.g. of the hover, also a continuous
+    // one of the categories of the rows, e.g. of no type without values of
+    // its column (none of the data), whose domain is empty
+    s.nearest ??= p => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - p));
     // the ticks of data of whole numbers are whole numbers (`integers`, e.g.
     // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js),
     // the ones of periods the starts of the periods (e.g. days, not noons,

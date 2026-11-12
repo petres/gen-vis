@@ -33,7 +33,7 @@ See [definition.md](definition.md#definition).
 | `class` | string |  | The class of the element of the visualisation (vis), a template of the globals, e.g. for the styles of a page. |
 | `message` | string \| null \| expression |  | A text instead of the marks and the legends, a template and an expression of the globals and totalWidth, e.g. steps of a narrow screen, null or an empty text for the marks. |
 | `empty` | string \| text \| expression |  | A text instead of the marks if there are no rows, e.g. of a filter, a template of the globals. |
-| `hover` | [hover](#hover) |  | The hover: the dims of its rows (columns) and its box, templates of html, their values are text. |
+| `hover` | [hover](#hover) \| null |  | The hover, false (or null) switches it off. |
 | `highlight` | [highlight](#highlight) |  | The highlight of the elements, see highlight and others of the marks. |
 | `fontFamily` | string |  | Css font-family, by default the css variable --gen-vis-font-family or Inter (in the package). |
 | `dims` | map |  | The dims of the columns of the data by their names, the marks and all other parts of the definition refer to them, a text is the column, null removes a dim, e.g. of a parent. |
@@ -54,9 +54,9 @@ See [definition.md](definition.md#dims).
 | `format` | string \| text |  | The d3 format of the values (a time format of dates), the one of the axis and of the hover without their own, e.g. ",.0f"; or an expression of the value (the name of the dim), e.g. "=format(@y / 1000, ',.0f')" in thousands. |
 | `interval` | string |  | Of a date dim of a time or utc scale: a value is the period starting at it, minute, hour, day, week, month, quarter, half (a year), year or a number of them, e.g. "6 months": the domain of the data reaches the end of the last period; @x:scaled (also @x:scaled:center) is the middle of the period of a row, so bars, points, lines and the hover are in the middle of their period, @x:scaled:start and @x:scaled:end are its start and end, @x:step its length in pixels (bars 80% of it by default); ticks, grid lines and annotations stay at their dates (the ticks at the starts of the units, e.g. days, not noons); the hover shows the period, e.g. H2 2023 (%K is the half of the year in formats). |
 | `scale` | [scale](#scale) \| null |  |  |
-| `axis` | [axis](#axis) \| null |  |  |
-| `legend` | [legend](#legend) \| null |  |  |
-| `hover` | [dimHover](#dimHover) \| null |  |  |
+| `axis` | [axis](#axis) \| switch |  |  |
+| `legend` | [legend](#legend) \| switch |  |  |
+| `hover` | [dimHover](#dimHover) \| switch |  |  |
 | `domain` | list of domainValue \| expression |  | The domain of the scale, see scale.domain, e.g. [0, null]. |
 | `zero` | boolean |  | The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`. |
 | `nice` | boolean \| number |  | Rounds the ends of the domain of the scale, see scale.nice. |
@@ -124,7 +124,7 @@ See [definition.md](definition.md#axes).
 | `domain` | object |  | The props of the line of the axis (svg attributes, its class is domain, a circle of an angular axis) of the names of the facet, e.g. { "props": { "stroke-opacity": 0.4 } }. |
 | `rotate` | number |  | The angle of the labels in degrees, positive counterclockwise, negative clockwise. |
 | `grid` | boolean |  | Lines at the ticks; also `grid` of the dim. |
-| `title` | object |  |  |
+| `title` | string \| object |  | The title of the axis, a text is its name, e.g. "Revenue" is { "name": "Revenue" }. |
 | `padding` | number | `3` | The gap between the tick marks and the labels in pixels, also of polar axes, 3 by default (see the prop defaults). |
 
 ## The legend of a dim (`dims.<name>.legend`)<a id="legend"></a>

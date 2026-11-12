@@ -133,13 +133,19 @@ describe('the schema', () => {
         expect(errors({ annotations: { type: 'line', y: { '*': ['@target', 1.1] }, label: 'Ziel' } })).toEqual([]);
     });
 
-    test('false or null removes a part of a dim, the keys of a parent', () => {
+    test('false or null removes a part of a dim, the keys of a parent, true is an axis, a legend or a hover of the defaults', () => {
         for (const part of ['scale', 'axis', 'hover', 'legend']) {
             expect(errors({ dims: { c: { [part]: false } } })).toEqual([]);
             expect(errors({ dims: { c: { [part]: null } } })).toEqual([]);
-            expect(errors({ dims: { c: { [part]: true } } })).not.toEqual([]);
+            expect(errors({ dims: { c: { [part]: true } } }).length == 0).toBe(part != 'scale');
+            expect(errors({ dims: { c: { [part]: 1 } } })).not.toEqual([]);
         }
         expect(errors({ dims: { c: null }, filter: null, geo: null })).toEqual([]);
+        // no hover, the text of the title of an axis
+        expect(errors({ hover: false })).toEqual([]);
+        expect(errors({ hover: null })).toEqual([]);
+        expect(errors({ hover: true })).not.toEqual([]);
+        expect(errors({ dims: { c: { axis: { title: 'Revenue' } } } })).toEqual([]);
     });
 
     test('rejects typos and wrong values, also at the top level', () => {

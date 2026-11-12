@@ -159,7 +159,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
     let box = null;
 
     // the options of the hover, see docs/usage.md "Events and slots"
-    const hoverOptions = () => store.def.hover ?? {};
+    const hoverOptions = () => store.def.hover || {};
 
     // the keys of the hover: the arrows to the left and the right move it
     // to the position before and after, the ones up and down to the row
@@ -211,8 +211,9 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the hover needs the dims of the positions and of the values,
         // of a coordinate system with `values` of the hover only the ones
         // of the values, e.g. of a pie without rings, all rows are one position
+        // (`"hover": false` or null of the definition switches it off)
         const names = ctx.axis;
-        keyboard = Boolean(names.v && (names.h || coord.hover.values));
+        keyboard = Boolean(names.v && (names.h || coord.hover.values)) && store.def.hover !== false && store.def.hover !== null;
         if (!keyboard) {
             hover.visible = false;
             return;

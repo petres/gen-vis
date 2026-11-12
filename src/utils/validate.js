@@ -12,13 +12,14 @@ import { projectionNames } from "@/coords/geo.js";
 import { applyTransforms, madeBy, madeColumns, transformNames, utcColumns } from "@/utils/transform";
 import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
+import { isExpressionText } from "@/utils/expr-parse";
 import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { inferTypes, toDate } from "@/utils/data";
 import { versionError, languageError } from "@/utils/version";
 import { translate, authoredPath, markKeys, positionChannels, typeOf } from "@/utils/language";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
 import { schema, markNames } from "@/schema/definition.js";
-import { similar } from "@/utils/warn";
+import { similar, pixelsOf } from "@/utils/warn";
 import { parentsOf } from "@/utils/load";
 
 // the interpolations of the mark types with a curve, e.g. cartesian:line
@@ -47,7 +48,8 @@ const templateNames = text => typeof text == 'string' ? [...text.matchAll(/\{([\
 const checkRef = (ref, path, warn, names) => {
     if (!names || names.has(ref))
         return;
-    const close = similar(ref, [...names]);
+    // (of the names of rows also the columns, see RowNames)
+    const close = similar(ref, [...names, ...(names.columns ?? [])].filter(n => typeof n == 'string'));
     // the globals are listed once, not also as `globals.<name>`
     const listed = [...names].filter(n => !n.startsWith('globals.'));
     const known = close !== undefined ? `, did you mean ${show(close)}?` : listed.length <= 12 ? `, expected one of ${list(listed)}` : '';
@@ -233,6 +235,9 @@ const describe = node => {
         return show(node.const);
     if (node.pattern == '^@')
         return 'a reference "@name"';
+    // an expression of the string syntax, e.g. "=@totalWidth * 0.5"
+    if (node.pattern == '^[=@]')
+        return 'an expression';
     return typeNames[node.type] ?? 'a value';
 };
 
@@ -946,6 +951,12 @@ const checkOptions = ({ def, names, warn }) => {
         }
     }
     checkProp(def.height, 'height', warn, names.global);
+    // a size is a number of pixels, a text of one is read as it (see sizeOf of utils/warn.js)
+    [['height', 300], ['width', 800]].filter(([k]) => typeof def[k] == 'string' && !/^[=@]/.test(def[k])).forEach(([k, e]) => {
+        const px = pixelsOf(def[k]);
+        warn(k, px !== undefined ? `a number of pixels, e.g. ${px}, not ${JSON.stringify(def[k])} (read as ${px})`
+            : `expected a number of pixels, e.g. ${e}, not ${JSON.stringify(def[k])}${k == 'width' ? ', the width of a page is the one of its element (CSS)' : ''}`);
+    });
     Object.entries(isObject(def.margins) ? def.margins : {}).forEach(([k, v]) => checkProp(v, `margins.${k}`, warn, names.global));
 };
 
@@ -1187,6 +1198,9 @@ const checkData = ctx => {
         if (!columns.has(column)) {
             if (implicit.has(n))
                 warn(implicit.get(n), `'${n}' is neither a dim nor a column of the data${choices(n, [...Object.keys(named), ...names])}`);
+            // the dim of an axis of a channel of a column, e.g. "x": "yaer" without dims
+            else if (!Object.hasOwn(named, n) && implicit.has(column))
+                warn(implicit.get(column), `'${column}' is neither a dim nor a column of the data${choices(column, [...Object.keys(named), ...names])}`);
             else
                 warn(`dims.${n}.column`, unknownColumn(column));
             return;
@@ -1261,7 +1275,7 @@ const context = (def, warn, rows, columns = null) => {
                 return true;
             // null or false removes a part, e.g. the hover of a parent
             if (v !== null && v !== false)
-                warn(`dims.${n}.${k}`, `expected an object, e.g. {}`);
+                warn(`dims.${n}.${k}`, k == 'scale' ? `expected an object, e.g. {}` : `expected an object, e.g. {}, true (of the defaults), null or false (none)`);
             return false;
         }))]));
     // the controls with their index
@@ -1395,6 +1409,30 @@ const defaultProps = (def, normalized, marks = []) => {
 // a warning of the engine's form with the path of the definition, see authoredPath
 const pathed = ([p, m]) => [authoredPath(p), m];
 
+// a warning of a part of an expression of the string syntax (`resolved` is
+// the definition as written), e.g. "filter.==[1]" of "@a == @p", at the
+// key of the text, with the text, as the errors of its syntax, e.g.
+// `filter: expression "@a == @p": unknown reference 'p'`; a list of one
+// entry may be the entry, e.g. "marks[0]" of a mark
+const inExpression = (resolved, [path, message]) => {
+    const keys = String(path).match(/[^.[\]]+|\[\d+\]/g) ?? [];
+    let value = resolved;
+    let at = '';
+    for (const [i, k] of keys.entries()) {
+        if (typeof value == 'string')
+            return isExpressionText(value) ? [at, `expression ${JSON.stringify(value)}: ${message}`] : [path, message];
+        const index = /^\[(\d+)\]$/.exec(k)?.[1];
+        if (index !== undefined)
+            value = Array.isArray(value) ? value[+index] : (index == '0' && i == 1 && isObject(value) ? value : undefined);
+        else
+            value = isObject(value) ? value[k] : undefined;
+        if (value === undefined)
+            return [path, message];
+        at += index !== undefined ? k : at ? `.${k}` : k;
+    }
+    return [path, message];
+};
+
 // the warnings of the engine's form of a definition of 5.0 resolved with
 // the globals `names`, in the words of the definition
 const checkResolved = (authored, names, rows) => {
@@ -1404,8 +1442,8 @@ const checkResolved = (authored, names, rows) => {
     // the columns of the rows given, of the data and of the transforms
     const columns = Array.isArray(rows) && rows.length > 0
         ? transformedColumns(engine.transform, new Set(rows.slice(0, 1000).flatMap(r => isObject(r) ? Object.keys(r) : [])), engine.globals) : null;
-    const warnings = [...checkDef(engine, normalized, rows, { ...defaultProps(engine, normalized, [resolved.marks ?? []].flat()), columns, authored: resolved, parents: parentsOf.get(authored) ?? [] }).map(pathed),
-        ...markKeyWarnings(resolved, columns)];
+    const warnings = [...checkDef(engine, normalized, rows, { ...defaultProps(engine, normalized, [resolved.marks ?? []].flat()), columns, authored: resolved, parents: parentsOf.get(authored) ?? [] })
+        .map(w => inExpression(resolved, pathed(w))), ...markKeyWarnings(resolved, columns)];
     return { resolved, warnings };
 };
 
@@ -1547,7 +1585,8 @@ const validateDef = (raw, rows = null) => {
         ({ warnings: own, resolved } = checkResolved(authored, namesOfGlobals(globals, controls), rows));
     } catch (error) {
         // the shape of a part is none the engine reads, e.g. a dim of a number
-        return [error.message];
+        // (a mark of no list is the first one, as in the other warnings)
+        return [error.message.replace(/^(marks|annotations|transform)\./, (m, k) => isObject(authored[k]) ? `${k}[0].` : m)];
     }
     // the schema of the definition as written, with the expressions of the
     // globals resolved (their values are checked), a warning of the schema
