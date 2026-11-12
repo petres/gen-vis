@@ -392,11 +392,14 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     };
     const dodgeGroup = dodge === undefined || dodge === false ? undefined : (dodge === true ? p.by[0] : dodge);
     // the colors of the categories, of a dim of a scale (e.g. of a color
-    // scale) its scaled value, of a categorical dim the color of its category
+    // scale, also an ordinal one of categories with a `range` or a
+    // `scheme` of colors) its scaled value, of a categorical dim the color
+    // of its category
+    const colorScale = m => isObject(m.scale) && (m.scale.range !== undefined || m.scale.scheme !== undefined);
     ['fill', 'stroke'].forEach(k => {
         const v = props[k];
         if (typeof v == 'string' && Object.hasOwn(dims, v) && isObject(dims[v])) {
-            if (isCategorical(dims[v])) {
+            if (isCategorical(dims[v]) && !colorScale(dims[v])) {
                 if (!p.by.includes(v))
                     p.by.push(v);
                 // a group of the mark, as one of its `by`, e.g. in the hover

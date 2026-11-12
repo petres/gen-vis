@@ -1431,7 +1431,9 @@ attributes are merged into the defaults, e.g. `d` of a path.
 - `fill` or `stroke` naming a categorical dim of `dims` is the color of its
   categories (`@color`), the dim is added to `by`; naming another dim, e.g.
   of a scale of colors, the scaled value of the row (`@value:scaled`),
-  e.g. `"fill": "value"` of a heatmap or a choropleth.
+  e.g. `"fill": "value"` of a heatmap or a choropleth, also a categorical
+  dim with a scale of colors of its own (a `range` or a `scheme` of its
+  `scale`, e.g. `"scale": {"type": "ordinal", "range": ["red", "blue"]}`).
 - `r`, `opacity`, `stroke-width` and `font-size` naming a dim which is not
   categorical are its scaled value, e.g. `"r": "size"` of a dim `size` with
   `"scale": {"type": "sqrt", "range": [0, 20]}`.

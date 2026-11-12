@@ -153,6 +153,15 @@ describe('the language of 5.0', () => {
         expect(def.dims.c.fromData).toBe('rows');
     });
 
+    test('a fill of a categorical dim of a scale of colors of its own (an ordinal one of a range) is its scaled value, of a scheme of the dim the color of its category', () => {
+        const def = translate({ dims: { x: { column: 'k', type: 'categorical' }, y: 'v', c: { column: 't', scale: { type: 'ordinal', range: ['red', 'blue'] } }, s: { column: 't', scheme: 'Tableau10' } },
+            marks: [{ type: 'bar', fill: 'c' }, { type: 'bar', fill: 's' }] });
+        expect(def.marks[0].props.fill).toBe('@c:scaled');
+        expect(def.marks[0].by).toEqual([]);
+        expect(def.marks[1].props.fill).toBe('@color');
+        expect(def.marks[1].by).toEqual(['s']);
+    });
+
     test('polar and geo marks', () => {
         const polar = translate({ coord: 'polar', dims: { x: 'angle', y: 'share', c: 'c' },
             marks: [{ type: 'arc', by: 'c', stack: true, innerRadius: 50 }, { type: 'line', by: 'c', curve: 'linearClosed' }] });

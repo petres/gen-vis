@@ -541,6 +541,14 @@ describe('the default fill of bars, areas and arcs without categories', () => {
     });
 });
 
+describe('a fill of a dim of an ordinal scale of colors', () => {
+    test('is the color of its range, no warning', async () => {
+        const el = await mount({ def: { width: 600, dims: { x: { column: 'k', type: 'categorical' }, y: 'v', c: { column: 't', scale: { type: 'ordinal', range: ['red', 'blue'] } } }, marks: [{ type: 'bar', fill: 'c' }] }, data: 'k,v,t\na,1,p\nb,2,q' });
+        expect([...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('fill'))).toEqual(['red', 'blue']);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('bars and ticks of periods and of the scale of another dim (final review of 5.0)', () => {
     const lines = el => [...el.querySelectorAll('g.vis-mark line')].filter(l => l[itemOf]);
     const months = 'd,b\n2020-01-01,3\n2020-02-01,4\n2020-03-01,5';
