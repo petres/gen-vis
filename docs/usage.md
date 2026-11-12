@@ -49,9 +49,9 @@ import { vuePlugin } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist
 Vue.createApp(App).use(vuePlugin(Vue)).mount('#app');
 ```
 
-With a bundler the module is `@preschen/gen-vis/esm`. It has no `types`
-entry in `package.json`; the types are the ones of the main entry
-(`import type { GenVisInstance } from '@preschen/gen-vis'`).
+With a bundler the module is `@preschen/gen-vis/esm`, with its types
+(`types/esm.d.ts`: the ones of the main entry and `createVueComponent` and
+`vuePlugin` of the Vue of the page).
 
 `npm run lib` builds it in `dist-lib/esm/`, with the [export
 page](export.md#export-page). `npm run upload` copies all of `dist-lib/`
@@ -184,7 +184,9 @@ The attributes are strings: `data-download`, `data-csv`, `data-svg`,
 Every visualisation has its own state, several of them can be used on a page.
 If `def`, `defFile` or `data` change (`update` of [createGenVis](#javascript),
 a new prop of the component), the visualisation is loaded again, also of
-other `defaults`, a new `state` or new `globals` are applied without
+other `defaults` (a new object of the same content of `def` or `defaults`
+is not loaded again, e.g. one written in a template of Vue, new data
+always is), a new `state` or new `globals` are applied without
 loading it again. Errors are shown in place of
 the visualisation, e.g. of a definition or data which can not be loaded;
 an error of the draw of a loaded definition, e.g. of a value of a control
@@ -195,7 +197,8 @@ draw it again.
 ## Events and slots
 
 Besides `update:state` (see [state](#state)) the visualisation emits `rendered`
-once it is drawn the first time, `error` with the message of an error and
+once it is drawn, again after every load of a new definition or new data
+(and after a draw which failed before succeeds), `error` with the message of an error and
 `hover` and `select` (a click, a tap or enter and space of the hover by the
 keyboard) with the rows under the mouse, `hover` with `null` at its end (also
 when the chart is drawn anew, e.g. of a new definition, or destroyed), the

@@ -127,6 +127,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     // the page had passed it back, see apply and wantedState
     let keepOwn = false;
     let ownState = null;
+    // the definition object of the load as JSON, a new object of the same
+    // content is not loaded again, e.g. one written in a template of Vue,
+    // a new one of every render of the page (not the data, a structural
+    // compare of many rows would cost more than it saves)
+    let loadedDef = null;
     // the listeners of the props, see setListeners
     const propListeners = {};
     // the table instead of the plots, also of a definition loaded again,
@@ -343,6 +348,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         if (observer || removed)
             return;
         heightKey = sourceKey();
+        loadedDef = props.def && typeof props.def == 'object' ? JSON.stringify(props.def) : null;
         // the definition loaded before is not shown when it is ready
         if (props.def === null && props.defFile === null) {
             store.cancel();
@@ -585,7 +591,8 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         assign(next);
         const changed = k => k in next && next[k] !== before[k];
         // other defaults are drawn anew, the same ones of a new object not
-        const reload = changed('def') || changed('defFile') || changed('data') || (changed('defaults') && !sameValue(next.defaults ?? null, before.defaults ?? null));
+        const newDef = changed('def') && !(loadedDef !== null && props.def && typeof props.def == 'object' && JSON.stringify(props.def) === loadedDef);
+        const reload = newDef || changed('defFile') || changed('data') || (changed('defaults') && !sameValue(next.defaults ?? null, before.defaults ?? null));
         // a state of the page wins, without one a reload keeps the chart's own one
         if ('state' in next)
             keepOwn = false;

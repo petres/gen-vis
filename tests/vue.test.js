@@ -82,6 +82,28 @@ describe('the component', () => {
         expect(errors).toEqual([]);
     });
 
+    // review of 5.0: a definition written in the template (a new object of every render) loaded it again
+    test('a definition of the same content as a new object of a render of the page is not loaded again', async () => {
+        const download = ref(false);
+        const title = ref('Titel');
+        let loads = 0;
+        const { el } = await mountApp(() => h(GenVis, { def: lineDef({ title: title.value }), data: lineData, download: download.value, onRendered: () => loads++ }));
+        await vi.waitFor(() => expect(loads).toBe(1));
+        el.querySelectorAll('.vis-control input')[1].click();
+        download.value = 'chart';
+        await vueTick();
+        await nextTick();
+        await new Promise(r => setTimeout(r, 50));
+        expect(el.querySelector('.vis-download')).not.toBeNull();
+        expect(loads).toBe(1);
+        expect(el.querySelectorAll('.vis-control input')[1].checked).toBe(true);
+        // another content is
+        title.value = 'Neu';
+        await vi.waitFor(() => expect(el.querySelector('.vis-title').textContent).toBe('Neu'));
+        expect(loads).toBe(2);
+        expect(errors).toEqual([]);
+    });
+
     test('the defaults of the parts, e.g. of the tick marks, also changed ones', async () => {
         const defaults = ref({ axis: { padding: 1, tickMarks: { size: 4 } } });
         const { el } = await mountApp(() => h(GenVis, { def: lineDef(), data: lineData, defaults: defaults.value }));
