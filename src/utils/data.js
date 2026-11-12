@@ -554,12 +554,26 @@ const filterRows = (rows, spec, dims, scope = {}, { columns = null, path = 'filt
         const conditions = rowFilter(spec, dims, scope, path, unknown);
         return conditions.length > 0 ? filter(rows, conditions) : rows;
     }
+    // an `and` or an `or` of filters of the object form, e.g. the stacks of
+    // the rows of marks of filters (see translate of utils/language.js): the
+    // rows of all of them or of one of them, in their order
+    if (ofFilters(spec)) {
+        const [op, parts] = Object.entries(spec)[0];
+        const options = { columns, path, unknown };
+        if (op == 'and')
+            return parts.reduce((kept, part) => filterRows(kept, part, dims, scope, options), rows);
+        const kept = new Set(parts.flatMap(part => filterRows(rows, part, dims, scope, options)));
+        return rows.filter(r => kept.has(r));
+    }
     const { expression, converted } = datesAsDates(spec, dims);
     const test = bind(expression, rowResolver(dims, columns, scope, converted));
     if (test.constant)
         return truthy(test()) ? rows : [];
     return rows.filter(row => truthy(test(row)));
 };
+
+const ofFilters = spec => isOperator(spec) && ['and', 'or'].includes(Object.keys(spec)[0]) && Array.isArray(Object.values(spec)[0])
+    && Object.values(spec)[0].some(part => isObject(part) && (!isOperator(part) || ofFilters(part)));
 
 /**
  * An expression of the rows whose comparisons of a date dim compare dates:

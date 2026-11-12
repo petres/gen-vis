@@ -154,6 +154,29 @@ describe('dodged stacked bars', () => {
     });
 });
 
+describe('the stacks of a mark of a filter', () => {
+    const rows = 'x,v,t\n1,1,solar\n2,2,solar\n3,1,solar\n1,2,wind\n2,1,wind\n3,3,wind\n1,4,load\n2,2,load\n3,5,load';
+    const top = async marks => {
+        const el = await mount({ def: { dims: { x: 'x', y: 'v', t: 't' }, marks }, data: rows });
+        expect(errors).toEqual([]);
+        return Math.max(...[...el.querySelectorAll('[data-dim="y"] .tick text')].map(t => Number(t.textContent)));
+    };
+    // the stacks of solar and wind are 4 high at most, the load 5: the rows
+    // the filter leaves out were stacked too (9)
+    test.each([
+        ['an expression', "@t != 'load'", true],
+        ['an object', { t: { not: 'load' } }, true],
+        ['an object and a condition of the stack', { t: { not: 'load' } }, "@t != 'solar' or @x > 0"],
+        ['an expression and a condition of the stack of the object form', "@t != 'load'", { t: ['solar', 'wind'] }],
+    ])('only the rows the filter keeps are stacked: %s', async (_, filter, stack) => {
+        expect(await top([{ type: 'area', by: 't', stack, filter }, { type: 'line', filter: { t: 'load' } }])).toBe(5);
+    });
+    test('the stacks of marks of other filters are the ones of the rows of all of them', async () => {
+        expect(await top([{ type: 'bar', width: 5, by: 't', stack: true, filter: { t: 'solar' } }, { type: 'bar', width: 5, by: 't', stack: true, filter: { t: 'wind' } }])).toBe(5);
+        expect(await top([{ type: 'bar', width: 5, by: 't', stack: true, filter: { t: { not: 'solar' } } }, { type: 'text', text: '@y', y: '@y:end:scaled', stack: true, filter: { t: { not: 'solar' } } }])).toBe(8);
+    });
+});
+
 describe('labels with an anchor', () => {
     test('the text of a value beside its bar', async () => {
         const def = {

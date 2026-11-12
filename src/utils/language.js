@@ -378,11 +378,15 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     // `group` of dodged stacked bars: a stack per slot, e.g. per year and type,
     // the stacks start at 0, the base
     // `"diverging"` stacks all rows, the negative values in the reverse
-    // order, see stack of utils/data.js
+    // order, see stack of utils/data.js; the stacks of a mark are the ones of
+    // its rows, of the ones its `filter` keeps (the others would widen the
+    // domain and be the base of its stacks)
     const stacked = (dim, by, condition, group) => {
         bases.add(dim);
         const diverging = condition === 'diverging';
-        stacks.push({ dim, by, condition: condition === undefined || diverging ? true : condition, group, diverging });
+        const own = condition === undefined || diverging ? true : condition;
+        const kept = p.filter === undefined || p.filter === null || p.filter === true ? own : own === true ? p.filter : { and: [own, p.filter] };
+        stacks.push({ dim, by, condition: kept, group, diverging });
     };
     // the base of a bar or an area of the value of a dim without a start of
     // its own: 0 (the domain includes it, see translate), of an area on a
@@ -861,7 +865,7 @@ const translated = raw => {
         if (diverging)
             m.stackDiverging = true;
         m.stacked = m.stacked === undefined || m.stacked === true || condition === true ? (m.stacked === true || condition === true ? true : condition)
-            : { or: [m.stacked, condition] };
+            : JSON.stringify(m.stacked) == JSON.stringify(condition) ? m.stacked : { or: [m.stacked, condition] };
         if (by !== undefined)
             m.stackBy = by;
         // the stacks of dodged bars are the ones of each slot, see stackGroups of layout.js

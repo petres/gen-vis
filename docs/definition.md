@@ -1478,15 +1478,16 @@ attributes are merged into the defaults, e.g. `d` of a path.
 
 - `stack`: stacks the values of a bar, an area or an arc by the groups of
   `by` (the first category nearest to 0, at the bottom of the positive
-  values, at the top of the negative ones), `true` all rows or an expression
-  of the rows which are stacked (or the values of dims, as a
-  [`filter`](#filter)), the others are not stacked, their start and end are
-  their value, e.g. a line of the consumption or a total on stacked areas
-  of the same dim, their values are in the domain and in the hover:
+  values, at the top of the negative ones), `true` all rows of the mark (the
+  ones its `filter` keeps) or an expression of them which are stacked (or the
+  values of dims, as a [`filter`](#filter)), the others are not stacked,
+  their start and end are their value, e.g. a line of the consumption or a
+  total on stacked areas of the same dim, their values are in the domain
+  and in the hover:
   ```json
   {
       "marks": [
-          { "type": "area", "by": "type", "stack": "@type != 'load'", "filter": "@type != 'load'" },
+          { "type": "area", "by": "type", "stack": true, "filter": "@type != 'load'" },
           { "type": "line", "filter": { "type": "load" } }
       ]
   }
