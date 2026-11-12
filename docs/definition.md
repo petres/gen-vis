@@ -727,10 +727,40 @@ and `angle` (angular) and `y` and `radius` (radial), so `"x": "Jahr"` is
 enough. `"axis": false` leaves out the axis, `"scale": false` the scale,
 `"orientation": null` of the scale is none (e.g. a dim `y` of the sizes
 of points). An axis without a `position` is at the one of the orientation of
-its scale (`bottom`, `left`, `angular`, `radial`), e.g. of a second vertical
-axis `"axis": {}` or `"axis": {"position": "right"}`. A dim a mark names in
+its scale (`bottom`, `left`, `angular`, `radial`). A dim a mark names in
 a channel beside the dim of the axis of the channel (e.g. `"y2": "hi"` of a
-rule) is on the scale of that axis, see [channels](#channels).
+rule) is on the scale of that axis, see [channels](#channels), unless it
+has an axis of its own.
+
+Another dim with an axis of its own is a second axis with a scale of its
+own: the position of its axis says the orientation of its scale (`left`
+and `right` vertical, `top` and `bottom` horizontal), an axis without a
+`position` of a dim which a mark names in `y` (or `x`) is at the other side
+of that axis, at the right (at the top), e.g. rain as bars on the left axis
+and the temperature as a line on the right one:
+
+```json
+{
+    "dims": {
+        "x": { "column": "month", "interval": "month", "format": "%b" },
+        "y": { "column": "rain", "axis": { "title": { "name": "Rain (mm)" } } },
+        "temp": { "column": "temp", "axis": { "position": "right", "title": { "name": "Temperature (°C)" } } }
+    },
+    "marks": [
+        { "type": "bar", "fill": "#9EC5E8" },
+        { "type": "line", "y": "temp", "stroke": "#C3423F" }
+    ]
+}
+```
+
+A second horizontal axis is one of a dim of `x`, e.g. with `"axis":
+{"position": "top"}`. A scale of an orientation keeps the position of its
+orientation: `"scale": {"orientation": "vertical"}` and `"axis": {}` is an
+axis at the left on the one of `y`, e.g. of axes one above the other with
+ranges of their own (`"range": ["@height * 0.5", 0]`); an axis of the
+scale of another dim is `"scale": {"of": "y"}`. `gen-vis check` warns of
+an axis whose position follows from neither and of a position of the
+other orientation, e.g. `"right"` of a horizontal scale.
 
 The shorthands of a dim are parts of its scale and its axis:
 
@@ -1339,8 +1369,10 @@ which names neither a dim nor a column of the data (e.g. a typo, `"x":
 - A dim a channel names beside the dim of its axis (e.g. `"y2": "hi"` of a
   rule, `"x1": "hi"` of a bar) is on the scale of that axis
   (`"scale": {"of": "y"}`), so its values are positions of the axis and
-  they are in its domain; without the dim of the axis it has a scale of
-  its own.
+  they are in its domain; without the dim of the axis, with a scale or
+  with an axis of its own (a [second axis](#dims), e.g. `"y": "temp"` of a
+  dim `temp` with `"axis": {"position": "right"}`) it has a scale of its
+  own.
 - A number is a value on the scale of the axis of the channel
   (`@y:scaled:100`) of `x0` and `y0` of bars and areas, of `y` of bars and
   of every channel of rules (`x`, `y` and the ends `x1`, `x2`, `y1`,

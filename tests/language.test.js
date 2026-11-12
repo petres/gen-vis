@@ -265,6 +265,18 @@ describe('the dims of the channels (review of 5.0)', () => {
         // the column of another axis stays a dim of its own on the scale of the axis, e.g. y2 of the column of y
         expect(translate({ dims: { x: 'year', y: 'v' }, marks: { type: 'rule', y1: 'v', y2: 'hi' } }).dims.hi.scale).toEqual({ of: 'y' });
     });
+    test('a dim of a channel with an axis of its own is a second axis, of a scale of its own', () => {
+        const dims = (temp, channel = 'y') => translate({ dims: { x: 'year', y: 'rain', temp }, marks: [{ type: 'bar' }, { type: 'line', [channel]: 'temp' }] }).dims.temp;
+        expect(dims({ column: 'temp', axis: { position: 'right' } }).scale).toBeUndefined();
+        expect(dims({ column: 'temp', scale: {}, axis: { position: 'right' } }).scale).toEqual({});
+        // without a position at the other side of the axis of the channel
+        expect(dims({ column: 'temp', axis: {} }).axis).toEqual({ position: 'right' });
+        expect(dims({ column: 'temp', axis: {} }, 'x').axis).toEqual({ position: 'top' });
+        // a scale of an orientation keeps the side of its orientation
+        expect(dims({ column: 'temp', scale: { orientation: 'vertical' }, axis: {} }).axis).toEqual({});
+        // without an axis on the scale of the axis of the channel
+        expect(dims({ column: 'temp', axis: false }).scale).toEqual({ of: 'y' });
+    });
     test('a fill of a categorical dim is in the default hover, as a by', () => {
         const t = translate({ dims: { x: 'a', y: 'b', land: { column: 'land', categories: { W: 'red', T: 'blue' } } }, marks: { type: 'point', fill: 'land' } });
         expect(t.marks[0].by).toEqual(['land']);

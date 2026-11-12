@@ -314,12 +314,16 @@ const checkDims = ctx => {
         if (m.scale)
             checkScale(ctx, n, m, path);
         if (m.axis) {
-            if (!m.scale)
+            if (!m.scale && m.axis.position !== undefined)
                 warn(`${path}.axis`, `an axis needs a 'scale'`);
             if (coord.positions.length == 0)
                 warn(`${path}.axis`, `the coordinate system '${coordName}' has no axes`);
+            else if (m.axis.position === undefined)
+                warn(`${path}.axis`, `an axis needs a 'position' or a scale of an orientation, e.g. "position": "right" of a second vertical axis`);
             else if (!coord.positions.includes(m.axis.position))
                 warn(`${path}.axis.position`, `unknown position '${m.axis.position}'${choices(m.axis.position, coord.positions)}`);
+            else if ({ horizontal: ['left', 'right'], vertical: ['top', 'bottom'] }[m.scale?.orientation]?.includes(m.axis.position))
+                warn(`${path}.axis.position`, `'${m.axis.position}' is no position of an axis of a ${m.scale.orientation} scale`);
             checkProp(m.axis.ticks, `${path}.axis.ticks`, warn, names.facet);
             if (m.axis.at !== undefined) {
                 const other = m.scale?.orientation == 'horizontal' ? 'vertical' : 'horizontal';

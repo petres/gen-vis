@@ -159,7 +159,7 @@ const dim = (raw, name) => {
 // the axis does not exist
 // the dims of the axes of the columns of channels, see channelOf
 const axisDims = new WeakSet();
-const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued = false, implicit = null) => {
+const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued = false, implicit = null, cartesian = true) => {
     const v = mark[channel];
     if (v === undefined)
         return axis && Object.hasOwn(dims, axis) ? { dim: axis, value: ref(axis) } : undefined;
@@ -180,9 +180,19 @@ const channelOf = (mark, channel, dims, axis = positionChannels[channel], valued
                 return { dim: name, value: ref(name) };
         }
         // another dim of a position (e.g. "hi" of a rule of y1 and y2) is on
-        // the scale of the axis of the channel, its values in its domain
-        if (axis && v != axis && Object.hasOwn(dims, axis) && !['x', 'y'].includes(v) && isObject(dims[v]) && dims[v].scale === undefined && !isCategorical(dims[v]))
-            dims[v].scale = { of: axis };
+        // the scale of the axis of the channel, its values in its domain; one
+        // with an axis of its own is a second axis with a scale of its own (of
+        // the orientation of the position of its axis, see normalizeDim), by
+        // default at the other side, e.g. a line of "y": "temp" of a dim temp
+        // with "axis": {} at the right
+        const d = dims[v];
+        if (axis && v != axis && Object.hasOwn(dims, axis) && !['x', 'y'].includes(v) && isObject(d) && !isCategorical(d)) {
+            if (!isObject(d.axis)) {
+                if (d.scale === undefined)
+                    d.scale = { of: axis };
+            } else if (cartesian && d.axis.position === undefined && (d.scale === undefined || (isObject(d.scale) && d.scale.of === undefined && d.scale.orientation === undefined)))
+                d.axis = { ...d.axis, position: axis == 'x' ? 'top' : 'right' };
+        }
         return { dim: v, value: ref(v) };
     }
     if (typeof v == 'number' && valued && axis && Object.hasOwn(dims, axis))
@@ -299,7 +309,8 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     p.type = type;
 
     const kind = type.split(':')[1];
-    const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis, false, implicit);
+    const cartesian = coord == 'cartesian';
+    const ch = (name, axis) => channelOf({ ...p, ...props }, name, dims, axis, false, implicit, cartesian);
     // the dims of the positions the mark uses, e.g. of the hover by default
     ['x', 'y', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2'].forEach(n => {
         const c = raw[n] !== undefined || n == 'x' || n == 'y' ? ch(n, n == 'x2' ? 'x' : n == 'y2' ? 'y' : undefined) : undefined;
@@ -312,7 +323,7 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     // a channel only if the mark has it, e.g. the start of a bar
     const given = (name, axis) => raw[name] !== undefined ? ch(name, axis) : undefined;
     // a channel of a value: a number is one on the scale, e.g. the base of a bar
-    const valued = (name, axis = positionChannels[name]) => raw[name] !== undefined ? channelOf({ ...p, ...props }, name, dims, axis, true, implicit) : undefined;
+    const valued = (name, axis = positionChannels[name]) => raw[name] !== undefined ? channelOf({ ...p, ...props }, name, dims, axis, true, implicit, cartesian) : undefined;
     const take = (...names) => names.forEach(n => delete props[n]);
     const stack = p.stack;
     delete p.stack;

@@ -48,6 +48,8 @@ const positions = {
 };
 // the position of an axis of the orientation of its scale
 const axisPositions = { horizontal: 'bottom', vertical: 'left', angular: 'angular', radial: 'radial' };
+// the orientation of the scale of an axis at a position
+const sideOrientations = { left: 'vertical', right: 'vertical', top: 'horizontal', bottom: 'horizontal', angular: 'angular', radial: 'radial' };
 
 const categoricalScales = ['band', 'point', 'ordinal'];
 const dateScales = ['time', 'utc'];
@@ -139,8 +141,9 @@ const typeOf = (m, name, used) => {
     return used.has(name) ? 'categorical' : undefined;
 };
 
-// the normalized dim, `orientation` the one of its name in the coordinate system
-const normalizeDim = (raw, orientation) => {
+// the normalized dim, `orientation` the one of its name in the coordinate
+// system, `axes` if the coordinate system has axes
+const normalizeDim = (raw, orientation, axes = true) => {
     const m = { ...raw };
     const scaled = scaleKeys.filter(k => k in m);
     if (scaled.length > 0) {
@@ -148,6 +151,10 @@ const normalizeDim = (raw, orientation) => {
             m.scale = { ...(isObject(m.scale) ? m.scale : {}), ...Object.fromEntries(scaled.map(k => [k, m[k]])) };
         scaled.forEach(k => delete m[k]);
     }
+    // another dim with an axis at a position has a scale of its own of the
+    // orientation of that position, e.g. a second vertical axis at the right
+    if (!orientation && axes && isObject(m.axis) && (m.scale === undefined || (isObject(m.scale) && m.scale.of === undefined)))
+        orientation = sideOrientations[m.axis.position];
     if (orientation) {
         if (m.scale === undefined)
             m.scale = {};
@@ -188,7 +195,7 @@ const normalizeMark = (raw, coord, markTypes) => {
 const normalizeDims = (dims, coord, marks = [], used = new Set()) => {
     const names = positions[coord] ?? {};
     return Object.fromEntries(Object.entries(dims).map(([n, raw]) => {
-        const m = normalizeDim(raw, Object.hasOwn(names, n) ? names[n] : undefined);
+        const m = normalizeDim(raw, Object.hasOwn(names, n) ? names[n] : undefined, Object.hasOwn(positions, coord));
         m.type ??= typeOf(m, n, used);
         if (m.type === undefined)
             delete m.type;

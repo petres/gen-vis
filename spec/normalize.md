@@ -62,8 +62,12 @@ engine reads; `tests/language.test.js` has cases of step 3.
   - a channel naming a dim is `@<dim>:scaled` (of points, texts and polar
     angles of a categorical dim `@<dim>:scaled:center`), a column of no dim
     adds the dim `{"column": name}`; a dim of a channel beside the dim of
-    its axis (`x0`, `x1`, `x2` of `x`, `y0`, `y1`, `y2` of `y`) which has no
-    scale and is not categorical gets `"scale": {"of": axis}`; a channel
+    its axis (`x`, `x0`, `x1`, `x2` of `x`, `y`, `y0`, `y1`, `y2` of `y`)
+    which has no scale, no axis and is not categorical gets `"scale":
+    {"of": axis}`; one with an axis of its own is a second axis, of a
+    cartesian chart its axis without a `position` and without an orientation
+    of its scale gets the position at the other side, `top` of `x`, `right`
+    of `y`; a channel
     which is left out is the dim of its axis (`x`, `y`) if it exists;
   - a number of `x0`, `y0` of bars, areas and rules, of `y` of bars and of
     `x`, `y` of rules is `@<axis>:scaled:<number>`; other values (numbers,
@@ -128,6 +132,12 @@ writes: the dims are objects, `marks` is a list of objects.
   the sizes of points): cartesian `x` horizontal, `y` vertical, polar `x`
   and `angle` angular, `y` and `radius` radial. A dim of the scale of
   another one (`"scale": {"of": "y"}`) has none of these.
+- Another dim with an axis at a position and a scale without `of` (or
+  none) has a scale of the orientation of the position, unless its scale
+  has an orientation (also `null`): `left` and `right` vertical, `top` and
+  `bottom` horizontal, `angular` angular and `radial` radial, e.g. a second
+  vertical axis `"temp": {"column": "temp", "axis": {"position": "right"}}`
+  (not of a coordinate system without axes).
 - An axis without a `position` is at the one of the orientation of its
   scale: horizontal `bottom`, vertical `left`, angular `angular`, radial
   `radial`.

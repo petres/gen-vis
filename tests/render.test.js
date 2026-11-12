@@ -1703,6 +1703,41 @@ describe('horizontal bars and several value axes', () => {
         // two values: a row of their names above
         expect(await values(def)).toEqual([['', 'y', 'y2'], ['Tirol', '2,0', '20'], ['Wien', '1,0', '10']]);
     });
+
+    test('a dim of a channel with an axis of its own is a second axis of its own scale, not the one of the axis of the channel', async () => {
+        const second = async (other, mark = { type: 'point', y: 'other' }) => {
+            const def = { locale: 'en', width: 600, height: 300, margins: { top: 30, right: 40, bottom: 30, left: 40 },
+                dims: { x: 'year', y: { column: 'value', domain: [0, 4] }, other }, marks: [{ type: 'line' }, mark] };
+            const el = await mount({ def, data: 'year,value,other\n2020,1,10\n2021,2,20\n2022,3,40\n2023,4,30' });
+            const ticks = side => [...el.querySelectorAll(`g.vis-axis-${side} g.tick text`)].map(t => Number(t.textContent));
+            const circles = [...el.querySelectorAll('g.vis-mark circle')];
+            return { ticks, ys: circles.map(c => Math.round(+c.getAttribute('cy'))), xs: circles.map(c => Math.round(+c.getAttribute('cx'))) };
+        };
+        // the right axis of the values of other (10 to 40), the highest point at the top of the plot area
+        for (const other of [
+            { column: 'other', axis: { position: 'right' } },
+            // a scale of the defaults is no other one
+            { column: 'other', scale: {}, axis: { position: 'right' } },
+            // an axis without a position is at the other side of the one of the channel
+            { column: 'other', axis: {} },
+        ]) {
+            const { ticks, ys } = await second(other);
+            expect(ticks('right').at(-1)).toBeGreaterThanOrEqual(40);
+            expect(ticks('left')).toEqual([0, 1, 2, 3, 4]);
+            expect(Math.min(...ys)).toBe(ys[2]);
+            expect(ys[2]).toBeLessThan(40);
+        }
+        // a horizontal one, at the top
+        const top = await second({ column: 'other', axis: { position: 'top' } }, { type: 'point', x: 'other' });
+        expect(top.ticks('top').at(-1)).toBeGreaterThanOrEqual(40);
+        expect(Math.max(...top.xs)).toBe(top.xs[2]);
+        // without an axis of its own a dim is on the scale of the axis of the channel, as before:
+        // its values 10 to 40 of the fixed domain of y (0 to 4) above the plot area
+        const shared = await second({ column: 'other' });
+        expect(shared.ticks('right')).toEqual([]);
+        expect(Math.max(...shared.ys)).toBeLessThan(0);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('transforms', () => {

@@ -316,6 +316,17 @@ describe('validateDef', () => {
             // the warnings of the schema are the last ones
             "dims.x.type: unknown type 'number', expected one of 'numeric', 'date', 'categorical'",
         ]);
+        // a second axis: its scale has the orientation of its position or of the channel which names it,
+        // an axis of neither has no position; a position of the other orientation is no side of the scale
+        def.dims.y.axis = {};
+        def.dims.t = { column: 'temp', axis: {} };
+        def.dims.u = { column: 'temp', scale: { orientation: 'horizontal' }, axis: { position: 'right' } };
+        expect(validateDef(def).filter(w => w.startsWith('dims.t') || w.startsWith('dims.u'))).toEqual([
+            `dims.t.axis: an axis needs a 'position' or a scale of an orientation, e.g. "position": "right" of a second vertical axis`,
+            "dims.u.axis.position: 'right' is no position of an axis of a horizontal scale",
+        ]);
+        delete def.dims.t;
+        delete def.dims.u;
         // the categories of a dim without listed ones are the ones of the data
         def.dims.c = { column: 'land', type: 'categorical', common: { width: 1 } };
         expect(validateDef(def).filter(w => w.startsWith('dims.c'))).toEqual([]);

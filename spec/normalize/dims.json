@@ -35,6 +35,96 @@
     }
   },
   {
+    "name": "another dim with an axis at a position has a scale of the orientation of the position, also of a scale of the defaults",
+    "def": {
+      "dims": {
+        "x": {
+          "column": "year"
+        },
+        "temp": {
+          "column": "temp",
+          "axis": {
+            "position": "right"
+          }
+        },
+        "rain": {
+          "column": "rain",
+          "scale": {},
+          "axis": {
+            "position": "top"
+          }
+        },
+        "fixed": {
+          "column": "fixed",
+          "scale": {
+            "orientation": "vertical"
+          },
+          "axis": {
+            "position": "right"
+          }
+        },
+        "hi": {
+          "column": "hi",
+          "scale": {
+            "of": "x"
+          },
+          "axis": {
+            "position": "top"
+          }
+        }
+      }
+    },
+    "result": {
+      "dims": {
+        "x": {
+          "column": "year",
+          "scale": {
+            "orientation": "horizontal"
+          },
+          "axis": {
+            "position": "bottom"
+          }
+        },
+        "temp": {
+          "column": "temp",
+          "axis": {
+            "position": "right"
+          },
+          "scale": {
+            "orientation": "vertical"
+          }
+        },
+        "rain": {
+          "column": "rain",
+          "scale": {
+            "orientation": "horizontal"
+          },
+          "axis": {
+            "position": "top"
+          }
+        },
+        "fixed": {
+          "column": "fixed",
+          "scale": {
+            "orientation": "vertical"
+          },
+          "axis": {
+            "position": "right"
+          }
+        },
+        "hi": {
+          "column": "hi",
+          "scale": {
+            "of": "x"
+          },
+          "axis": {
+            "position": "top"
+          }
+        }
+      }
+    }
+  },
+  {
     "name": "the parts of the categories stay at the dim, it is categorical",
     "def": {
       "dims": {
