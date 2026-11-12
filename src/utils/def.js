@@ -7,9 +7,9 @@ import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { isMatch, operators, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { hasLocale } from '@/utils/locale';
-import { translate, checkDims, entryOf, optionKeys } from '@/utils/language';
-import { resolve, namesOfGlobals } from '@/utils/resolve';
-import { normalize } from '@/utils/normalize';
+import { entryOf, optionKeys } from '@/utils/language';
+import { namesOfGlobals } from '@/utils/resolve';
+import { compile } from '@/utils/compile';
 
 // arrays whose entries all have a key, an `id`, the `global` of controls or
 // the `value` of their entries, are merged by it, the first of these which
@@ -696,7 +696,7 @@ const resolvedParts = (def, defOrg, authored = null, markTypes = {}, kept = []) 
     if (!authored)
         return pick(JSON.parse(JSON.stringify(pick(defOrg))));
     const names = namesOfGlobals(def.globals, authored.controls);
-    return pick(normalize(checkDims(translate(resolve(authored, names))), { markTypes }));
+    return pick(compile(authored, names, markTypes));
 };
 
 /**

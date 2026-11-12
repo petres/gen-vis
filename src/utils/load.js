@@ -4,8 +4,9 @@ export { valueFormat, resolveUrl, clearCache, resolveParents, parentsOf, readDef
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, oddValues, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
 import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/utils/transform";
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
-import { translate, checkDims, implicitDims, authoredPath } from "@/utils/language";
-import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
+import { translate, checkDims, authoredPath } from "@/utils/language";
+import { compile, implicitOf } from "@/utils/compile";
+import { namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
 import { applyGlobals, applyState, snapshot, userControls } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
@@ -355,15 +356,16 @@ const resolveDef = async ({ def: given, defUrl, data, check, markTypes = builtIn
     // values of its controls
     const authored = await resolveParents(JSON.parse(JSON.stringify(def)), url);
     const name = url === undefined ? 'inline definition' : url;
-    const engine = v => {
+    const engine = make => {
         try {
-            return normalize(checkDims(translate(v)), { markTypes });
+            return make();
         } catch (error) {
             throw authoredError(error);
         }
     };
-    const defOrg = engine(resolve(authored, namesOfGlobals(authored.globals, authored.controls)));
-    defOrg[variantsOf] = engineVariants(resolvedVariants(authored), defOrg, engine);
+    // (an own copy, see compile, it is changed by prepare)
+    const defOrg = engine(() => compile(authored, namesOfGlobals(authored.globals, authored.controls), markTypes));
+    defOrg[variantsOf] = engineVariants(resolvedVariants(authored), defOrg, v => engine(() => normalize(checkDims(translate(v)), { markTypes })));
     // the check of the definition (as written) with the rows, e.g.
     // of years as dates, see load, it is loaded meanwhile
     const validate = async rows => (await checks)?.validateDef(authored, rows)
@@ -512,15 +514,16 @@ const prepare = (defOrg, authored, rows, files, state, globals, { symbols = {}, 
  * with the `globals`; none without rows, unless the header of CSV names
  * the columns.
  */
-const missingColumns = (authored, globals, rows, columns) => {
+const missingColumns = (authored, globals, rows, columns, markTypes) => {
     const data = sourceRows(rows, columns);
     // without rows the columns of the header of CSV, if there is one
     const header = data === rows ? headers.get(rows) : undefined;
     if (!data?.length && !header)
         return [];
+    // the definition the prepared one is of, see compile
     let resolved;
     try {
-        resolved = resolve(authored, namesOfGlobals(globals, authored.controls));
+        resolved = compile(authored, namesOfGlobals(globals, authored.controls), markTypes);
     } catch {
         return [];
     }
@@ -532,7 +535,7 @@ const missingColumns = (authored, globals, rows, columns) => {
         const data = i === undefined ? undefined : [resolved.marks ?? []].flat()[+i]?.data;
         return Array.isArray(data) ? data : [];
     };
-    const implicit = implicitDims(resolved);
+    const implicit = resolved[implicitOf];
     return implicit.filter(d => !known.has(d.column) && !ownOf(d.path).some(r => isObject(r) && Object.hasOwn(r, d.column))).map(d => `${d.path}: no dim and no column '${d.column}' in the data, `
         + `the dims are ${Object.keys(isObject(authored.dims) ? authored.dims : {}).map(n => `'${n}'`).join(', ') || 'none'}, the columns ${names.map(n => `'${n}'`).join(', ')}`);
 };
@@ -627,7 +630,7 @@ const load = async ({ def = null, defUrl = null, data = null, state = null, glob
     const { prepared, defaults, columns } = ready;
     // (with the check its warning of such a channel, see validateDef, not twice)
     if (!check)
-        [...missingColumns(authored, prepared.globals, rows, columns), ...columnReferences(prepared, rows, columns)]
+        [...missingColumns(authored, prepared.globals, rows, columns, markTypes), ...columnReferences(prepared, rows, columns)]
             .forEach(w => console.warn(`gen-vis ${url ?? 'inline definition'}: ${w}`));
     // the values the dims cannot use, e.g. "1,234" among numbers
     const odd = new Map();

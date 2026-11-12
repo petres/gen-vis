@@ -1,4 +1,4 @@
-export { translate, checkDims, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
+export { translate, translated, checkDims, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -45,8 +45,6 @@ const nameKeys = new Set(['$schema', 'parent', 'data', 'dataFormat', 'column', '
 const expressionKeys = new Set(['expr', 'height', 'width', 'margins', 'top', 'right', 'bottom', 'left', 'message', 'cols', 'scales',
     'ticks', 'values', 'tickSpacing', 'at', 'domain', 'include', 'center', 'range', 'inset', 'step', 'pad', 'position', 'orientation',
     'filter', 'stack', 'stacked', 'text', 'label', 'x', 'y', 'x0', 'x1', 'x2', 'y0', 'y1', 'y2', 'lon', 'lat', 'r', 'props', 'highlight', 'others', 'empty']);
-
-const clone = v => v === undefined ? undefined : JSON.parse(JSON.stringify(v));
 
 /**
  * The strings of the string syntax of expressions (see utils/expr-parse.js)
@@ -769,7 +767,8 @@ const translate = raw => translated(raw).def;
 const implicitDims = raw => translated(raw).implicit;
 
 const translated = raw => {
-    const def = compileStrings(clone(raw));
+    // (compileStrings makes new objects and lists of all parts, `raw` is not changed)
+    const def = compileStrings(raw);
     const implicit = [];
     const out = {};
     ['$schema', 'parent', 'data', 'dataFormat', 'transform', 'globals', 'geo', 'annotations'].forEach(k => {

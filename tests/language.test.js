@@ -1,6 +1,7 @@
 import { describe, test, expect } from 'vitest';
 import { translate, compileStrings, implicitDims, authoredPath, optionKeys } from '@/utils/language.js';
 import { resolve } from '@/utils/resolve.js';
+import { compile, implicitOf } from '@/utils/compile.js';
 
 describe('the language of 5.0', () => {
     test('the options, the dims and the marks of a line chart', () => {
@@ -328,4 +329,32 @@ test('"stack": "diverging" stacks all rows, the negative values in the reverse o
     const def = translate({ dims: { x: 'part', y: { column: 'statement', type: 'categorical' }, answer: { column: 'answer', legend: {} } }, marks: { type: 'bar', by: 'answer', stack: 'diverging' } });
     expect(def.dims.x).toMatchObject({ stacked: true, stackDiverging: true });
     expect(translate({ dims: { x: 'year', y: 'n', t: 't' }, marks: { type: 'bar', by: 't', stack: true } }).dims.y.stackDiverging).toBeUndefined();
+});
+
+test('compile: the engine form of the last names is kept, every call gets an own copy of it', () => {
+    let reads = 0;
+    const types = {}, others = { point: {} };
+    const authored = { dims: { y: 'v' }, marks: { type: 'point', x: 'yaer', y: 'y' } };
+    // (the dims are read by every resolve)
+    const dims = authored.dims;
+    Object.defineProperty(authored, 'dims', { enumerable: true, get: () => (reads++, dims) });
+    const a = compile(authored, { s: 1 }, types);
+    const once = reads;
+    expect(once).toBeGreaterThan(0);
+    expect(a[implicitOf]).toEqual([{ path: 'marks[0].x', column: 'yaer' }]);
+    // a change of a copy, e.g. the type of a dim of the rows, is not one of the kept form
+    a.dims.y.type = 'categorical';
+    a.marks.push({});
+    const b = compile(authored, { s: 1 }, types);
+    expect(reads).toBe(once);
+    expect(b).not.toBe(a);
+    expect(b.dims.y.type).toBeUndefined();
+    expect(b.marks).toHaveLength(1);
+    // other names, a name without a value, other mark types: compiled again
+    compile(authored, { s: 2 }, types);
+    compile(authored, { s: undefined }, types);
+    compile(authored, { s: undefined }, others);
+    expect(reads).toBe(4 * once);
+    compile(authored, { s: undefined }, others);
+    expect(reads).toBe(4 * once);
 });
