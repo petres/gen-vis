@@ -175,6 +175,7 @@ plugin of another Vue, the types are the ones of `@preschen/gen-vis/vue`.
 | `table`    | `data-table`    | a button at the right of the footer which shows the rows shown as a table instead of the plots, and the chart again, see [the data](#accessibility-and-the-data) |
 | `imageWidth` | `data-image-width` | the width of the PNG in pixels (the chart is laid out at it, also a definition with a `width` of its own), the one of the definition otherwise or 800, `screen` for the one on the screen (as it is seen, e.g. on a phone) |
 | `lazy`     | `data-lazy`     | draws the visualisation only when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin` of the `IntersectionObserver`, e.g. `"800px 0px"`, a number or a length without a unit is pixels, e.g. `800` or `"800"` (a margin the browser refuses is the default one, with a warning); its files are loaded ahead (three heights) when the browser is idle, see [lazy loading](#lazy-loading) |
+| `nonce`    | `data-nonce`    | the nonce of a content security policy of the page (`style-src 'nonce-…'`), for the stylesheets the package adds to the page, see [content security policy](#content-security-policy) |
 
 The attributes are strings: `data-download`, `data-csv`, `data-svg`,
 `data-copy`, `data-table`, `data-check`, `data-debug` and `data-lazy` without a value or
@@ -498,6 +499,28 @@ and the lines of the axes, `tick` and `domain`, as the ones of d3:
 
 Styles of the page which are in a cascade layer themselves only override the
 package if their layer is declared after it, e.g. `@layer gen-vis, page;`.
+
+### Content security policy
+
+A page with a content security policy of styles without `'unsafe-inline'`,
+e.g. `Content-Security-Policy: style-src 'self' 'nonce-abc'`, gives the
+package its nonce, the prop `nonce` (`data-nonce="abc"`, `:nonce` of Vue).
+The package adds two kinds of `<style>` to the page, the stylesheet of the
+package (once, in the head) and the one of the highlights of each chart:
+both get the nonce. The stylesheet of the package is added when the script
+is loaded, with the nonce of a script of the page if it has one (`<script
+nonce="abc">`, as a policy of scripts of nonces has), else it is blocked
+until the first chart with a `nonce` is created, which adds it again with
+its nonce (the browser reports the first one as a violation). The styles the
+package sets on its elements (e.g. the widths of the facets, the position of
+the hover) are properties of the element (`element.style`), which a policy
+does not block. A policy blocks the `style` attributes of the definition
+itself: a `style` in the `props` of a mark (use the props of their own,
+e.g. `"font-style": "italic"`, or a `class` and a stylesheet of the page)
+and `style` in the HTML of the definition, e.g. of `source` or of a
+template of the hover (it is left out). The `inter.css` of the font (see
+[the font](#the-font)) is a file to link, for a policy of `'self'` or of
+the CDN.
 
 The font and the colors of the package are css variables, e.g. for a dark
 page (the default in brackets):

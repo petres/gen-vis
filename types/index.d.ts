@@ -98,6 +98,8 @@ export interface GenVisProps {
     imageWidth?: number | 'screen' | null;
     /** Loads the definition and the data when it is near the viewport, `true` within one height of the viewport, a string is the `rootMargin`, e.g. `'800px 0px'`, a number (also one of the string without a unit) pixels. */
     lazy?: boolean | string | number;
+    /** The nonce of a content security policy of the page (`style-src 'nonce-…'`) for the stylesheets the package adds. */
+    nonce?: string | null;
 }
 
 /** The rows of the hover and of a click or a tap (`select`), the values of the dims. */

@@ -1479,6 +1479,34 @@ describe('highlight', () => {
     });
 });
 
+describe('a content security policy', () => {
+    test('the stylesheets of the package and of the highlights have the nonce of the prop (and of data-nonce)', async () => {
+        // the stylesheet injected by the script of the package, see vite.config.js
+        const sheet = document.head.appendChild(document.createElement('style'));
+        sheet.setAttribute('data-gen-vis', '');
+        sheet.textContent = '.vis { color: black; }';
+        onTestFinished(() => sheet.remove());
+        const def = lineDef();
+        def.marks[1].highlight = { r: 6 };
+        const el = document.body.appendChild(html('div', { 'data-def': JSON.stringify(def), 'data-data': lineData, 'data-nonce': 'abc' }));
+        const vis = mountGenVisElement(el);
+        await rendered(el);
+        await nextTick();
+        const style = el.querySelector('.vis > style');
+        expect(style.textContent).toContain('r: 6');
+        expect([style.nonce, sheet.nonce]).toEqual(['abc', 'abc']);
+        expect(sheet.textContent).toBe('.vis { color: black; }');
+        vis.update({ nonce: 'xyz' });
+        await nextTick();
+        expect([style.nonce, sheet.nonce]).toEqual(['xyz', 'xyz']);
+        expect(style.textContent).toContain('r: 6');
+        // a chart without one leaves it
+        await mount({ def, data: lineData });
+        expect(sheet.nonce).toBe('xyz');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('data formats', () => {
     test('parquet as data, integers as categories', async () => {
         const def = lineDef();

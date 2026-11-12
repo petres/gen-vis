@@ -65,8 +65,23 @@ const defaults = {
     // the content of the header, the footer, the buttons and the hover, functions
     // of their props which return a node, a text or null
     slots: null,
+    // the nonce of a content security policy of the page (`style-src
+    // 'nonce-…'`) for the stylesheets of the package and of the chart
+    nonce: null,
 };
 const propNames = Object.keys(defaults);
+
+// the stylesheet of the package (injected by the script, see vite.config.js)
+// with the nonce of a content security policy, its text set again, so the
+// browser checks it again with the nonce (a stylesheet blocked before
+// applies then); not one of another nonce, e.g. of the script of the page
+const styleNonce = nonce => {
+    const style = typeof document == 'undefined' ? null : document.querySelector('style[data-gen-vis]');
+    if (!nonce || !style || style.nonce === String(nonce))
+        return;
+    style.nonce = String(nonce);
+    style.textContent = style.textContent;
+};
 
 // the events, see docs/usage.md "Events and slots"
 const events = { onRendered: 'rendered', onError: 'error', onHover: 'hover', onSelect: 'select', 'onUpdate:state': 'update:state' };
@@ -626,6 +641,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             vis?.invalidate();
         if (changed('debug'))
             render();
+        if (changed('nonce')) {
+            styleNonce(props.nonce);
+            vis?.invalidate();
+        }
     };
 
     const instance = {
@@ -682,6 +701,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
 
     if (!root)
         element.appendChild(outer);
+    styleNonce(props.nonce);
     reserved = heights.get(sourceKey()) ?? null;
     render();
     if (!observe())

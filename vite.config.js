@@ -65,8 +65,11 @@ const injectCss = (mode) => ({
             }
             const url = mode == 'module' ? file => `new URL("./fonts/${file}", import.meta.url).href`
                 : file => `new URL("../dist-lib/esm/chunks/fonts/${file}", import.meta.url).href`;
-            // not on a server, e.g. of server side rendering, only in the browser
-            entry.code = `(() => { if (typeof document == "undefined") return; const s = document.createElement("style"); s.textContent = ${fontCode(url)} + "\\n" + ${JSON.stringify(css)}; document.head.appendChild(s); })();\n${entry.code}`;
+            // not on a server, e.g. of server side rendering, only in the
+            // browser; marked, so a chart of the prop `nonce` gives it the
+            // nonce of a content security policy (see comp/app.js), at once
+            // the one of a script of the page, which has the policy's
+            entry.code = `(() => { if (typeof document == "undefined") return; const s = document.createElement("style"); s.setAttribute("data-gen-vis", ""); s.nonce = document.querySelector("script[nonce]")?.nonce ?? ""; s.textContent = ${fontCode(url)} + "\\n" + ${JSON.stringify(css)}; document.head.appendChild(s); })();\n${entry.code}`;
         }
     },
 });

@@ -427,6 +427,13 @@ const createVis = (app, failed = null) => {
         patch(root, { class: rootClass ? `vis ${rootClass}` : 'vis', 'data-vis': uid, ...globalAttrs, style: { '--gen-vis-font-family': opts.fontFamily } });
         const css = highlightStyle(store.def.marks, { scope: `.vis[data-vis="${uid}"]`, transition: Number(opts.highlight?.transition) || 0,
             warn: (mark, message) => warnOnce(store, `highlight:${mark.id}:${message}`, `${markPath(store.def, mark, true)}.${message}`) });
+        // with the nonce of a content security policy (`nonce`), its text set
+        // again of a new one, so the browser checks it again
+        const nonce = String(app.props().nonce ?? '');
+        if (style.nonce !== nonce) {
+            style.nonce = nonce;
+            style.textContent = '';
+        }
         if (style.textContent !== css)
             style.textContent = css;
 

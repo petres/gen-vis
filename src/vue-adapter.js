@@ -23,6 +23,7 @@ const props = {
     table: { type: Boolean, default: false },
     imageWidth: { type: [Number, String], default: null },
     lazy: { type: [Boolean, String, Number], default: false },
+    nonce: { type: String, default: null },
 };
 
 // the events of the visualisation, see docs/usage.md "Events and slots"
