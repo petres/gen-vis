@@ -1,9 +1,10 @@
 import { describe, test, expect, beforeAll } from 'vitest';
 import { applyTransforms, loadTransforms, transformColumns, transformNames } from '@/utils/transform';
 import { transformTypes } from '@/utils/transform-types';
-import { usedColumns } from '@/utils/data';
+import { toNumber, usedColumns } from '@/utils/data';
 import { validateDef } from '@/utils/validate';
 import schema from '../schema.json';
+import { quantile } from 'd3-array';
 
 const rows = [
     { date: '2019-01-01', type: 'gas', value: '10' },
@@ -602,5 +603,129 @@ describe('the names of an expression after a transform of rows (review of 5.0)',
         const data = [{ id: 1 }, { id: 2, k: 5 }];
         const columns = applyTransforms(data, [{ type: 'calc', expr: '@k', as: 'out' }], { k: 9 });
         expect(columns.get('out')).toEqual([null, 5]);
+    });
+});
+
+// the window and the rank as they were before the sliding window of 5.0
+// (every window read again), the reference of the faster ones: the same
+// results, also of -0, of ties and of large values
+const reference = {
+    window: (t, { n, numbers, groups }) => {
+        const quantiles = { median: 0.5, q1: 0.25, q3: 0.75 };
+        const p = t.op == 'quantile' ? toNumber(t.p) : quantiles[t.op];
+        const result = new Array(n).fill(null);
+        const size = Math.max(1, Math.round(toNumber(t.size) ?? 1));
+        const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
+        const ofWindow = (values, start, end) => {
+            if (t.op != 'min' && t.op != 'max') {
+                const v = values.slice(start, end + 1).filter(v => v !== null);
+                return v.length == 0 ? null : quantile(v, p);
+            }
+            let result = null;
+            for (let k = start; k <= end; k++)
+                if (values[k] !== null)
+                    result = result === null ? values[k] : (t.op == 'min' ? Math.min(result, values[k]) : Math.max(result, values[k]));
+            return result;
+        };
+        groups.forEach(g => {
+            const values = g.map(numbers);
+            let sum = 0;
+            let compensation = 0;
+            let count = 0;
+            const add = x => {
+                const s = sum + x;
+                compensation += Math.abs(sum) >= Math.abs(x) ? (sum - s) + x : (x - s) + sum;
+                sum = s;
+            };
+            for (let end = 0; end < values.length; end++) {
+                if (values[end] !== null) {
+                    add(values[end]);
+                    count++;
+                }
+                const start = end - size + 1;
+                if (start > 0 && values[start - 1] !== null) {
+                    add(-values[start - 1]);
+                    count--;
+                }
+                if (start >= 0 && values[start + before] !== null)
+                    result[g[start + before]] = count == 0 ? null
+                        : t.op == 'mean' ? (sum + compensation)/count
+                        : t.op == 'sum' ? sum + compensation
+                        : ofWindow(values, start, end);
+            }
+        });
+        return result;
+    },
+    rank: (t, { n, numbers, groups }) => {
+        const result = new Array(n).fill(null);
+        groups.forEach(g => {
+            const values = g.filter(i => numbers(i) !== null).sort((a, b) => t.descending ? numbers(b) - numbers(a) : numbers(a) - numbers(b));
+            values.forEach((i, k) => {
+                result[i] = k > 0 && numbers(values[k - 1]) === numbers(i) ? result[values[k - 1]] : k + 1;
+            });
+        });
+        return result;
+    },
+};
+
+describe('the sliding window (review of 5.0)', () => {
+    // a seeded random number of [0, 1), mulberry32
+    const random = seed => () => {
+        seed = (seed + 0x6D2B79F5) | 0;
+        let x = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+        x = (x + Math.imul(x ^ (x >>> 7), 61 | x)) ^ x;
+        return ((x ^ (x >>> 14)) >>> 0)/4294967296;
+    };
+    // values with ties, zeros of both signs, small ones beside large ones,
+    // sums beyond the largest number, missing and non-finite ones
+    const pool = [0, -0, '-0', 1, 1, 2, 2, 3, -1, -2.5, 0.1, 0.2, -0.3, '7', ' 7 ', 1e17, -1e17, 1e308, -1e308, 1.7976931348623157e308,
+        5e-324, null, undefined, '', 'x', NaN, Infinity, -Infinity, 'Infinity'];
+    // the context of a transform of rows in groups, in a random order
+    const contextOf = (next, n) => {
+        const raw = Array.from({ length: n }, () => next() < 0.3 ? pool[Math.floor(next()*pool.length)] : Math.round((next() - 0.5)*20)/(next() < 0.5 ? 1 : 4));
+        const parts = 1 + Math.floor(next()*4);
+        const groups = Array.from({ length: parts }, () => []);
+        Array.from({ length: n }, (_, i) => i).sort(() => next() - 0.5).forEach(i => groups[Math.floor(next()*parts)].push(i));
+        return { n, values: i => raw[i], numbers: i => toNumber(raw[i]), groups: groups.filter(g => g.length > 0) };
+    };
+    const same = (a, b) => a.length == b.length && a.every((v, i) => Object.is(v, b[i]));
+
+    test('window: the same results as reading every window, of sizes, alignments, groups, ties, missing and non-finite values', () => {
+        const next = random(5);
+        const ops = [['sum'], ['mean'], ['min'], ['max'], ['median'], ['q1'], ['q3'], ['quantile', 0], ['quantile', 1], ['quantile', 0.1], ['quantile', '0.9'], ['quantile', 1/3]];
+        let compared = 0;
+        for (let run = 0; run < 400; run++) {
+            const context = contextOf(next, 1 + Math.floor(next()*60));
+            const size = [1, 2, 3, 4, 5, 7, 10, 30, 2.6, '5', 100][Math.floor(next()*11)];
+            const align = next() < 0.5 ? 'center' : undefined;
+            ops.forEach(([op, p]) => {
+                const t = { type: 'window', column: 'v', op, p, size, align };
+                const [now, before] = [transformTypes.window(t, context), reference.window(t, context)];
+                if (!same(now, before))
+                    expect({ t, now }).toEqual({ t, now: before });
+                compared += now.filter(v => v !== null).length;
+            });
+        }
+        expect(compared).toBeGreaterThan(10000);
+    });
+
+    test('rank: the same ranks as reading the numbers of every comparison', () => {
+        const next = random(7);
+        for (let run = 0; run < 200; run++) {
+            const context = contextOf(next, 1 + Math.floor(next()*80));
+            [false, true].forEach(descending => {
+                const t = { type: 'rank', column: 'v', descending };
+                expect(transformTypes.rank(t, context)).toEqual(reference.rank(t, context));
+            });
+        }
+    });
+
+    test('a window of 365 rows of 100 000 is fast, of every op', () => {
+        const many = Array.from({ length: 100000 }, (_, i) => ({ v: i % 11 == 0 ? '' : String((i*7919) % 1000), g: i % 3 }));
+        for (const op of ['mean', 'min', 'max', 'median', 'quantile']) {
+            const start = performance.now();
+            applyTransforms(many, { type: 'window', column: 'v', by: 'g', op, p: 0.9, size: 365, as: 'w' });
+            expect(performance.now() - start).toBeLessThan(1000);
+        }
     });
 });

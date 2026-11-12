@@ -131,23 +131,26 @@ const aggregateOf = (op, values, t) => {
  * default) or around the row (`"center"`), missing values are left out,
  * only of whole windows, a row without a value has none, as of cumulative.
  * The window moves along the rows, its sum is compensated (Neumaier), so
- * small values beside large ones are kept, e.g. 1 beside 1e17.
+ * small values beside large ones are kept, e.g. 1 beside 1e17; its least
+ * and largest values are the ones of a queue of the rows which can still
+ * be one, its quantiles the ones of its values kept in order, so a long
+ * window takes no longer than a short one.
  */
 const slide = (t, { n, numbers, groups }, op) => {
     const result = new Array(n).fill(null);
     const size = Math.max(1, Math.round(toNumber(t.size) ?? 1));
     const before = t.align == 'center' ? Math.floor((size - 1)/2) : size - 1;
-    // the least or the largest value, the median or a quantile of the
-    // window, of the values in it
-    const ofWindow = (values, start, end) => {
-        if (op != 'min' && op != 'max')
-            return aggregateOf(op, values.slice(start, end + 1).filter(v => v !== null), t);
-        let result = null;
-        for (let k = start; k <= end; k++)
-            if (values[k] !== null)
-                result = result === null ? values[k] : (op == 'min' ? Math.min(result, values[k]) : Math.max(result, values[k]));
-        return result;
-    };
+    const p = op == 'sum' || op == 'mean' || op == 'min' || op == 'max' ? null : probabilityOf(op, t);
+    // whether the value x replaces the value y before it as the extreme of
+    // the window: the least or the largest one, -0 before 0 of Math.min and 0
+    // before -0 of Math.max; of the quantiles 0 and 1 the first one of equal
+    // values, as d3-array's min and max
+    const replaces = op == 'min' ? (x, y) => x < y || (x === y && Object.is(x, -0))
+        : op == 'max' ? (x, y) => x > y || (x === y && Object.is(y, -0))
+        : p === null ? null
+        : p <= 0 ? (x, y) => x < y
+        : p >= 1 ? (x, y) => x > y
+        : null;
     groups.forEach(g => {
         const values = g.map(numbers);
         let sum = 0;
@@ -158,25 +161,82 @@ const slide = (t, { n, numbers, groups }, op) => {
             compensation += Math.abs(sum) >= Math.abs(x) ? (sum - s) + x : (x - s) + sum;
             sum = s;
         };
+        // the rows of the window which can be its extreme, their values in
+        // the order of the replacing (a row is added and left out once)
+        const queue = replaces ? new Int32Array(values.length) : null;
+        let head = 0;
+        let tail = 0;
+        // the values of the window in ascending order, of the quantiles (and
+        // the one added before the first one is left out)
+        const sorted = replaces || p === null ? null : new Float64Array(size + 1);
+        // the first place of a value not below (`after`: above) x
+        const place = (x, after) => {
+            let lo = 0;
+            let hi = count;
+            while (lo < hi) {
+                const mid = (lo + hi) >>> 1;
+                if (after ? sorted[mid] <= x : sorted[mid] < x)
+                    lo = mid + 1;
+                else
+                    hi = mid;
+            }
+            return lo;
+        };
         for (let end = 0; end < values.length; end++) {
-            if (values[end] !== null) {
-                add(values[end]);
+            const x = values[end];
+            if (x !== null) {
+                if (queue) {
+                    while (tail > head && replaces(x, values[queue[tail - 1]]))
+                        tail--;
+                    queue[tail++] = end;
+                }
+                else if (sorted) {
+                    const k = place(x, true);
+                    sorted.copyWithin(k + 1, k, count);
+                    sorted[k] = x;
+                }
+                else
+                    add(x);
                 count++;
             }
             const start = end - size + 1;
             if (start > 0 && values[start - 1] !== null) {
-                add(-values[start - 1]);
+                if (queue) {
+                    if (queue[head] == start - 1)
+                        head++;
+                }
+                else if (sorted) {
+                    // (a value equal to it, 0 or -0: the sign of a zero
+                    // does not change a quantile between two values, one
+                    // of a single value is the value of the row)
+                    const k = place(values[start - 1], false);
+                    sorted.copyWithin(k, k + 1, count);
+                }
+                else
+                    add(-values[start - 1]);
                 count--;
             }
             // the window of the row `start + before`
             if (start >= 0 && values[start + before] !== null)
-                result[g[start + before]] = count == 0 ? null
+                result[g[start + before]] = queue ? values[queue[head]]
+                    : sorted ? quantileOf(sorted, count, p, values[start + before])
                     : op == 'mean' ? (sum + compensation)/count
-                    : op == 'sum' ? sum + compensation
-                    : ofWindow(values, start, end);
+                    : sum + compensation;
         }
     });
     return result;
+};
+// the quantile p (between 0 and 1, not 0 or 1) of the `count` values in
+// ascending order, the ones of d3-array's quantile: of a single value the
+// value (the one of the row), otherwise interpolated between the two
+// nearest values
+const quantileOf = (sorted, count, p, value) => {
+    if (count < 2)
+        return value;
+    const i = (count - 1)*p;
+    const i0 = Math.floor(i);
+    const value0 = sorted[i0];
+    return value0 + (sorted[i0 + 1] - value0)*(i - i0);
 };
 
 const transformTypes = {
@@ -311,9 +371,12 @@ const transformTypes = {
     rank: (t, { n, numbers, groups }) => {
         const result = new Array(n).fill(null);
         groups.forEach(g => {
-            const values = g.filter(i => numbers(i) !== null).sort((a, b) => t.descending ? numbers(b) - numbers(a) : numbers(a) - numbers(b));
-            values.forEach((i, k) => {
-                result[i] = k > 0 && numbers(values[k - 1]) === numbers(i) ? result[values[k - 1]] : k + 1;
+            // (the numbers read once, not of every comparison)
+            const values = g.map(numbers);
+            const order = g.map((_, k) => k).filter(k => values[k] !== null)
+                .sort((a, b) => t.descending ? values[b] - values[a] : values[a] - values[b]);
+            order.forEach((k, j) => {
+                result[g[k]] = j > 0 && values[order[j - 1]] === values[k] ? result[g[order[j - 1]]] : j + 1;
             });
         });
         return result;
