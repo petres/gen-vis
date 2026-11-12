@@ -123,8 +123,10 @@ describe('rendering', () => {
     });
 
     test.each([
-        [40, 'rotate(-40)', 'end'],
-        [-40, 'rotate(40)', 'start'],
+        // about their place at the end of the tick mark, centered on their tick across the text
+        [40, 'rotate(-40 0 8)', 'end'],
+        [-40, 'rotate(40 0 8)', 'start'],
+        [90, 'rotate(-90 0 8)', 'end'],
     ])('axis labels rotated by %s', async (rotate, transform, anchor) => {
         const def = lineDef();
         def.dims.x.axis.rotate = rotate;
@@ -134,6 +136,7 @@ describe('rendering', () => {
         labels.forEach(t => {
             expect(t.getAttribute('transform')).toBe(transform);
             expect(t.getAttribute('text-anchor')).toBe(anchor);
+            expect(t.getAttribute('dy')).toBe('0.32em');
         });
     });
 

@@ -1047,7 +1047,9 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   e.g. `"categories": {"1": {"name": "Mon"}}` of weekdays; the others by
   their key in the format. `labels.props.text` comes before both.
 - `rotate`: the angle of the labels in degrees, positive counterclockwise,
-  negative clockwise.
+  negative clockwise, about their place beyond the tick mark: a label
+  ends (positive) or starts (negative) at its tick, centered on it across
+  the text, e.g. of 90° below the tick.
 - `labels` (of all axes, also of polar charts): the `props` of the labels,
   svg attributes and `text`, e.g. `{"font-weight": "@weight", "text":
   "@short", "max-width": 300}`, their names are the ones of the facet, the

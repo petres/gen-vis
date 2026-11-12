@@ -255,10 +255,17 @@ const drawAxis = (ga, { name, position, scale, values, format, labels, padding, 
     if (!moved && !ga[labelsMoved])
         return;
     ga[labelsMoved] = moved;
+    // (rotated about their place at the end of the tick mark, centered on
+    // their tick across the text, `dy`, not about the tick on the axis,
+    // which moved them along the axis, e.g. 8 pixels beside the tick of 90°)
     ga.querySelectorAll(".tick text").forEach(node => {
-        if (rotate)
+        if (rotate) {
             setAttr(node, "text-anchor", rotate > 0 ? "end" : "start");
-        const t = [shift, rotate ? `rotate(${-rotate})` : ''].filter(Boolean).join(' ');
+            setAttr(node, "dy", "0.32em");
+        } else
+            setAttr(node, "dy", position == "top" ? "0em" : position == "bottom" ? "0.71em" : "0.32em");
+        const pivot = rotate ? ` ${node.getAttribute("x") ?? 0} ${node.getAttribute("y") ?? 0}` : '';
+        const t = [shift, rotate ? `rotate(${-rotate}${pivot})` : ''].filter(Boolean).join(' ');
         if (t)
             setAttr(node, "transform", t);
         else
