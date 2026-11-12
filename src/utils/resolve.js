@@ -1,6 +1,6 @@
 export { resolve, variants, namesOfGlobals };
 
-import { isObject } from '@/utils/values';
+import { escapeHtml, isObject } from '@/utils/values';
 import { evaluate, isMatch, isOperator, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
 import { entriesOf, expressionKeys, nameKeys, markKeys } from '@/utils/language';
@@ -97,8 +97,7 @@ const resolveIn = (value, names, key, inside) => {
 // part of the definition: its own expressions of the globals are resolved
 const chosen = (r, names, key, inside) => r !== null && typeof r == 'object' ? resolveIn(r, names, key, inside) : r;
 
-const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-const escapedNames = names => Object.fromEntries(Object.entries(names).map(([k, v]) => [k, typeof v == 'string' ? v.replace(/[&<>"']/g, c => escapes[c]) : v]));
+const escapedNames = names => Object.fromEntries(Object.entries(names).map(([k, v]) => [k, typeof v == 'string' ? escapeHtml(v) : v]));
 
 // the value of an expression of the names only, unresolved of others (also
 // of a reference to a name, so "@lang" of `language` stays)

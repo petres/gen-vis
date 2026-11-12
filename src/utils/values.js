@@ -1,6 +1,6 @@
 // the comparisons of the values of definitions and of the data, e.g. of
 // categories, used by the other parts, so they import no part of their own
-export { isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy };
+export { escapeHtml, isObject, missing, compareCategories, comparison, toNumber, sameValue, inherited, ownValue, truthy };
 
 // an object of a definition, e.g. a dim, not a list and not null
 const isObject = v => v !== null && typeof v == 'object' && !Array.isArray(v);
@@ -65,3 +65,7 @@ const sameValue = (a, b) => {
 // values are true
 const falseText = /^\s*(?:false|[+-]?(?:0+\.?0*|\.0+)(?:e[+-]?\d+)?)?\s*$/i;
 const truthy = v => typeof v == 'string' ? !falseText.test(v) : (Array.isArray(v) ? v.length > 0 : Boolean(v));
+
+// a text as html, e.g. a value of a global in a template of html
+const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);

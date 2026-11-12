@@ -1,4 +1,4 @@
-export { drawAxis, pixelOffset, tickPosition };
+export { drawAxis, pixelOffset, tickPosition, tickInset };
 
 import { animate, create, interrupt, itemOf, join, onEnd, setAttr } from "@/utils/dom";
 import { fitText, motion, setAttrs } from "@/utils/draw";

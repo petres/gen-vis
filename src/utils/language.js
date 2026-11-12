@@ -1,4 +1,4 @@
-export { translate, translated, checkDims, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
+export { markAliases, translate, translated, checkDims, compileStrings, optionKeys, markKeys, expressionKeys, nameKeys, typeOf, positionChannels, authoredPath, entryOf, entriesOf, implicitDims };
 
 import { isObject } from '@/utils/values';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -215,6 +215,9 @@ const markParts = (raw, i) => {
     p.by = [p.by ?? []].flat().filter(b => b !== undefined && b !== null);
     return { p, props };
 };
+
+// the names of marks of 5.0 which are no kind of a mark type, see typeOf
+const markAliases = ['point', 'label', 'cell', 'tick'];
 
 // the full name of a mark type of a coordinate system, e.g. "cartesian:bar"
 // of "bar", the ones of svg elements and the aliases of 5.0

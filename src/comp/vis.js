@@ -150,7 +150,7 @@ const createVis = (app, failed = null) => {
     const legendsAt = () => {
         const at = { top: [], bottom: [], left: [], right: [] };
         // a prop of the width of the visualisation, e.g. below the plots of a phone
-        const scope = { ...store.scope, totalWidth: fullWidth };
+        const scope = store.scopeAt(fullWidth);
         // the legends of the width of the visualisation, see color-legend.js
         store.dimNamesWithKey('legend').forEach(n => at[evaluate(store.dim(n).legend.position, scope) ?? 'top']?.push(n));
         // the annotations with a name after the legends of the dims, at
@@ -163,7 +163,7 @@ const createVis = (app, failed = null) => {
     // globals and the width, e.g. steps of `totalWidth` or a global of a
     // control, or `empty` without rows
     const messageOf = () => {
-        const scope = { ...store.scope, totalWidth: width };
+        const scope = store.scopeAt(width);
         const message = store.text(evaluate(store.def.message ?? null, scope));
         if (message !== null && message !== undefined && message !== '')
             return String(message);

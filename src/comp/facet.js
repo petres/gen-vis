@@ -6,6 +6,7 @@ import { highlighter } from "@/utils/highlight";
 import { drawAxis } from "@/utils/axis";
 import { create, interruptAll, setAttr } from "@/utils/dom";
 import { markTypes } from "@/marks";
+import { markAliases } from "@/utils/language";
 import { markPath, similar, withPath } from "@/utils/warn";
 import { inFacet, markGroups, markRows } from "@/layout";
 import { el, patch, place, setText } from "@/comp/html";
@@ -14,11 +15,10 @@ import { createFacetHover } from "@/comp/facet-hover";
 // the message of an unknown mark type, of a typo the name it probably is,
 // e.g. "line" of "lines": the names of 5.0 (also point, label, cell and tick) of
 // the coordinate system, a full name of the ones of the registry
-const aliases = ['point', 'label', 'cell', 'tick'];
 const unknownType = (type, coord) => {
     const full = Object.keys(markTypes).filter(t => !t.startsWith('annotation:'));
     const names = String(type).includes(':') ? full : [...new Set([...full.filter(t => !markTypes[t].coords || markTypes[t].coords.includes(coord))
-        .map(t => t.split(':')[1]), ...aliases])];
+        .map(t => t.split(':')[1]), ...markAliases])];
     const close = similar(type, names);
     return `unknown mark type '${type}'${close !== undefined ? `, did you mean '${close}'?` : `, e.g. 'line', 'bar' or 'point'`}`;
 };

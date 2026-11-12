@@ -1,8 +1,8 @@
-export { escapeHtml, mergeAll, sameValue, prepareDef, applyResolved, variants, variantsOf, selectedEntry, templateNames, templateRefs, templateKeys, fillTemplate, fillText, fillHtml, formatOf, symbolOf, symbolShape, inLanguage, languageOf };
+export { mergeAll, sameValue, prepareDef, applyResolved, variants, variantsOf, selectedEntry, templateNames, templateRefs, templateKeys, fillTemplate, fillText, fillHtml, formatOf, symbolOf, symbolShape, inLanguage, languageOf };
 
 import { deepMerge, mergeAll as mergeParts } from '@/utils/merge';
 import { ownColors, schemeColors } from '@/utils/d3';
-import { comparison, isObject, sameValue } from '@/utils/values';
+import { comparison, escapeHtml, isObject, sameValue } from '@/utils/values';
 import { defaultScaleType, hasCategories } from '@/utils/normalize';
 import { isMatch, operators, refNames } from '@/utils/expr';
 import { isExpressionText, parseExpression } from '@/utils/expr-parse';
@@ -866,9 +866,6 @@ const templateNames = def => {
 // a text of the definition with the values of the globals, e.g. a title or
 // a name, other values are kept, e.g. undefined
 const fillText = (text, globals) => typeof text == 'string' ? fillTemplate(text, globals) : text;
-
-const escapes = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
-const escapeHtml = text => String(text).replace(/[&<>"']/g, c => escapes[c]);
 
 // a template of html, e.g. of the hover, with the values of `names` as text,
 // e.g. {land.unit}, unknown names are kept

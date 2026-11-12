@@ -3,13 +3,12 @@ export { autoMargins };
 import { tickCount, tickValues, tickFormat, labelProps } from '@/coords/ticks';
 import { textWidth } from '@/utils/measure';
 import { bandCenter } from '@/utils/scales';
+import { tickInset } from '@/utils/axis';
 
 // the font sizes of the labels of the ticks and of the titles of the axes,
 // the ones of the styles (see styles.css)
 const labelFontSize = 12;
 const titleFontSize = 12;
-// the parts of the tick marks inside the plot area of the styles, see utils/axis.js
-const tickInset = { bottom: 4, top: 5, right: 4, left: 5 };
 
 /**
  * The margins of the facets of the sides which are "auto" (`given`, the

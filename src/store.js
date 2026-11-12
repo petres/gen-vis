@@ -3,8 +3,9 @@ export { createStore };
 import { distinctValues, prepareData, scaleDef, sourceRows, updateData, updateDataValues } from "@/utils/data";
 import { warnOnce } from "@/utils/warn";
 import { applyTransforms, utcColumns } from "@/utils/transform";
-import { applyResolved, escapeHtml, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
+import { applyResolved, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { inferTypes } from "@/utils/data";
+import { escapeHtml } from "@/utils/values";
 import { markTypes } from "@/marks";
 import { applyGlobals, applyState, diffState, snapshot, userControls } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
@@ -110,7 +111,9 @@ class Store {
     // the names of the references in all parts of the definition, the globals
     // and the width of the visualisation, a facet adds its sizes, a mark the
     // props of the categories and the row, see docs/definition.md "Expressions" > "Names"
-    get scope() { return { ...this.names, totalWidth: this.totalWidth, [formatter]: (format, name) => this.format(format, name) } }
+    get scope() { return this.scopeAt(this.totalWidth) }
+    // the scope of a width, e.g. of the layout of a new width
+    scopeAt(totalWidth) { return { ...this.names, totalWidth, [formatter]: (format, name) => this.format(format, name) } }
 
     // a d3 format in the locale of the values of a dim, of times if it is
     // a dim of dates or of a time scale, e.g. "%Y", local or UTC of a

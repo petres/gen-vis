@@ -16,7 +16,7 @@ import { isExpressionText } from "@/utils/expr-parse";
 import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
 import { continuous, convert, inferTypes, toDate } from "@/utils/data";
 import { versionError, languageError } from "@/utils/version";
-import { translate, authoredPath, markKeys, positionChannels, typeOf } from "@/utils/language";
+import { translate, authoredPath, markAliases, markKeys, positionChannels, typeOf } from "@/utils/language";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
 import { schema, markNames } from "@/schema/definition.js";
 import { similar, pixelsOf } from "@/utils/warn";
@@ -624,9 +624,6 @@ const checkFilter = (ctx, conditions, path, known) => {
     });
 };
 
-// the names of marks of 5.0 which are no kind of a mark type, see typeOf of utils/language.js
-const aliases = ['point', 'label', 'cell', 'tick'];
-
 // the marks: their types, categories, data and props
 const checkMarks = ctx => {
     const { def, dims, names, warn, coord, coordName } = ctx;
@@ -646,7 +643,7 @@ const checkMarks = ctx => {
         // a type without the prefix of the coordinate system is one which normalize did not find
         const short = typeof p.type == 'string' && !p.type.includes(':')
             ? [...new Set([...types.filter(t => !t.startsWith('annotation:') && (!markTypes[t].coords || markTypes[t].coords.includes(coordName))).map(t => t.split(':')[1]),
-                ...aliases.filter(n => markNames.includes(n))])] : null;
+                ...markAliases.filter(n => markNames.includes(n))])] : null;
         if (short)
             warn(`${path}.type`, `unknown type '${p.type}' of the coordinate system '${coordName}'${choices(p.type, short)}`);
         else if (!types.includes(p.type))

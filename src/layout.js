@@ -2,7 +2,7 @@ export { layout, axisNames, visibleKeys, markRows, markGroups, withColor, unknow
 
 import { categoryOrder, continuous, convert, filter, filterRows, groupBy, keptRows, sourceRows, stack, withoutConditions } from "@/utils/data";
 import * as d3 from "@/utils/d3";
-import { bind, constant, evaluate, formatter, isOperator, refNames } from "@/utils/expr";
+import { bind, constant, evaluate, isOperator, refNames } from "@/utils/expr";
 import { isObject } from "@/utils/values";
 import { autoMargins } from "@/utils/margins";
 import { bandCenter, logProblems, makeScale } from "@/utils/scales";
@@ -340,7 +340,7 @@ const ofWidth = raw => raw !== undefined && raw !== null && typeof raw != 'boole
 const layout = (store, width, before = null) => {
     const def = store.def;
     const axis = axisNames(store);
-    const scope = { ...store.names, totalWidth: width, [formatter]: store.scope[formatter] };
+    const scope = store.scopeAt(width);
     const stacked = axis.v ? store.dim(axis.v).stacked : undefined;
     const kept = before?.[rowsKept];
     const reuse = kept?.keep && kept.store === store && kept.def === def && kept.data === store.data && kept.columns === store.columns

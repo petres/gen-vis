@@ -1,5 +1,6 @@
 import { describe, test, expect } from 'vitest';
-import { translate, compileStrings, implicitDims, authoredPath, optionKeys } from '@/utils/language.js';
+import { translate, compileStrings, implicitDims, authoredPath, optionKeys, markAliases, typeOf } from '@/utils/language.js';
+import { markNames } from '@/schema/definition.js';
 import { resolve } from '@/utils/resolve.js';
 import { compile, implicitOf } from '@/utils/compile.js';
 
@@ -357,4 +358,11 @@ test('compile: the engine form of the last names is kept, every call gets an own
     expect(reads).toBe(4 * once);
     compile(authored, { s: undefined }, others);
     expect(reads).toBe(4 * once);
+});
+
+test('the aliases of 5.0 are names of the schema, typeOf knows them in every coordinate system', () => {
+    markAliases.forEach(n => {
+        expect(markNames).toContain(n);
+        ['cartesian', 'polar', 'geo'].forEach(c => expect(typeOf(n, c)).toContain(':'));
+    });
 });
