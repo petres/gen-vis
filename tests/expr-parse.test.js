@@ -108,7 +108,9 @@ describe('parseExpression', () => {
         expect(parseExpression('=1 + 2 + 3 + 4')).toEqual({ '+': [1, 2, 3, 4] });
         expect(parseExpression('=1 + (2 + 3)')).toEqual({ '+': [1, { '+': [2, 3] }] });
         expect(parseExpression('=1 < 2 < 3 < 4')).toEqual({ '<': [1, 2, 3, 4] });
-        expect(parseExpression('=1 == 2 < 3')).toEqual({ '<': [{ '==': [1, 2] }, 3] });
+        expect(parseExpression('=(1 == 2) < 3')).toEqual({ '<': [{ '==': [1, 2] }, 3] });
+        expect(parseExpression('=1 <= 2 < 3 < 4 >= 0')).toEqual({ and: [{ '<=': [1, 2] }, { '<': [2, 3, 4] }, { '>=': [4, 0] }] });
+        expect(() => parseExpression('=1 == 2 < 3')).toThrow('expression "=1 == 2 < 3": "<" after "==" is no chain, write "and" or parentheses at 8');
         expect(parseExpression('@a and @b and @c')).toEqual({ and: ['@a', '@b', '@c'] });
     });
 
@@ -206,7 +208,10 @@ describe('formatExpression', () => {
         expect(formatExpression({ '+': [{ '-': [1, 2] }, 3] })).toBe('1 - 2 + 3');
         expect(formatExpression({ '-': [1, { '+': [2, 3] }] })).toBe('1 - (2 + 3)');
         expect(formatExpression({ '<': [0, '@x', 10] })).toBe('0 < @x < 10');
-        expect(formatExpression({ '<=': [{ '<': [0, '@x'] }, 10] })).toBe('0 < @x <= 10');
+        // the operands of a comparison which are comparisons are in parentheses, a
+        // chain would be the and of the comparisons
+        expect(formatExpression({ '<=': [{ '<': [0, '@x'] }, 10] })).toBe('(0 < @x) <= 10');
+        expect(formatExpression({ and: [{ '<=': [0, '@x'] }, { '<': ['@x', 10] }] })).toBe('0 <= @x and @x < 10');
         expect(formatExpression({ '<': [{ '<': [0, '@x'] }, 10] })).toBe('(0 < @x) < 10');
         expect(formatExpression({ or: [{ and: ['@a', '@b'] }, '@c'] })).toBe('@a and @b or @c');
         expect(formatExpression({ and: [{ or: ['@a', '@b'] }, '@c'] })).toBe('(@a or @b) and @c');

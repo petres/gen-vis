@@ -15,7 +15,9 @@ import { isOperator } from '@/utils/expr';
  *   of its operands, e.g. `a or b or c` is { "or": [a, b, c] }
  * - `not a`
  * - `== != < <= > >=`, a chain of the same operator is one operator, e.g.
- *   `0 < @x < 10` is { "<": [0, "@x", 10] }, mixed ones nest from the left
+ *   `0 < @x < 10` is { "<": [0, "@x", 10] }, a mix of `< <= > >=` is the
+ *   and of its runs, e.g. `0 <= @x < 10` is { "and": [{ "<=": [0, "@x"] },
+ *   { "<": ["@x", 10] }] }, a mix with `==` or `!=` is an error
  * - `+ -`, then `* /`, runs of the same operator are one operator, e.g.
  *   `a - b - c` is { "-": [a, b, c] }, mixed ones nest from the left, e.g.
  *   `a - b + c` is { "+": [{ "-": [a, b] }, c] }
@@ -52,6 +54,8 @@ const constants = { true: true, false: false, null: null };
 // the operators of two or more operands between them, by their level, the
 // loosest first; `-` of one operand is the unary minus (level 7), the
 // values and calls are level 8
+// the comparisons which chain only with themselves
+const equality = new Set(['==', '!=']);
 const levels = { 'or': 1, 'and': 2, '==': 4, '!=': 4, '<': 4, '<=': 4, '>': 4, '>=': 4, '+': 5, '-': 5, '*': 6, '/': 6 };
 
 // the name of a reference after "@", also a "-" if a letter follows it
@@ -244,7 +248,29 @@ const parseExpression = text => {
         }
         return comparison(raw);
     };
-    const comparison = raw => binary('punct', ['==', '!=', '<', '<=', '>', '>='], additive, raw);
+    // a chain of comparisons, as in mathematics: a run of the same operator
+    // is one operator, a mix of <, <=, > and >= is the and of its runs, e.g.
+    // `0 <= @x < 10` is { "and": [{ "<=": [0, "@x"] }, { "<": ["@x", 10] }] };
+    // == and != chain only with themselves, a mix with them would compare
+    // true or false with the next operand, so it is an error
+    const comparison = raw => {
+        const first = additive(raw);
+        const runs = [];
+        let op;
+        while (tokens[i].type == 'punct' && levels[tokens[i].value] == 4) {
+            const t = next();
+            const right = additive(raw);
+            if (t.value === op)
+                runs.at(-1)[op].push(right);
+            else {
+                if (op && (equality.has(op) || equality.has(t.value)))
+                    fail(`"${t.value}" after "${op}" is no chain, write "and" or parentheses`, t.pos);
+                runs.push({ [t.value]: [op ? runs.at(-1)[op].at(-1) : first, right] });
+                op = t.value;
+            }
+        }
+        return runs.length == 0 ? first : (runs.length == 1 ? runs[0] : { and: runs });
+    };
     const additive = raw => binary('punct', ['+', '-'], multiplicative, raw);
     const multiplicative = raw => binary('punct', ['*', '/'], unary, raw);
     const unary = raw => {
@@ -384,7 +410,9 @@ const node = (ast, raw) => {
         return [typeof args[0] == 'number' ? `-(${args[0]})` : `-${formatted(args[0], 8)}`, 7];
     const level = levels[op];
     if (level !== undefined && args.length >= 2)
-        return [args.map((a, i) => formatted(a, i == 0 && !sameOp(a, op) ? level : level + 1)).join(` ${op} `), level];
+        // the operands of a comparison in parentheses, as a comparison of
+        // them would be a chain
+        return [args.map((a, i) => formatted(a, i == 0 && !sameOp(a, op) && level != 4 ? level : level + 1)).join(` ${op} `), level];
     if (!callable.has(op))
         throw new Error(`expression ${JSON.stringify(ast)}: no text of "${op}" of ${args.length} argument${args.length == 1 ? '' : 's'}`);
     return [`${op}(${args.map((a, i) => formatted(a, 0, op == 'var' && i == 0)).join(', ')})`, 8];

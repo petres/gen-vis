@@ -2484,7 +2484,7 @@ The operators and their string syntax:
 | `+`, `-`, `*`, `/` | `a + b`, `a - b`, `-a`, `a * b`, `a / b` | the sum, the difference (of one argument its negation), the product, the quotient; no value if a value is no number (also a text of the data which is no decimal number) or of a division by 0 |
 | `min`, `max`, `round` | `min(a, b)`, `max(a, b)`, `round(a, digits)` | the least, the largest value, the value rounded to digits (0 by default), halves up |
 | `==`, `!=` | `a == b`, `a != b` | the same values: numbers and texts of numbers by their value, as `<`, e.g. `2024`, `"2024"` and `"2024.0"` of a column, others as texts, missing values are the same, e.g. `null` and `""`; more values are a chain, e.g. `@a == @b == @c` (all the same) |
-| `<`, `<=`, `>`, `>=` | `a < b`, `0 < @x < 10` | numbers by their value, otherwise texts, false of a missing value, also of `""`, more values are a chain |
+| `<`, `<=`, `>`, `>=` | `a < b`, `0 < @x < 10`, `20 <= @x < 50` | numbers by their value, otherwise texts, false of a missing value, also of `""`; more values are a chain as in mathematics, also of different ones: `20 <= @x < 50` is `20 <= @x and @x < 50` (in the object form that `and`); `==` and `!=` chain only with themselves, `@a == @b < 3` is an error, write `(@a == @b) < 3` |
 | `and`, `or`, `not` | `a and b`, `a or b`, `not a` | the first false value, the first true value (e.g. a default `@color or 'black'`), the negation |
 | `if` | `c ? a : b`, `if(c, a, c2, b, d)` | the value of the first true condition, otherwise the last one |
 | `cat` | `cat(@name, ': ', @y)` | the values as a text |
