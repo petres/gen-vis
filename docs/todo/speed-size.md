@@ -1,6 +1,7 @@
 # To do: speed and size
 
-The numbers and how they were measured are in [../improvements-5.0.md](../improvements-5.0.md) and in
+The numbers and how they were measured are in
+[../design-5.0.md](../design-5.0.md#6-speed-and-size-what-was-measured-and-decided) and in
 the CHANGELOG ("Fixes and features of the outside review"). The first load is about 106 kB gzip in
 two requests; a small chart mounts in 26–45 ms cold and 5–9 ms warm in headless Chromium. A chart is
 slow because of its data, not because of its drawing.

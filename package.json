@@ -1,6 +1,6 @@
 {
   "name": "@preschen/gen-vis",
-  "version": "5.0.0-alpha.3",
+  "version": "5.0.0",
   "description": "A declarative d3 visualisation library: a JSON definition and a data file describe a chart",
   "type": "module",
   "main": "dist/gen-vis.js",

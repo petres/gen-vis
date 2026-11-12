@@ -765,8 +765,9 @@ their rows replace the rows or follow them. Fixtures in `spec/transforms`.
 
 ### Fixes and features of the second review of the release
 
-The review of 2026-11-10 (speed, size, architecture: see
-[docs/improvements-5.0.md](docs/improvements-5.0.md)) and its fixes.
+The review of 2026-11-10 (speed, size, architecture: what was measured
+and decided is in [docs/design-5.0.md](docs/design-5.0.md), what is left
+in [docs/todo/](docs/todo/README.md)) and its fixes.
 
 Features:
 

@@ -1,8 +1,8 @@
 # To do
 
-What is known and not done: from the reviews of 5.0 (the review of the release of 2026-11-10, measured in
-[../improvements-5.0.md](../improvements-5.0.md), and the outside review of 2026-11-12). What was done
-is in the CHANGELOG. Ideas of new features are in [../features/](../features/).
+What is known and not done: from the reviews of 5.0 (the review of the release of 2026-11-10 and the
+outside review of 2026-11-12). What was done is in the CHANGELOG, what was measured and decided in
+[../design-5.0.md](../design-5.0.md#6-speed-and-size-what-was-measured-and-decided). Ideas of new features are in [../features/](../features/).
 
 | File | |
 |---|---|

@@ -7,7 +7,8 @@ source of the description of the language.
 
 This document is the design of the language and of the way from a
 definition to the picture: the decisions of the language, the pipeline, the
-schema, the engine, and the decisions of details with their reasons. The
+schema, the engine, the decisions of details with their reasons, and what
+was measured of its speed and size. The
 reference of the language is
 `docs/definition.md`, the per-key texts are the ones of
 `src/schema/definition.js`, the portable rules are in `spec/`.
@@ -233,3 +234,88 @@ mark).
   version which reads it differently; an inline definition may have none.
 - **Not part of the language:** dark CSS variables (a page sets the
   variables of its theme).
+
+## 6. Speed and size: what was measured and decided
+
+Two reviews measured 5.0 before its release (2026-11-10 and 2026-11-12);
+their changes are in the CHANGELOG, what is left in [todo/](todo/README.md).
+What they found is a reason of the design above and of what was left alone.
+
+**How it is measured.** Headless Chromium (software rendering, so only
+relative numbers count), all 72 examples of `data/` in an element of 800 px
+and five large cases (a line of 50 000 rows, 5000 bars, 200 categories, 48
+facets, 20 000 points). A mount is the time from `mountGenVisElement` to
+`rendered` plus a forced layout, cold (the first mount of a page) and warm.
+Two builds are compared interleaved in the same run, the median of several
+passes; the totals vary by about 1 %.
+
+**Where the time goes.** A chart is slow because of its data, not because
+of its drawing: of the mount of all examples about 40 % is loading and
+preparing the data (reading CSV 8 %, the types of the columns 7 %, the rows
+of the dims 16 %, the transforms 11 %), reading dates 7 %, the layout 5 %,
+the drawing 18 %, measuring the width 4 %, garbage collection 7 %. A small
+chart mounts in 26–45 ms cold and 5–9 ms warm, the import of the module is
+about 20 ms of it. 70 of the 72 examples do one layout and one draw per
+facet on mount.
+
+**What follows from it, and is in 5.0:**
+
+- The rows of a file are parsed once for the charts which share it; the
+  texts of dates are read once per text and time zone.
+- A definition is resolved, translated and normalized once per load
+  (`utils/compile.js`); every caller gets a copy of its own.
+- The marks of the same `filter` share its rows; the rows of the hover are
+  prepared with the first event of a facet, not with every draw; plots
+  beside legends are drawn once on mount.
+- Nothing measures between writes: a resize uses the width of the
+  `ResizeObserver`, `destroy()` measures only if the frame after the last
+  draw has not, the inset of the ticks and the font of a legend are read
+  once per draw, cut labels are found with the canvas and checked once in
+  the element.
+- The rows of a mark of its own `data` are kept between draws, so their
+  elements are updated and animate.
+- The transforms over a window slide (a monotonic queue, the sorted values
+  of the window).
+
+**The first load** of the browser module is about 106 kB gzip in two
+requests (4.1 had 80 kB with fewer features). About a quarter is d3
+(`d3-shape`, `d3-scale`, `d3-time-format`, `d3-array`, `d3-color`,
+`d3-time`, `d3-interpolate`, `d3-format`), the rest is own code spread
+evenly (`layout.js`, `language.js`, `data.js`, `def.js` about 6 kB each,
+`load.js`, `vis.js`, `facet-hover.js`, `scales.js` about 4 kB each). What
+few charts need is loaded for them: maps, polar charts, parquet, the check,
+the transforms, the colors of d3, the legend of a scale of colors, the
+scales and curves few definitions name, the table and the exports. A part
+loaded later waits for no file but the base (`atOnce` and `inlineRuntime`
+of `vite.config.js` fail the build otherwise).
+
+**Looked at and left alone:**
+
+- The texts of errors and warnings are 2–3 % of the base: moving the
+  diagnostics behind the check is not worth it.
+- A lazy chunk of the times (`scaleTime`, `d3-time`, `d3-time-format`)
+  would save about 7 kB for charts without dates and cost one more request
+  for all others: most charts are time series.
+- A pointer move costs about 0.5 ms on a page of 72 charts, half of it
+  `getScreenCTM`, the layout the browser needs for the box of the hover
+  anyway. CSS `contain: layout` changed nothing.
+- A resize is a full layout and redraw, 4.4 ms per chart. The keyed update
+  of the layers keeps the elements, the axes are kept per part: the profile
+  of the drawing is flat.
+
+**What to keep** in any rewrite:
+
+- No framework and no `d3-selection` in the core: elements with a keyed
+  update (`utils/draw.js`, `comp/html.js`); mark types return plain layers
+  and never touch the DOM.
+- The store with the prepared definition, the layout as a function of it
+  which needs no DOM, the facets drawing a view; rows are never changed.
+- The expression engine (`utils/expr.js`) and its portable suite.
+- The registries of mark types and coordinate systems, the lazy chunks, the
+  thin Vue adapter.
+
+**A content security policy.** 5.0 reads CSV and TSV without the reader of
+d3, which builds a function from text and needs `unsafe-eval`. The prop
+`nonce` is the nonce of the `<style>` elements of the package, see
+[usage.md](usage.md); what still violates a strict policy of styles is in
+[todo/bugs.md](todo/bugs.md).
