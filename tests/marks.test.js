@@ -576,6 +576,13 @@ describe('bars and ticks of periods and of the scale of another dim (final revie
         expect(errors).toEqual([]);
     });
 
+    test('bars of an interval of years of a column of years (2019, ...): a date dim, the bars are drawn', async () => {
+        const el = await mount({ def: { width: 500, height: 250, dims: { x: { column: 'd', interval: 'year' }, y: 'v' }, marks: { type: 'bar' } }, data: 'd,v\n2019,1\n2020,2\n2021,3' });
+        expect(rects(el).length).toBe(3);
+        expect([...el.querySelectorAll('[data-dim="x"] .tick text')].map(t => t.textContent)).toEqual(['2019', '2020', '2021', '2022']);
+        expect(errors).toEqual([]);
+    });
+
     test('a tick of a column beside horizontal bars runs across their bands, a tick of no length warns', async () => {
         const el = await mount({ def: { width: 400, height: 200, dims: { x: { column: 'b', zero: true }, y: 'a' },
             marks: [{ type: 'bar' }, { type: 'tick', x: 't', stroke: 'red' }] }, data: 'a,b,t\nA,3,4\nB,4,2\nC,5,6' });

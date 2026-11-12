@@ -983,6 +983,23 @@ const absent = v => missing(v) || missingToken(v);
  */
 const inferType = (values, n = values.length, hint = undefined) => {
     const at = typeof values == 'function' ? values : i => values[i];
+    // the values of a dim of periods (an `interval`, hint 'date') which are
+    // all texts of dates are dates, also years, e.g. "2019", not numbers;
+    // numbers are timestamps then, they stay numbers
+    if (hint == 'date') {
+        let dated = false;
+        const checked = new Set();
+        for (let j = 0; j < n; j++) {
+            const v = at(j);
+            if (checked.has(v) || absent(v))
+                continue;
+            checked.add(v);
+            if (typeof v != 'string' || toDate(v) === null)
+                return inferType(values, n, 'continuous');
+            dated = true;
+        }
+        return dated ? 'date' : undefined;
+    }
     let present = false;
     let before;
     let i = 0;
@@ -1052,7 +1069,7 @@ const numberFormat = /^(?:(.)?([<>=^]))?([+\-( ])?([$#])?(0)?(\d+)?(,)?(\.\d+)?(
  * number format (of the dim, its axis, hover or legend), of a domain or
  * an `include` of numbers, 'continuous' of the
  * other parts of a continuous scale (an open domain, `nice`, `pad`,
- * `center`, `zero`, e.g. of the value of bars, an `interval`), undefined otherwise. A scale type and the
+ * `center`, `zero`, e.g. of the value of bars), 'date' of an `interval`, undefined otherwise. A scale type and the
  * categories make the type already, see normalize.
  */
 const typeHint = m => {
@@ -1061,8 +1078,11 @@ const typeHint = m => {
     if (formats.some(f => !timeFormat.test(f) && numberFormat.test(f))
         || [m.domain, scale.domain, m.include, scale.include].some(v => [v].flat().some(e => typeof e == 'number')))
         return 'numeric';
+    // the periods of dates, also of years, see inferType
+    if (m.interval !== undefined)
+        return 'date';
     if ([m.domain, scale.domain].some(v => Array.isArray(v) && v.includes(null))
-        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined) || m.interval !== undefined
+        || ['nice', 'pad', 'center'].some(k => m[k] !== undefined || scale[k] !== undefined)
         || scale.zero === true || m.zero === true)
         return 'continuous';
     return undefined;
@@ -1120,12 +1140,12 @@ const inferTypes = (def, rows, columns = null, known = () => true) => {
         if (unknown)
             return;
         // without values of the parts of a continuous dim numeric, e.g. of `"zero": true`
-        m.type = types.get(key) ?? (hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
+        m.type = types.get(key) ?? (hint == 'date' ? 'date' : hint && formatType(m) != 'date' ? 'numeric' : formatType(m));
     };
     const ofScale = [];
     Object.values(def.dims ?? {}).forEach(infer);
     variants(def).slice(1).forEach(variant => Object.entries(isObject(variant.dims) ? variant.dims : {})
         .filter(([n]) => !Object.hasOwn(def.dims ?? {}, n)).forEach(([, m]) => infer(m)));
-    ofScale.forEach(m => m.type = def.dims[m.scale.of].type ?? (typeHint(m) && formatType(m) != 'date' ? 'numeric' : formatType(m)));
+    ofScale.forEach(m => m.type = def.dims[m.scale.of].type ?? (typeHint(m) == 'date' ? 'date' : typeHint(m) && formatType(m) != 'date' ? 'numeric' : formatType(m)));
 };
 

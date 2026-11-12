@@ -866,7 +866,9 @@ one; times of hours around the changes are unambiguous with an offset or
 at them, e.g. half years of `2023-01-01` and `2023-07-01`: `minute`,
 `hour`, `day`, `week`, `month`, `quarter`, `half`, `year` or a number of
 them, e.g. `"6 months"`
-(a band scale of dates has a band per date instead, in their order). The
+(a band scale of dates has a band per date instead, in their order). A
+dim with an `interval` and without a `type` is a date dim if its values
+are texts of dates, also of years, e.g. `2019` of a CSV. The
 domain of the data reaches the end of the last period (without the 2% of
 other positions), so bars at the ends fit; `@x:scaled` (also
 `@x:scaled:center`) is the middle of the period of a row, so bars, points

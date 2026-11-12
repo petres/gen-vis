@@ -506,6 +506,23 @@ describe('prepareData', () => {
         expect(oddValues(def, odd)).toEqual([]);
     });
 
+    test('a dim of an interval is a date dim, also of a column of years; timestamps (numbers) stay numbers', () => {
+        const types = (rows, m) => {
+            const def = { dims: { x: { column: 'd', ...m } } };
+            inferTypes(def, rows);
+            return def.dims.x.type;
+        };
+        const years = ['2019', '2020', '2021'].map(d => ({ d }));
+        expect(types(years, { interval: 'year' })).toBe('date');
+        expect(types(years, { interval: 'year', pad: 0.05 })).toBe('date');
+        expect(types(years, {})).toBe('numeric');
+        expect(types([{ d: '2024-01-01' }, { d: '2024-04-01' }], { interval: 'quarter' })).toBe('date');
+        expect(types([{ d: 1704067200000 }, { d: 1711929600000 }], { interval: 'quarter' })).toBe('numeric');
+        expect(types([], { interval: 'year' })).toBe('date');
+        // a number format makes it numeric
+        expect(types(years, { interval: 'year', format: ',.0f' })).toBe('numeric');
+    });
+
     test('mostly numbers and texts with digits: numeric, the texts are missing with a warning (review of 5.0)', () => {
         // e.g. separators of thousands, a limit or a unit
         expect(inferType(['10', '1,234', '30', '<5', '7'])).toBe('numeric');
