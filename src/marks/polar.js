@@ -2,7 +2,7 @@
 import { arc, areaRadial, lineRadial, pointRadial } from 'd3-shape';
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, once, dodge, halo, inside, centered } from "@/marks/elements";
+import { perGroup, linePerGroup, perRow, finite, curve, points, areaPoints, propScale, once, dodge, halo, inside, centered } from "@/marks/elements";
 import { barScale, barWidth } from "@/marks/cartesian";
 import { radiusRange } from "@/coords/polar-plot";
 import { defaults } from "@/marks/defaults";
@@ -86,7 +86,7 @@ const types = {
         marks(groups, mark, ctx) {
             const offset = angleOffset(mark, ctx, 'd.angle');
             const [r0] = radiusRange(ctx);
-            return perGroup(groups, g => lineRadial()
+            return linePerGroup(groups, g => lineRadial()
                 .curve(curve(mark))
                 .defined(e => finite(e.angle, e.radius))
                 .angle(e => e.angle + offset)

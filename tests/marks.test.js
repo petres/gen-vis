@@ -240,6 +240,24 @@ describe('labels with an anchor', () => {
     });
 });
 
+describe('a value of a line between missing values', () => {
+    const data = 'year,v\n2020,1\n2021,\n2022,3\n2023,\n2024,2\n2025,4';
+    const path = async (props = {}, rows = data) => (await mount({ def: { width: 600, dims: { x: 'year', y: 'v' }, marks: [{ type: 'line', ...props }] }, data: rows })).querySelector('g.vis-mark path');
+    test('is a dot of the width of the line: a short segment with round caps (it was a sub-path of no length, not drawn)', async () => {
+        const p = await path();
+        expect(p.getAttribute('d')).toMatch(/^M[\d.]+,[\d.]+h0\.01M[\d.]+,[\d.]+h0\.01M[\d.]+,[\d.]+L[\d.]+,[\d.]+$/);
+        expect(p.getAttribute('stroke-linecap')).toBe('round');
+        // the caps of the mark are the ones given, a line without such values has none
+        expect((await path({ 'stroke-linecap': 'square' })).getAttribute('stroke-linecap')).toBe('square');
+        const whole = await path({}, 'year,v\n2020,1\n2021,2');
+        expect(whole.getAttribute('stroke-linecap')).toBeNull();
+        expect(whole.getAttribute('d')).not.toContain('h0.01');
+        // of a curve too
+        expect((await path({ curve: 'monotoneX' })).getAttribute('d')).toContain('h0.01');
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('templates in the text of a mark', () => {
     test('{name} of a global is its value (as in titles), also where a dim has its name, after a change of the global; other braces stay', async () => {
         const { el, vis } = await mountVis({ def: { globals: { target: 5, unit: '%' }, dims: { x: 'x', y: 'v', target: 'v' },

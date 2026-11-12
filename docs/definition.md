@@ -847,7 +847,9 @@ no numbers or dates, and objects or lists as values of a dim (e.g. of nested
 JSON).
 
 Numeric and date values which are missing, invalid or infinite are `null`:
-they are gaps in lines and areas, points and bars are not drawn, and they
+they are gaps in lines and areas (a value of a line between two gaps is a
+dot of the width of the line, of round caps unless the mark has a
+`stroke-linecap`), points and bars are not drawn, and they
 are not shown in the hover, only of the marks which use the value of the row
 (not e.g. `@y:scaled:max`, the end of the scale). A mark none of whose rows
 has the values it uses is named in a warning of the console (also of the

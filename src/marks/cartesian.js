@@ -2,7 +2,7 @@ export { barScale, barWidth };
 
 import * as d3 from "@/utils/d3";
 import { bandCenter } from "@/utils/scales";
-import { perGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset, once } from "@/marks/elements";
+import { perGroup, linePerGroup, perRow, finite, curve, points, areaPoints, propScale, bandOffset, once } from "@/marks/elements";
 import { pixelOffset } from "@/utils/axis";
 import { refOf, refNames } from "@/utils/expr";
 import { markPath, warnOnce } from "@/utils/warn";
@@ -77,7 +77,7 @@ export default {
             }
             // through the centers of the bands of a band scale, as the bars
             const [dx, dy] = [bandOffset(mark, ctx, 'd.x'), bandOffset(mark, ctx, 'd.y')];
-            return perGroup(groups, g => d3.line()
+            return linePerGroup(groups, g => d3.line()
                 .curve(curve(mark))
                 .defined(e => finite(e.x, e.y))
                 .x(e => e.x + dx)

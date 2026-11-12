@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propDim, propScale, bandOffset, once, dodge, halo, inside, centered };
+export { perRow, perGroup, linePerGroup, finite, curve, points, areaPoints, alongRows, propDim, propScale, bandOffset, once, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';
@@ -173,6 +173,25 @@ const perGroup = (groups, d) => ({
     // the custom properties of the highlight of the group (see highlightVars) on its path
     items: groups.map(g => ({ ...g.attrs, ...groupAttrs(g), ...(g.vars ?? {}), ...(d ? { d: d(g) } : {}), [keyOf]: groupKey(g) })),
 });
+
+// the layer of the paths of lines per group (see perGroup): a value between
+// missing ones, a sub-path of one point (`M x,yZ` of d3), is a dot of the
+// width of the line, a short segment with round caps (of the path, unless
+// the mark has a `stroke-linecap`), a sub-path of no length has no caps of
+// the default butt
+const isolated = /M([-+\d.,e]+)Z/g;
+const linePerGroup = (groups, d) => {
+    const layer = perGroup(groups, d);
+    layer.items.forEach(item => {
+        const dots = typeof item.d == 'string' && isolated.test(item.d);
+        isolated.lastIndex = 0;
+        if (dots)
+            item.d = item.d.replace(isolated, 'M$1h0.01');
+        // (null removes the round caps of a draw before)
+        item['stroke-linecap'] ??= dots ? 'round' : null;
+    });
+    return layer;
+};
 
 // the props of the position and the size of an element per row
 const placing = ['x', 'y', 'x1', 'x2', 'y1', 'y2', 'cx', 'cy', 'width', 'height'];
