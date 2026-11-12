@@ -513,12 +513,13 @@ const makeScale = (name, dim, rows, { dims = {}, coord = {}, scope = {}, stackOf
     // its column (none of the data), whose domain is empty
     s.nearest ??= p => d3.least(s.domain(), d => Math.abs(s(d) + bandCenter(s) - p));
     // the ticks of data of whole numbers are whole numbers (`integers`, e.g.
-    // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js),
+    // years: 2001 and 2002, not 2001.5, see tickFormat of utils/locale.js;
+    // also stacked ones, their sums are whole),
     // the ones of periods the starts of the periods (e.g. days, not noons,
     // quarters, not their months); not with other values on the scale: the ones of the dims with this
     // scale (`also`) or a fixed end of the domain, e.g. 0.5 of [0, 0.5],
     // and not if fewer than two ticks are whole
-    if (s.ticks && !log && dim.type == 'numeric' && !dim.stacked && found.extent && found.whole && ends.every(Number.isInteger)) {
+    if (s.ticks && !log && dim.type == 'numeric' && found.extent && found.whole && ends.every(Number.isInteger)) {
         const ticks = s.ticks;
         s.integers = true;
         s.ticks = count => {

@@ -263,6 +263,14 @@ describe('the ticks of whole numbers', () => {
         expect(makeScale('y', linear([0, 2]), whole, options).ticks(10)).toEqual([0, 1, 2]);
     });
 
+    test('also of stacked values: their sums are whole', () => {
+        const rows = [{ y: 1 }, { y: 2 }, { y: 1 }, { y: 1 }];
+        const stacks = new Map([[rows[0], [0, 1]], [rows[1], [1, 3]], [rows[2], [0, 1]], [rows[3], [1, 2]]]);
+        const s = makeScale('y', { ...linear([null, null]), stacked: true, zero: true }, rows, { ...options, stackOf: r => stacks.get(r) });
+        expect(s.domain()).toEqual([0, 3]);
+        expect(s.ticks(10)).toEqual([0, 1, 2, 3]);
+    });
+
     test('not with the values of a dim of the same scale (`of`) which are none', () => {
         const s = makeScale('y', linear([null, null]), whole, { ...options, also: ['w'] });
         expect(s.ticks(5)).toEqual([0, 0.2, 0.4, 0.6, 0.8, 1]);
