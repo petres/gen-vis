@@ -80,6 +80,27 @@ describe('the width of an export', () => {
         expect(wide - own).toBeLessThan(420);
         expect(errors).toEqual([]);
     });
+
+    // review of 5.0: "The PNG could not be made" of a hidden chart, a TypeError of one showing an error
+    test('screen: of a hidden chart the width of the definition; a chart showing an error is refused', async () => {
+        const own = plotWidth(await (await chart()).exportSvg());
+        const hidden = await chart({ imageWidth: 'screen' });
+        const measure = Element.prototype.getBoundingClientRect;
+        Element.prototype.getBoundingClientRect = function () {
+            return this.classList.contains('vis') ? { x: 0, y: 0, left: 0, top: 0, width: 0, height: 0, right: 0, bottom: 0 } : measure.call(this);
+        };
+        try {
+            expect(plotWidth(await hidden.exportSvg())).toBe(own);
+        } finally {
+            Element.prototype.getBoundingClientRect = measure;
+        }
+        const failing = await chart({ imageWidth: 'screen', def: { ...def(), marks: [{ type: 'nosuch' }] } });
+        expect(failing.el.querySelector('.vis-error')).not.toBeNull();
+        await expect(failing.exportSvg()).rejects.toThrow(/shows an error.*nosuch/);
+        await expect(failing.image()).rejects.toThrow(/shows an error/);
+        await expect(failing.exportCsv()).rejects.toThrow(/shows an error/);
+        errors.length = 0;
+    });
 });
 
 describe('exportSvg', () => {

@@ -298,7 +298,8 @@ createGenVis(map, { defFile: '/data/map.json', onHover: e => ranking.setHighligh
 The image is a copy of the visualisation with the same state, drawn outside
 of the screen in the width of `imageWidth`, so it is the same on every
 screen, e.g. the facets have the columns of this width, or with `screen` in
-the width it has on the screen, e.g. the layout of a phone. It is twice the
+the width it has on the screen, e.g. the layout of a phone (of a hidden
+chart, which has no width there, the one of the definition or 800). It is twice the
 size, narrow ones more (at least 800 pixels wide, e.g. three times of 360),
 has no controls, their selection is a line below the subtitle, e.g.
 `Einheit: Anteil · Jahr: 2024` (without the controls whose global the
@@ -323,7 +324,7 @@ the body with the `--gen-vis-*` variables, the font and the color of the
 place of the chart (styles of its ancestors' selectors, e.g. `.tab .vis-title`,
 do not apply there). They and `exportCsv` are an error while the
 visualisation is loaded, also while a new definition or new data is
-loaded, e.g. after `rendered` again:
+loaded, e.g. after `rendered` again, and while it shows an error:
 
 ```html
 <GenVis ref="chart" def-file="/data/bev/def.json"/>

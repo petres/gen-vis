@@ -486,6 +486,8 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             throw new Error('The visualisation is not loaded yet, e.g. a lazy one out of view.');
         if (store.loading)
             throw new Error('The visualisation is not loaded yet, a new definition or new data is loaded.');
+        if (error)
+            throw new Error(`The visualisation shows an error, there is nothing to export: ${error}`);
     };
 
     // a copy of the visualisation for the images (see staticCopy of
@@ -508,10 +510,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const exporting = await lazy.exporting();
         // the width of `imageWidth` is the one of the chart, also of a
         // definition with a width of its own, see staticCopy
+        // (of a hidden chart, which has no width on the screen, the one of
+        // the definition or the default)
         const fixed = Boolean(props.imageWidth);
-        const width = props.imageWidth == 'screen'
-            ? outer.querySelector('.vis').getBoundingClientRect().width
-            : Number(props.imageWidth || pixelsOf(def.width) || exporting.defaultWidth);
+        const screen = props.imageWidth == 'screen' ? outer.querySelector('.vis')?.getBoundingClientRect().width : null;
+        const width = screen || Number((props.imageWidth != 'screen' && props.imageWidth) || pixelsOf(def.width) || exporting.defaultWidth);
         const mount = (holder, done) => {
             const shown = createGenVis(holder, { ...copy, onRendered: done.resolve, onError: done.reject });
             shown.el.classList.add(...classes);
