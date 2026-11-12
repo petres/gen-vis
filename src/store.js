@@ -27,6 +27,13 @@ const localeOf = locale => {
     return locales.get(key);
 };
 
+// the values of the globals are the ones before (as they are, a global is
+// set to another value, not changed in place)
+const sameGlobals = (before, globals) => {
+    const keys = Object.keys(globals ?? {});
+    return keys.length == Object.keys(before).length && keys.every(k => Object.hasOwn(before, k) && before[k] === globals[k]);
+};
+
 class Store {
     defUrl = null;
     defOrg = null;
@@ -112,9 +119,17 @@ class Store {
     // and the width of the visualisation (`totalWidth`, also of plots beside
     // legends, which have less), a facet adds its sizes, a mark the
     // props of the categories and the row, see docs/definition.md "Expressions" > "Names"
-    get scope() { return this.scopeAt(this.visWidth) }
+    get scope() {
+        const names = this.names;
+        if (this.scopeCache?.names !== names || this.scopeCache.totalWidth !== this.visWidth)
+            this.scopeCache = { names, totalWidth: this.visWidth, scope: Object.freeze(this.scopeAt(this.visWidth)) };
+        return this.scopeCache.scope;
+    }
     // the scope of a width of the visualisation, e.g. of a layout without one (a test)
-    scopeAt(totalWidth) { return { ...this.names, totalWidth, [formatter]: (format, name) => this.format(format, name) } }
+    scopeAt(totalWidth) { return { ...this.names, totalWidth, [formatter]: this.formatOf } }
+    // the last scope and names, see names
+    scopeCache = null;
+    formatOf = (format, name) => this.format(format, name);
 
     // a d3 format in the locale of the values of a dim, of times if it is
     // a dim of dates or of a time scale, e.g. "%Y", local or UTC of a
@@ -153,7 +168,18 @@ class Store {
 
     // the names of the templates, the globals and the fields of the selected
     // entries of the controls, e.g. `group:name`, see templateNames
-    get names() { return templateNames(this.def) }
+    // (built again only of another definition or other values of its
+    // globals, which are set in place from many places, e.g. a control or
+    // the state, so they are compared; and after applyControls, which sets
+    // the names of the entries of the controls in place, e.g. of a language)
+    get names() {
+        const globals = this.def?.globals;
+        const cached = this.namesCache;
+        if (!cached || cached.def !== this.def || cached.globals !== globals || !sameGlobals(cached.values, globals))
+            this.namesCache = { def: this.def, globals, values: { ...globals }, names: Object.freeze(templateNames(this.def)) };
+        return this.namesCache.names;
+    }
+    namesCache = null;
 
     // a text of the definition with the values of the globals, e.g. "{base} = 100"
     text(t) { return fillText(this.textOf(t), this.names) }
@@ -268,6 +294,7 @@ class Store {
                 break;
         }
         this.warnNotes();
+        this.namesCache = null;
         const rowsChanged = sourceRows(this.rows, this.columns) !== source;
         // other rows of a transform of rows, e.g. the classes of other edges
         // of a bin, are prepared again, the same ones are updated in place

@@ -641,6 +641,27 @@ describe('controls of the values of a column (review of 4.1)', () => {
         s.setGlobals({ lang: 'en' });
         expect(names(s)).toEqual(['September', 'October']);
     });
+
+    test('the names and the scope are built once per state of the globals, again of a global set in place or of names of another language', async () => {
+        const s = createStore();
+        await s.init({ def: monthDef('%B', '@lang'), data: monthData });
+        expect(s.names).toBe(s.names);
+        expect(s.scope).toBe(s.scope);
+        expect(s.names['m:name']).toBe('Oktober');
+        const scope = s.scope;
+        // a control sets its global in place, a read before applyControls
+        // has the names before, which sets the names of the entries in place
+        s.def.globals.lang = 'en';
+        expect(s.names['m:name']).toBe('Oktober');
+        s.applyControls();
+        expect(s.names['m:name']).toBe('October');
+        expect(s.scope).not.toBe(scope);
+        s.def.globals.m = '2026-09';
+        expect(s.names).toMatchObject({ m: '2026-09', 'globals.m': '2026-09', 'm:name': 'September' });
+        s.totalWidth = 640;
+        expect(s.scope.totalWidth).toBe(640);
+        expect(Object.isFrozen(s.scope)).toBe(true);
+    });
 });
 
 describe('the type of a dim of a column of a transform of a global (review of 5.0)', () => {
