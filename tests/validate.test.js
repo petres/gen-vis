@@ -306,6 +306,13 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('a band scale of a date dim: a band per date is one of categories (docs: interval)', () => {
+        const def = { dims: { x: { column: 'd', type: 'date', scale: { type: 'band' } }, y: 'v' }, marks: [{ type: 'bar' }] };
+        expect(validateDef(def)).toEqual([
+            `dims.x.scale.type: a band scale does not fit the type 'date', a band per date is one of categories: leave out "type": "date"`,
+        ]);
+    });
+
     test('dims', () => {
         const def = base();
         delete def.dims.x.column;

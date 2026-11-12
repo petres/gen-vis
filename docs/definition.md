@@ -870,7 +870,10 @@ one; times of hours around the changes are unambiguous with an offset or
 at them, e.g. half years of `2023-01-01` and `2023-07-01`: `minute`,
 `hour`, `day`, `week`, `month`, `quarter`, `half`, `year` or a number of
 them, e.g. `"6 months"`
-(a band scale of dates has a band per date instead, in their order). A
+(a band scale makes a band per date instead: of a dim without
+`"type": "date"` and `interval`, the dates are its categories, as they
+are written, in the order of the rows or of `order`, e.g. `"ascending"` of
+ISO dates). A
 dim with an `interval` and without a `type` is a date dim if its values
 are texts of dates, also of years, e.g. `2019` of a CSV. The
 domain of the data reaches the end of the last period (without the 2% of

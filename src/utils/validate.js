@@ -457,8 +457,9 @@ const checkScale = (ctx, n, m, path) => {
         // band, ordinal scales are of any values, e.g. colors of numbers
         const s = scale();
         const continuous = ['ticks', 'invertExtent', 'interpolator'].some(f => typeof s[f] == 'function');
+        // a band per date is one of the dates as categories, see the interval of docs/definition.md
         if (typed && type != 'ordinal' && continuous != ['numeric', 'date'].includes(m.type))
-            warn(`${path}.scale.type`, `a ${type} scale does not fit ${typeName}`);
+            warn(`${path}.scale.type`, `a ${type} scale does not fit ${typeName}${m.type == 'date' && !continuous ? `, a ${type} per date is one of categories: leave out "type": "date"` : ''}`);
         if (m.scale.interpolator !== undefined && typeof s.interpolator != 'function')
             warn(`${path}.scale.interpolator`, `a ${type} scale has no interpolator, e.g. a sequential one has`);
     }
@@ -475,7 +476,7 @@ const checkScale = (ctx, n, m, path) => {
         warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', e.g. 'Blues'`);
     if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
         warn(at('domain'), `a threshold scale needs the values between its classes`);
-    if (m.type == 'date' && m.scale.orientation !== undefined && !['time', 'utc'].includes(type))
+    if (m.type == 'date' && m.scale.orientation !== undefined && !['time', 'utc', 'band', 'point'].includes(type))
         warn(`${path}.scale.type`, `the positions of dates need a 'time' or a 'utc' scale`);
     // the ends of the domain of dates and categories are not rounded, see utils/scales.js
     if (typed && m.scale.nice !== undefined && m.scale.nice !== false && m.type != 'numeric')
