@@ -658,7 +658,7 @@ describe('controls of the values of a column (review of 4.1)', () => {
         expect(s.scope).not.toBe(scope);
         s.def.globals.m = '2026-09';
         expect(s.names).toMatchObject({ m: '2026-09', 'globals.m': '2026-09', 'm:name': 'September' });
-        s.totalWidth = 640;
+        s.visWidth = 640;
         expect(s.scope.totalWidth).toBe(640);
         expect(Object.isFrozen(s.scope)).toBe(true);
     });
