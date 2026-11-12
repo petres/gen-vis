@@ -2240,6 +2240,9 @@ of a scatter plot above its x and y.
   the side with more space, or on it (`center`), e.g. in the center of a
   polar chart, and `offset`, `[x, y]` in pixels, e.g. `"side": "above",
   "offset": [0, -10]` of a text above a region of a map, `null` is 0.
+  The box stays within the chart and the window: where it does not fit
+  on its side it is on the other one, where it fits on neither it is
+  moved into them (over the position).
 - `area`: the hover of the plot area (`plot`, the default) or of the facet
   with its margins (`facet`), e.g. the labels of the rows of horizontal bars
   are part of the row, a click on them is a `select` of the row.

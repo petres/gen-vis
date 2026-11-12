@@ -323,6 +323,9 @@ table.vis-table th:not(:first-child), table.vis-table td:not(:first-child) {
     border-radius: 4px;
     box-shadow: 0 2px 8px rgb(0 0 0 / 0.08);
     padding: 3px 2px;
+    /* the width of its content, wherever it is (see place of comp/hover.js),
+       its rows are not wrapped */
+    width: min-content;
     top: 40%;
     pointer-events: none;
 }

@@ -1,4 +1,4 @@
-export { createHover, byOrder };
+export { createHover, byOrder, space, fitted };
 
 import { create, join, setAttr } from "@/utils/dom";
 import { fillHtml } from "@/utils/def";
@@ -12,7 +12,8 @@ const byOrder = (a, b) => (b > a) - (b < a);
 // the space between the marker and the hover
 const space = 20;
 
-// beside the marker, above or below it, e.g. of horizontal bars, or on it
+// beside the marker, above or below it, e.g. of horizontal bars, or on it,
+// of a box which is not measured, e.g. of a hidden chart, see fitted
 const transforms = {
     left: 'translate(-100%, -50%)',
     right: 'translate(0, -50%)',
@@ -20,6 +21,31 @@ const transforms = {
     below: `translate(-50%, ${space}px)`,
     // on the position, e.g. in the center of a polar plot
     center: 'translate(-50%, -50%)',
+};
+
+/**
+ * The place of the box of the hover of the size `[w, h]` at the marker
+ * `[x, y]`, its offset from the marker: on its `side` if it fits within
+ * `bounds` (`[left, top, right, bottom]`, e.g. of the chart in the
+ * viewport), else on the other side if it fits there, else moved into
+ * them (at their left or top if it is larger), across the side then.
+ * Beside the marker the box is moved up or down into the bounds, above or
+ * below it to the left or the right.
+ */
+const fitted = ([x, y], side, [w, h], [left, top, right, bottom]) => {
+    const fits = (p, size, lo, hi) => p >= lo && p + size <= hi;
+    const into = (p, size, lo, hi) => Math.max(lo, Math.min(p, hi - size));
+    // the box on the side, else on the other one, else into the bounds
+    const beside = (p, size, lo, hi, first) => {
+        const [a, b] = first ? [p - space - size, p + space] : [p + space, p - space - size];
+        return fits(a, size, lo, hi) ? a : fits(b, size, lo, hi) ? b : into(a, size, lo, hi);
+    };
+    let px = into(x - w/2, w, left, right), py = into(y - h/2, h, top, bottom);
+    if (side == 'left' || side == 'right')
+        px = beside(x, w, left, right, side == 'left');
+    else if (side == 'above' || side == 'below')
+        py = beside(y, h, top, bottom, side == 'above');
+    return [px - x, py - y];
 };
 
 // the names of the templates of a row: the globals, the names of the
@@ -186,7 +212,7 @@ const createHover = (store, slots) => {
             drawn = null;
         }
         if (drawn && drawn.data === hover.data && drawn.title === hover.title && drawn.payload === hover.payload)
-            return;
+            return false;
         const first = !drawn;
         drawn = { data: hover.data, title: hover.title, payload: hover.payload };
         const sorted = sortedOf(hover.data);
@@ -224,14 +250,22 @@ const createHover = (store, slots) => {
                 totalRow(hover);
             }
         }
+        return true;
     };
 
     return {
         el: root,
-        // the position and the content of the hover
-        show(hover) {
-            patch(root, { class: 'vis-hover', style: { left: { left: `${-space}px`, right: `${space}px` }[hover.side] ?? '0px', transform: transforms[hover.side] } });
-            content(hover);
+        // the content of the hover, true if it changed, so the box is
+        // measured again, see fitted
+        show: content,
+        // the box at the offset `at` from the marker, see fitted, without
+        // one on the side of the hover, e.g. of a box which is not measured;
+        // left and top, not a transform: Chromium does not shrink the
+        // scrolled area of the page after a move by a transform alone
+        place(hover, at) {
+            patch(root, { class: 'vis-hover', style: at ? { left: `${at[0]}px`, top: `${at[1]}px` } : { left: { left: `${-space}px`, right: `${space}px` }[hover.side] ?? '0px', transform: transforms[hover.side] } });
         },
+        // the size of the box, a read of the layout
+        size: () => [root.offsetWidth, root.offsetHeight],
     };
 };

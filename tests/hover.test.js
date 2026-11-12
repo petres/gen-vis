@@ -2,7 +2,7 @@
 import { describe, test, expect, onTestFinished, vi } from 'vitest';
 import { scaleBand, scaleLinear } from 'd3-scale';
 import { orderOf, sortedByOrder, nearestWithRows, nearestRow, pointFinder, pointPosition, placed, positionsInOrder, clamp } from '@/comp/facet-hover';
-import { byOrder } from '@/comp/hover';
+import { byOrder, fitted } from '@/comp/hover';
 import { errors, useDom, mount, mountVis, pointer, nextTick } from './dom.js';
 import { targetOf } from '@/utils/dom';
 
@@ -410,6 +410,68 @@ describe('the position of the pointer', () => {
         await move(el, 500);
         expect(reads).toBe(2);
         expect(el.querySelector('.vis-hover')).not.toBeNull();
+    });
+});
+
+describe('the place of the box of the hover (review of 5.0: it widened narrow pages)', () => {
+    test('on its side if it fits, else on the other one, else moved into the bounds', () => {
+        const bounds = [0, 0, 360, 300];
+        // right of the marker, beside it it is moved into the bounds vertically
+        expect(fitted([100, 150], 'right', [200, 100], bounds)).toEqual([20, -50]);
+        expect(fitted([100, 280], 'right', [200, 100], bounds)).toEqual([20, -80]);
+        // left does not fit: right
+        expect(fitted([100, 150], 'left', [200, 100], bounds)).toEqual([20, -50]);
+        // on neither side: on the marker, at the right edge
+        expect(fitted([200, 150], 'right', [200, 100], bounds)).toEqual([-40, -50]);
+        // larger than the bounds: at their left
+        expect(fitted([200, 150], 'left', [400, 100], bounds)).toEqual([-200, -50]);
+        // above and below, moved into the bounds horizontally
+        expect(fitted([350, 50], 'above', [100, 40], bounds)).toEqual([-90, 20]);
+        expect(fitted([350, 150], 'above', [100, 40], bounds)).toEqual([-90, -60]);
+        // on the position
+        expect(fitted([10, 10], 'center', [100, 40], bounds)).toEqual([-10, -10]);
+    });
+
+    test('the box is measured when its content changes, not on every move, and stays within the chart', async () => {
+        const el = await mount({ def: lineDef({ marks: [{ type: 'line', by: 'c' }] }), data: 'year,value,land\n2020,1,Wien\n2021,2,Wien\n2022,3,Wien' });
+        // a box of 250 x 100 pixels, the chart and its facet at 0, 0, 600 x 300 pixels, of a viewport of 360 pixels
+        const width = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetWidth');
+        const height = Object.getOwnPropertyDescriptor(HTMLElement.prototype, 'offsetHeight');
+        const measure = Element.prototype.getBoundingClientRect;
+        const viewport = Object.getOwnPropertyDescriptor(Element.prototype, 'clientWidth');
+        let reads = 0;
+        Object.defineProperty(HTMLElement.prototype, 'offsetWidth', { configurable: true, get() { return this.classList.contains('vis-hover') ? (reads++, 250) : 0 } });
+        Object.defineProperty(HTMLElement.prototype, 'offsetHeight', { configurable: true, get() { return this.classList.contains('vis-hover') ? 100 : 0 } });
+        Object.defineProperty(Element.prototype, 'clientWidth', { configurable: true, get() { return this === document.documentElement ? 360 : 0 } });
+        Element.prototype.getBoundingClientRect = function () {
+            return this.matches('.vis, .vis-facet') ? DOMRect.fromRect({ x: 0, y: 0, width: 600, height: 300 }) : measure.call(this);
+        };
+        onTestFinished(() => {
+            Object.defineProperty(HTMLElement.prototype, 'offsetWidth', width);
+            Object.defineProperty(HTMLElement.prototype, 'offsetHeight', height);
+            Object.defineProperty(Element.prototype, 'clientWidth', viewport);
+            Element.prototype.getBoundingClientRect = measure;
+        });
+        // the left and the right of the box in the chart
+        const span = () => {
+            const at = Number(el.querySelector('.vis-facet > div[aria-live]').style.transform.match(/translate\(([-\d.]+)px/)[1]);
+            const left = at + parseFloat(el.querySelector('.vis-hover').style.left);
+            return [left, left + 250];
+        };
+        // the middle position: right of it the box would leave the viewport, left of it it fits
+        await move(el, 300);
+        const [left, right] = span();
+        expect(right).toBeLessThanOrEqual(360);
+        expect(left).toBeGreaterThanOrEqual(0);
+        expect(reads).toBe(1);
+        // the same position: not measured again
+        await move(el, 310);
+        expect(reads).toBe(1);
+        // the first one: right of it, 20 pixels apart
+        await move(el, 0);
+        expect(el.querySelector('.vis-hover').style.left).toBe('20px');
+        expect(reads).toBe(2);
+        expect(errors).toEqual([]);
     });
 });
 

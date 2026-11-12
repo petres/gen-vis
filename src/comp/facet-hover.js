@@ -10,7 +10,7 @@ import { unknownOf, withColor } from "@/layout";
 import { entrySymbol } from "@/comp/legend";
 import { bandCenter } from "@/utils/scales";
 import { patch } from "@/comp/html";
-import { createHover, byOrder } from "@/comp/hover";
+import { createHover, byOrder, fitted } from "@/comp/hover";
 
 /**
  * The place of a row in the hover, from the top, of the rows of its
@@ -157,6 +157,9 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
     let hide = null, step = null, selectShown = null;
     let lastEvent = null, lastKey = null, pointerAt = null;
     let box = null;
+    // the size of the box and the bounds of its place, read when its content
+    // changes or after a draw, not on every move, see boundsOf
+    let measured = null;
 
     // the options of the hover, see docs/usage.md "Events and slots"
     const hoverOptions = () => store.def.hover || {};
@@ -190,20 +193,48 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             style: `transform: translate(${facetOf().margins.left + o[0] + hover.x}px, ${facetOf().margins.top + o[1] + hover.y}px); position: absolute; top: 0; left: 0; z-index: 1;`,
         });
         if (hover.visible && hoverOptions().box !== false) {
+            let changed = false;
             if (!box) {
                 box = createHover(store, slots);
                 box.show(hover);
                 live.appendChild(box.el);
+                changed = true;
             } else
-                box.show(hover);
+                changed = box.show(hover);
+            if (changed || !measured)
+                measured = measure();
+            const anchor = [facetOf().margins.left + o[0] + hover.x, facetOf().margins.top + o[1] + hover.y];
+            box.place(hover, measured && fitted(anchor, hover.side, measured.size, measured.bounds));
         } else if (box) {
             box.el.remove();
             box = null;
+            measured = null;
         }
+    };
+
+    // the size of the box and its bounds in the coordinates of the facet
+    // (one read of the layout): within the chart and the viewport, in a
+    // direction where the box is larger than that within the viewport
+    // only, the page is not made wider. Null if nothing is laid out, e.g. a
+    // hidden chart or jsdom, the box is on its side then.
+    const measure = () => {
+        const facet = live.parentNode;
+        const chart = facet?.closest('.vis') ?? facet;
+        const size = box.size();
+        if (!chart || !size[0])
+            return null;
+        const f = facet.getBoundingClientRect(), c = chart.getBoundingClientRect();
+        const view = [0, 0, document.documentElement.clientWidth || innerWidth, document.documentElement.clientHeight || innerHeight];
+        const inner = [Math.max(c.left, view[0]), Math.max(c.top, view[1]), Math.min(c.right, view[2]), Math.min(c.bottom, view[3])];
+        const [left, right] = inner[2] - inner[0] >= size[0] ? [inner[0], inner[2]] : [view[0], view[2]];
+        const [top, bottom] = inner[3] - inner[1] >= size[1] ? [inner[1], inner[3]] : [view[1], view[3]];
+        return { size, bounds: [left - f.left, top - f.top, right - f.left, bottom - f.top] };
     };
 
     const init = ctx => {
         const coord = store.coord;
+        // the facet may have moved, e.g. of a new size
+        measured = null;
         hide = null;
         step = null;
         selectShown = null;
