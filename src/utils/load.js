@@ -1,4 +1,4 @@
-export { valueFormat, resolveUrl, clearCache, resolveParents, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
+export { valueFormat, resolveUrl, clearCache, resolveParents, parentsOf, readDef, requirements, raw, geoParts, loadGeo, load, fetchData };
 
 
 import { addDataValues, updateDataValues, dataFormat, distinctValues, inferTypes, oddValues, parseData, prepareData, sourceRows, toDate, usedColumns } from "@/utils/data";
@@ -144,6 +144,9 @@ const checkVersion = (def, source, required = false) => {
 // part is one of gen-vis 5 (see checkVersion), a definition of a file (of
 // its `url`, undefined of an inline one) has a `$schema`, in itself or in a
 // parent.
+// the parents of a merged definition (of resolveParents), in their order,
+// e.g. so the check tells a part of a shared parent from one of its own
+const parentsOf = new WeakMap();
 const resolveParents = async (def, url, load = fetchText) => {
     const parts = [];
     const included = new Set();
@@ -165,6 +168,8 @@ const resolveParents = async (def, url, load = fetchText) => {
     };
     await add(def, url, []);
     const merged = mergeAll(parts);
+    if (parts.length > 1)
+        parentsOf.set(merged, parts.slice(0, -1));
     if (url !== undefined)
         checkVersion(merged, `'${url}'`, true);
     return merged;

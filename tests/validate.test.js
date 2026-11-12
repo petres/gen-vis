@@ -186,7 +186,7 @@ describe('validateDef', () => {
         expect(validateDef(def)).toEqual([]);
         def.marks.curve = 'smooth';
         expect(validateDef(def)).toEqual([`marks[0].curve: unknown curve 'smooth', expected one of ${curveNames.map(c => `'${c}'`).join(', ')}`]);
-        def.marks = { ...def.marks, type: 'svg:circle', curve: 'monotoneX' };
+        def.marks = { type: 'svg:circle', by: ['c'], curve: 'monotoneX' };
         expect(validateDef(def)).toEqual([`marks[0].curve: only used by 'cartesian:line', 'cartesian:area', 'polar:line', 'polar:area'`]);
     });
 
@@ -262,14 +262,14 @@ describe('validateDef', () => {
     test('operators which are not evaluated as they are meant', () => {
         const def = base();
         def.dims.x.axis = { ticks: { steps: ['@innerWidth'] } };
-        def.marks.r = { format: ['@y'] };
+        def.marks['stroke-width'] = { format: ['@y'] };
         def.marks.fill = { fromat: ['@y', ',.1f'] };
         def.marks.opacity = { steps: ['@innerWidth', { small: 0.5, 500: 1 }] };
         def.marks.title = { if: ['@y'] };
         def.marks['data-v'] = { var: 1 };
         expect(validateDef(def)).toEqual([
             `dims.x.axis.ticks.steps: expected a value and its steps, e.g. ["@totalWidth", { "0": 220, "550": 250 }]`,
-            `marks[0].r.format: expected a value and a d3 format, e.g. ["@y", ",.1f"]`,
+            `marks[0].stroke-width.format: expected a value and a d3 format, e.g. ["@y", ",.1f"]`,
             // an object of one key close to an operator is a nested prop
             "marks[0].fill.fromat: a nested prop, not an operator, did you mean 'format'?",
             "marks[0].opacity.steps[1].small: the cut of a step is a number",
@@ -280,6 +280,7 @@ describe('validateDef', () => {
 
     test('match props and props of props, also in the string syntax', () => {
         const def = base();
+        def.marks = { ...def.marks, type: 'svg:circle', d: undefined };
         def.marks.r = { match: ['@c', { Wien: '@nope' }, '@x:scaled'] };
         def.marks.cx = '=(@unknown * 2) + 2';
         def.marks.cy = { match: ['@c'] };
@@ -921,6 +922,8 @@ describe('validateDef in the words of 5.0, the keys of marks and the data', () =
             "marks[0].highligt: unknown key, did you mean 'highlight'? (other keys are attributes of the elements)",
             "marks[0].strok-width: no attribute of svg, did you mean 'stroke-width'?",
             "marks[0].label: unknown key, did you mean 'layer'? (other keys are attributes of the elements)",
+            // a key which is neither one of a mark nor an attribute of its element
+            'marks[0].mode: no key of a mark and no attribute of svg, it has no effect (the other keys of a mark are attributes of its elements)',
         ]);
     });
 
@@ -976,8 +979,11 @@ test('the formats of numbers are formats of d3, of the rows given also of the di
     def.dims.y.format = '%,.0f';
     expect(validateDef(def)).toEqual([`dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`]);
     def.dims.y = { column: 'value', format: '%,.0f', axis: { format: ',.1f' }, hover: { format: 'x.y' } };
-    // without a type a time format is the one of a date dim
-    expect(validateDef(def)).toEqual([`dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    // without a type a time format is the one of a date dim, this one is neither
+    expect(validateDef(def)).toEqual([
+        `dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`,
+        `dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
+    expect(validateDef({ ...def, dims: { ...def.dims, y: { column: 'value', format: '%Y' } } })).toEqual([]);
     expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
         `dims.y.format: '%,.0f' is no d3 format of numbers (invalid format: %,.0f), a time format is one of a date dim, "type": "date", e.g. ",.0f"`,
         `dims.y.hover.format: 'x.y' is no d3 format of numbers (invalid format: x.y), e.g. ",.0f"`]);
@@ -1002,4 +1008,99 @@ test('a format as an expression of the value (the name of the dim): its referenc
     expect(validateDef(def)).toEqual([]);
     def.dims.y.axis = { format: '=@nope' };
     expect(validateDef(def)).toEqual([expect.stringMatching(/^dims\.y\.axis\.format: unknown reference 'nope'/)]);
+});
+
+describe('mistakes which give a wrong or an empty chart without a message', () => {
+    beforeAll(loadTransforms);
+    // the rows of the definitions of 5.0 below
+    const rows = [
+        { month: '2024-01-01', region: 'North', revenue: 1, units: 3 },
+        { month: '2024-02-01', region: 'South', revenue: 2, units: 4 },
+        { month: '2024-03-01', region: 'East', revenue: 3, units: 5 },
+    ];
+    const def = parts => ({ dims: { x: 'month', y: 'revenue', region: 'region' }, marks: { type: 'line', by: 'region' }, ...parts });
+
+    test('a listed category which is no value of its column, of all rows; not with fromData or of a parent', async () => {
+        const listed = def({ filter: '@region == "North"', dims: { x: 'month', y: 'revenue', region: { column: 'region', categories: { Nord: '#f00', South: '#00f' } } } });
+        expect(validateDef(listed, rows)).toEqual([
+            "dims.region.categories.Nord: 'Nord' is no value of the column 'region', the category has no rows, its values are 'North', 'South', 'East'",
+            `dims.region.categories: the listed categories are all of them, the rows of 2 values 'North', 'East' of 'region' are in none and not drawn, "fromData": "rows" adds the ones of the data`,
+        ]);
+        // the filter does not count, without the rows nothing is known
+        expect(validateDef({ ...listed, dims: { ...listed.dims, region: { column: 'region', categories: { North: '#f00', South: '#00f' } } } }, rows)).toEqual([]);
+        expect(validateDef(listed)).toEqual([]);
+        // fromData adds the ones of the data, the listed ones may be of other data
+        expect(validateDef({ ...listed, dims: { ...listed.dims, region: { ...listed.dims.region, fromData: 'rows' } } }, rows)).toEqual([]);
+        // the categories of a parent, e.g. names of all regions, are of other data as well
+        const parent = { dims: { region: { column: 'region', categories: { Nord: { name: 'N' }, North: {}, South: {}, East: {} } } } };
+        const merged = await resolveParents({ ...def(), $schema: 'https://unpkg.com/@preschen/gen-vis@5/schema.json', parent: 'parent.json' },
+            'http://x/def.json', () => JSON.stringify(parent));
+        expect(validateDef(merged, rows)).toEqual([]);
+    });
+
+    test('a line or an area without a dim y or a channel y', () => {
+        expect(validateDef(def({ dims: { x: 'month', region: 'region' } }), rows)).toEqual([
+            `marks[0]: a line needs a vertical position, there is no dim 'y' and the mark has no channel 'y', nothing is drawn, e.g. "dims": { "y": "value" } or "y": "value"`]);
+        expect(validateDef(def({ dims: { x: 'month', region: 'region' }, marks: { type: 'area', y: 'revenue' } }), rows)).toEqual([]);
+    });
+
+    test('keys of a mark which are no attribute of its element: a hint of the ones of other languages', () => {
+        expect(validateDef(def({ marks: { type: 'point', by: 'region', size: 5, radius: 4, shape: 'square', width: 2 } }), rows)).toEqual([
+            'marks[0].size: the radius of a point is "r", e.g. "r": 5, or a numeric dim, e.g. "r": "pop"',
+            `marks[0].radius: 'radius' is a position of polar marks, the radius of a point is "r", e.g. "r": 5, or a numeric dim, e.g. "r": "pop"`,
+            'marks[0].shape: points are circles, a mark has no shape; another symbol is a text mark of it, e.g. { "type": "text", "text": "▲" }, the symbols of a legend are "symbol" of the legend of the dim',
+            'marks[0].width: the radius of a point is "r", e.g. "r": 5, or a numeric dim, e.g. "r": "pop"',
+        ]);
+        // a color of a column (of no dim) or of a dim
+        expect(validateDef({ marks: { type: 'line', x: 'month', y: 'revenue', color: 'region' } }, rows)).toEqual([
+            `marks[0].color: 'region' is a column of the data, not a color: a mark per category of a dim in its color is "by": "region" (or "stroke": "region"), with a dim of the column, e.g. "dims": { "region": "region" }`]);
+        expect(validateDef(def({ marks: { type: 'line', color: 'region', 'stroke-width': 2 } }))).toEqual([
+            `marks[0].color: 'region' is a dim, not a color: a mark per category of a dim in its color is "by": "region" (or "stroke": "region")`]);
+        // a color is an attribute, the width of a line its stroke-width, keys of other elements have no effect
+        expect(validateDef(def({ marks: { type: 'line', by: 'region', color: 'red', width: 3, r: 2, wish: 1, 'data-k': 1 } }))).toEqual([
+            'marks[0].width: the width of a line is "stroke-width", e.g. "stroke-width": 2',
+            'marks[0].r: no attribute of the path of a line mark (it is one of other elements), it has no effect',
+            'marks[0].wish: no key of a mark and no attribute of svg, it has no effect (the other keys of a mark are attributes of its elements)',
+        ]);
+        // the size of a tick, the radius of a polar point, the width of a bar, typos of the highlight
+        expect(validateDef(def({ marks: [{ type: 'tick', size: 0.5 }, { type: 'bar', width: 4 }] }))).toEqual([]);
+        expect(validateDef({ ...def(), coord: 'polar', marks: { type: 'point', radius: 4 } })).toEqual([]);
+        expect(validateDef(def({ marks: { type: 'line', highlight: { 'stroke-wdith': 4 } } }))).toEqual([
+            "marks[0].highlight.stroke-wdith: no attribute of svg, did you mean 'stroke-width'?"]);
+    });
+
+    test('invalid d3 formats of numbers and dates, of dims, axes, hovers, expressions and transforms', () => {
+        expect(validateDef(def({ dims: { x: { column: 'month', type: 'date', axis: { format: '%b %J' } }, y: { column: 'revenue', format: ',.2q' } },
+            marks: { type: 'line', 'data-v': "=format(@y, '.1z')" }, transform: { type: 'format', column: 'month', format: '%W%', as: 'w' } }))).toEqual([
+            `dims.x.axis.format: '%b %J' is no d3 time format (unknown directive '%J'), e.g. "%b %Y"`,
+            `dims.y.format: ',.2q' is no d3 format of numbers (unknown type 'q'), e.g. ",.0f"`,
+            `marks[0].data-v.format: '.1z' is no d3 format of numbers (unknown type 'z'), e.g. ",.0f"`,
+            `transform[0].format: '%W%' is no d3 time format (a '%' at the end without a directive), e.g. "%W" (the week of the year) or "%u" (the weekday)`,
+        ]);
+        expect(validateDef(def({ dims: { x: { column: 'month', type: 'date', format: 'H%K %Y', hover: { format: '%-d. %B' } }, y: { column: 'revenue', format: '.1%' }, region: 'region' } }))).toEqual([]);
+    });
+
+    test('a value of a date dim which is no date', () => {
+        expect(validateDef(def({ dims: { x: { column: 'month', domain: ['01/2023', null], include: 2024, axis: { values: ['2024-02', 'Feb'] } }, y: 'revenue', region: 'region' } }), rows)).toEqual([
+            `dims.x.domain[0]: '01/2023' is no date, e.g. "2023", "2023-01", "2023-01-31" or "31.01.2023"`,
+            'dims.x.include: 2024 is a time in milliseconds since 1970 as a date, a year is a text, e.g. "2024"',
+            `dims.x.axis.values[1]: 'Feb' is no date, e.g. "2023", "2023-01", "2023-01-31" or "31.01.2023"`,
+        ]);
+    });
+
+    test('the columns a transform reads: of the data or of a transform before it', () => {
+        const transform = [{ type: 'calc', as: 'k', expr: '@revnue / 1000 * @f' }, { type: 'calc', as: 'u', expr: '@k * @units' },
+            { type: 'rolling', column: 'unit', by: 'region', order: 'month', size: 2, as: 'r' }];
+        expect(validateDef({ ...def(), globals: { f: 2 }, transform }, rows)).toEqual([
+            `transform[0].expr: 'revnue' is neither a column of the data or of a transform before it nor a global, its values are null, did you mean 'revenue'?`,
+            `transform[2].column: 'unit' is not a column of the data or of a transform before it, did you mean 'units'?`,
+        ]);
+    });
+
+    test('bars on a continuous position of the rows of an aggregate, stacked', () => {
+        const stacked = def({ transform: [{ type: 'year', column: 'month', as: 'year' }, { type: 'aggregate', column: 'revenue', by: ['region', 'year'], op: 'sum', rows: true }],
+            dims: { x: 'year', y: 'revenue', region: 'region' }, marks: { type: 'bar', by: 'region', stack: true } });
+        expect(validateDef(stacked, rows)).toEqual([
+            `marks[0]: the bars are vertical on the continuous scale of the dim 'x', they need a 'width' in pixels, a categorical dim of their position or an "interval" of dates`]);
+    });
 });

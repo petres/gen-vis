@@ -227,13 +227,23 @@ value of the controls (`controls[0].values[1] > marks[0].type: ...`).
 It also warns of keys of a mark which are probably typos of a key of a mark
 or of an attribute of svg (`marks[0].stak: unknown key, did you mean
 'stack'?`, `marks[0].strok-width: no attribute of svg, ...`; other keys are
-attributes of the elements), of keys of a transform its type does not read
-and of a fold whose key or value replaces a column. With the `rows` of the
+attributes of the elements, of a built-in mark type a key which is no
+attribute of its element is a warning too, with a hint for the ones of
+other libraries, e.g. `size` or `shape` of a point, `color` naming a
+column), of keys of a transform its type does not read, of a fold whose
+key or value replaces a column, of a line or an area without a vertical
+position, of d3 formats which d3 reads as another one (`",.2q"`, an
+unknown directive of a time format) and of values of a date dim which are
+no dates (`"01/2023"`). With the `rows` of the
 data it checks the data too: a dim's column which is not one of the data
 or the transforms (`dims.x.column: 'yaer' is not a column of the data, did
-you mean 'year'?`), a channel naming neither a dim nor a column, a `by` of
-a column without a dim, texts in a `numeric` dim and years as numbers in a
-`date` dim; the names of filters are the dims, the columns and the
+you mean 'year'?`), a column which a transform reads (also of an
+expression of a `calc` or a `filter`) and neither the data nor a transform
+before it has, a channel naming neither a dim nor a column, a `by` of
+a column without a dim, texts in a `numeric` dim, years as numbers in a
+`date` dim and a key of the listed `categories` of a dim without
+`fromData` which is no value of its column (of all rows; not a key of a
+parent); the names of filters are the dims, the columns and the
 globals (without rows any plain name may be a column). Dims without a type
 get the type the load infers from the values (also for transform
 columns). `gen-vis check` runs it on files, see [export](export.md#check).
