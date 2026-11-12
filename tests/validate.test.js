@@ -768,6 +768,20 @@ describe('validateDef and the schema', () => {
         ]);
     });
 
+    test('numbers of separators of thousands in CSV of semicolons (1.200 is read as 1.2), if the rows are given', async () => {
+        const def = { dims: { x: 'Jahr', y: 'Wert' }, marks: [{ type: 'line' }] };
+        const check = async csv => validateDef(def, await parseData(csv));
+        const warning = (v, n) => `dims.y.column: '${v}' of the column 'Wert' is read as ${n}, a number of a decimal point: a separator of thousands is no part of a number of CSV, write the numbers without it, e.g. ${v.replace('.', '')} (in a spreadsheet a format of numbers without separators of thousands)`;
+        expect(await check('Jahr;Wert\n2020;1.200\n2021;950\n2022;1.350')).toEqual([warning('1.200', 1.2)]);
+        expect(await check('Jahr;Wert\n2020;12.500\n2021;13.250')).toEqual([warning('12.500', 12.5)]);
+        // a decimal comma or another decimal form: no separators of thousands, nor of CSV of commas
+        expect(await check('Jahr;Wert\n2020;1.200\n2021;950,5')).toEqual([]);
+        expect(await check('Jahr;Wert\n2020;1.2\n2021;950')).toEqual([]);
+        expect(await check('Jahr,Wert\n2020,1.200\n2021,950')).toEqual([]);
+        // a categorical dim is of texts
+        expect(validateDef({ ...def, dims: { x: 'Jahr', y: { column: 'Wert', type: 'categorical' } } }, await parseData('Jahr;Wert\n2020;1.200'))).toEqual([]);
+    });
+
     test('a map has no axes', () => {
         const def = base();
         def.coord = 'geo';

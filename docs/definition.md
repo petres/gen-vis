@@ -214,7 +214,10 @@ semicolons and no comma is read as one of semicolons, and its columns of
 numbers of decimal commas are numbers, e.g. `1,5` and `-0,25` (never the
 ones of CSV of commas, where `"1,5"` is a text). Separators of thousands
 are no part of a number, e.g. `1.234,5` or `1,234.5`: such values are
-missing, with a warning. A `.csv` of tabs is read as one column, a warning
+missing, with a warning; `1.200` is a number of a decimal point, 1.2 (also
+in CSV of semicolons), the check warns of a column of CSV of semicolons of
+such numbers and whole ones (e.g. `1.200` and `950`): write the numbers
+without separators of thousands, e.g. `1200`. A `.csv` of tabs is read as one column, a warning
 (in the console and of `gen-vis check`) says so (`"dataFormat": "tsv"`
 reads it):
 

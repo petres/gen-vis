@@ -14,7 +14,7 @@ import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { isExpressionText } from "@/utils/expr-parse";
 import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
-import { continuous, convert, inferTypes, toDate } from "@/utils/data";
+import { absent, continuous, convert, inferTypes, toDate } from "@/utils/data";
 import { versionError, languageError } from "@/utils/version";
 import { translate, authoredPath, markAliases, markKeys, positionChannels, typeOf } from "@/utils/language";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
@@ -399,6 +399,7 @@ const checkDims = ctx => {
             checkProp(m.legend?.symbol?.props, `${path}.legend.symbol.props`, warn, known);
         }
         checkDates(ctx, n, m, path);
+        checkThousands(ctx, n, m, path);
         checkFormats(n, m, path, warn);
         // a format as an expression of the value, e.g. "=format(@y / 1000, ',.0f')": the value is the name of the dim
         [['format', m.format], ['axis.format', m.axis?.format], ['hover.format', m.hover?.format], ['legend.format', m.legend?.format]]
@@ -597,6 +598,37 @@ const checkDates = ({ rows, warn }, n, m, path) => {
     const small = rows.map(r => r?.[m.column]).find(millis);
     if (small !== undefined)
         warn(`${path}.type`, `the values of '${m.column}' are numbers, e.g. ${small}, which are milliseconds since 1970 as dates, a year has four digits, e.g. 2024`);
+};
+
+// the values of a column of CSV of semicolons which are only whole numbers
+// and numbers of separators of thousands (a point), e.g. "1.200" and "950":
+// no number of a decimal comma or another decimal form, so "1.200" is
+// probably 1200 (it is read as 1.2), the first such value (rows of
+// `semicolons`, see parseData of utils/data.js)
+const wholeNumber = /^\s*[+-]?\d+(?:e[+-]?\d+)?\s*$/i;
+const thousandsNumber = /^\s*[+-]?\d{1,3}(?:\.\d{3})+\s*$/;
+const thousandsOf = (rows, column) => {
+    let found;
+    for (const row of rows) {
+        const v = row?.[column];
+        if (absent(v) || (typeof v == 'string' && wholeNumber.test(v)))
+            continue;
+        if (typeof v != 'string' || !thousandsNumber.test(v))
+            return undefined;
+        found ??= v.trim();
+    }
+    return found;
+};
+
+// the numbers of a column of CSV of semicolons of separators of thousands,
+// e.g. "1.200" beside "950", are read as numbers of a decimal point (1.2):
+// a separator of thousands is no part of a number (docs/definition.md, Data)
+const checkThousands = ({ rows, warn }, n, m, path) => {
+    if (!rows?.semicolons || typeof m.column != 'string' || ['categorical', 'date'].includes(m.type))
+        return;
+    const v = thousandsOf(rows, m.column);
+    if (v !== undefined)
+        warn(`${path}.column`, `'${v}' of the column '${m.column}' is read as ${toNumber(v)}, a number of a decimal point: a separator of thousands is no part of a number of CSV, write the numbers without it, e.g. ${v.replaceAll('.', '')} (in a spreadsheet a format of numbers without separators of thousands)`);
 };
 
 // the conditions of the rows of dims, see rowFilter of utils/data.js:

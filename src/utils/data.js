@@ -1,4 +1,4 @@
-export { oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, dateReader, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
+export { absent, oddValues, sourceRows, groupBy, inferTypes, inferType, keptRows, rowFilter, filterRows, withoutConditions, parseData, dataFormat, dataFormats, isBinary, prepareData, updateData, convert, continuous, scaleDef, filter, stack, categoryOrder, toDate, dateReader, toNumber, addDataValues, updateDataValues, distinctValues, usedColumns, columnValues };
 
 import * as d3 from "@/utils/d3";
 import { fillTemplate, inLanguage, sameValue, templateKeys, variants } from "@/utils/def";
@@ -149,7 +149,7 @@ const parseData = async (data, format, columns = null, warn = null) => {
     }
     // of semicolons, e.g. of a spreadsheet in German, with decimal commas
     if (semicolons(data))
-        return duplicateColumns(decimalCommas(delimited(data, ';', warn)), warn);
+        return Object.defineProperty(duplicateColumns(decimalCommas(delimited(data, ';', warn)), warn), 'semicolons', { value: true });
     return separators(duplicateColumns(delimited(data, ',', warn), warn), warn);
 };
 
