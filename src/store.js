@@ -6,7 +6,7 @@ import { applyTransforms, utcColumns } from "@/utils/transform";
 import { applyResolved, escapeHtml, fillHtml, fillText, formatOf, languageOf, templateNames } from "@/utils/def";
 import { inferTypes } from "@/utils/data";
 import { markTypes } from "@/marks";
-import { applyGlobals, applyState, diffState, snapshot } from "@/utils/state";
+import { applyGlobals, applyState, diffState, snapshot, userControls } from "@/utils/state";
 import { getLocale } from "@/utils/locale";
 import { evaluate, formatter, isOperator, refNames } from "@/utils/expr";
 import { formatExpression } from "@/utils/expr-parse";
@@ -224,7 +224,7 @@ class Store {
     // of a transform, and again after them, e.g. of a global of a scale of
     // dates to utc, `keepVisible` keeps the entries shown or hidden of the
     // dims prepared again
-    applyControls(keepVisible = true) {
+    applyControls(keepVisible = true, kept = []) {
         const changedColumns = new Set();
         const transform = () => {
             const columns = applyTransforms(this.rows, this.def.transform, this.def.globals, utcColumns(this.def), this.columns, this.files, this.def.locale);
@@ -242,7 +242,7 @@ class Store {
             const columnsBefore = new Set(changedColumns);
             applyResolved(this.def, this.defOrg, { dataKeys: (column, inOrder) => this.dataKeys(column, inOrder), keepVisible, transform, files: this.files,
                 symbols: symbolDefaults(this.chartDefaults), ranks: rankDefaults(this.chartDefaults), authored: this.authored, markTypes: withMarkDefaults(markTypes, this.chartDefaults),
-                types: part => inferTypes(part, this.rows, this.columns) }).forEach(n => changed.includes(n) || changed.push(n));
+                types: part => inferTypes(part, this.rows, this.columns), kept }).forEach(n => changed.includes(n) || changed.push(n));
             transform();
             Object.keys(this.def.dims).filter(n => changedColumns.has(this.def.dims[n].column) && !changed.includes(n))
                 .forEach(n => changed.push(n));
@@ -302,8 +302,10 @@ class Store {
         applyState(this.def, state);
         applyGlobals(this.def, this.globals);
         // the entries of the legends of the dims prepared again are the
-        // ones of the definition and of the state, not the ones before
-        this.applyControls(false);
+        // ones of the definition and of the state, not the ones before; the
+        // state has the globals of the controls of the user, the globals of
+        // their entries do not change them, see entryGlobals of utils/def.js
+        this.applyControls(false, userControls(this.def).map(e => e.global));
         applyState(this.def, { visible: state?.visible });
         this.changed();
     }

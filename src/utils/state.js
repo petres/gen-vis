@@ -1,4 +1,4 @@
-export { snapshot, diffState, applyState, applyGlobals };
+export { snapshot, diffState, applyState, applyGlobals, userControls };
 
 import { sameValue } from "@/utils/def";
 

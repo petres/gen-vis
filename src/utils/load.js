@@ -6,7 +6,7 @@ import { applyTransforms, loadTransforms, madeColumns, utcColumns } from "@/util
 import { applyResolved, fillTemplate, languageOf, mergeAll, prepareDef, variants, variantsOf } from "@/utils/def";
 import { translate, checkDims, implicitDims, authoredPath } from "@/utils/language";
 import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/resolve";
-import { applyGlobals, applyState, snapshot } from "@/utils/state";
+import { applyGlobals, applyState, snapshot, userControls } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
 import { curveNames, later, loadColors, loadMore, ownScheme, scaleNames, scales } from "@/utils/d3";
@@ -485,7 +485,8 @@ const prepare = (defOrg, authored, rows, files, state, globals, { symbols = {}, 
     const defaults = snapshot(prepared);
     applyState(prepared, state);
     applyGlobals(prepared, globals);
-    applyResolved(prepared, defOrg, { ...resolving, transform });
+    // the globals of the controls of the user are the ones of a state, see setState of store.js
+    applyResolved(prepared, defOrg, { ...resolving, transform, kept: state ? userControls(prepared).map(e => e.global) : [] });
     applyState(prepared, { visible: state?.visible });
     transform();
     // the values of the columns of the transforms of the globals of the

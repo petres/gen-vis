@@ -458,6 +458,45 @@ describe('controls of globals, coordinate systems and maps', () => {
         expect(store.data[0].y).toBe(2);
     });
 
+    // review of 5.0: the entry kept setting the global, the other control snapped back
+    test('the globals of an entry are set when it becomes selected, the other control stays free', async () => {
+        const def = () => ({
+            globals: { unit: 'v', yr: '2022', label: '' },
+            controls: [
+                { type: 'radio', global: 'unit', values: [{ value: 'v', globals: { yr: '2020', label: 'V' } }, { value: 'w', globals: { yr: '2021', label: 'W' } }] },
+                { type: 'select', global: 'yr', values: ['2020', '2021', '2022'] },
+            ],
+            dims: { y: 'v' }, marks: [],
+        });
+        const store = createStore();
+        await store.init({ def: def(), data: [{ v: 1 }] });
+        // the initial entry sets it at the load
+        expect(store.def.globals).toEqual({ unit: 'v', yr: '2020', label: 'V' });
+        // the user chooses another year: it stays
+        store.def.globals.yr = '2022';
+        store.applyControls();
+        expect(store.def.globals.yr).toBe('2022');
+        expect(store.state).toEqual({ globals: { yr: '2022' } });
+        // another unit sets its year, a global without a control follows the entry
+        store.def.globals.unit = 'w';
+        store.applyControls();
+        expect(store.def.globals).toEqual({ unit: 'w', yr: '2021', label: 'W' });
+        store.def.globals.yr = '2020';
+        store.applyControls();
+        expect(store.def.globals).toEqual({ unit: 'w', yr: '2020', label: 'W' });
+        // a state has the globals of both controls, also of a year of the defaults
+        store.setState({ globals: { unit: 'w', yr: '2022' } });
+        expect(store.def.globals).toEqual({ unit: 'w', yr: '2022', label: 'W' });
+        store.setState({ globals: { unit: 'w' } });
+        expect(store.def.globals).toEqual({ unit: 'w', yr: '2020', label: 'W' });
+        store.setState(null);
+        expect(store.def.globals).toEqual({ unit: 'v', yr: '2020', label: 'V' });
+        // also of the load
+        const again = createStore();
+        await again.init({ def: def(), data: [{ v: 1 }], state: { globals: { unit: 'w' } } });
+        expect(again.def.globals).toEqual({ unit: 'w', yr: '2020', label: 'W' });
+    });
+
     test('a radio of the coordinate system', async () => {
         const store = createStore();
         await store.init({ def: {

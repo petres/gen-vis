@@ -2421,7 +2421,12 @@ be an expression of the globals:
   }
   ```
 - `globals` of an entry are set when it is selected, e.g. texts of other
-  globals or the global of another control, whose entry follows. The other
+  globals or the global of another control, whose entry follows. The global
+  of another control is set at the moment the entry becomes selected (by
+  the user, the page or at the load), the other control can be changed
+  afterwards (a [state](usage.md#state) has the values of both); other
+  globals, e.g. texts, are the ones of the selected entry while it is
+  selected. The other
   fields of an entry are names while it is selected: `{group:name}` of the
   templates and `@group:name` of the expressions is the field `name` of the
   entry selected of the global `group` (its `name`, `id`, `value` or another

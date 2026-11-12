@@ -635,32 +635,63 @@ const variants = def => def[variantsOf] ?? [def];
 // there is none
 const selectedEntry = (def, e) => e.values.find(v => sameValue(v.value, def.globals?.[e.global]));
 
-// the entries of the controls of the values of their globals
-const selectedEntries = def => (def.controls ?? []).map(e => selectedEntry(def, e)).filter(Boolean);
-
 // the sources of the prepared parts of a definition, a part whose source is
 // the same is kept, e.g. a dim with its categories of the data
 const sources = Symbol('sources');
+
+// the globals of the last apply of the entries of the controls, see entryGlobals
+const appliedGlobals = Symbol('applied globals');
+
+/**
+ * The globals of the selected entries of the controls set in `def.globals`
+ * (see docs/definition.md "Globals and controls"): the global of a control
+ * is set when its entry becomes selected (its global differs from the one
+ * of the apply before, at the first one all are), so the other control
+ * stays free afterwards, not a global which was set from outside since
+ * then (by the user or the page) or one of `kept` (the globals of the
+ * controls of a state, it has them, see setState of store.js) by an entry
+ * of a control of the user; the other globals, e.g. texts, are the ones of
+ * the selected entries while they are selected. The globals of an entry
+ * can select the entry of a later control, e.g. a language selects its
+ * names, until no entry changes them anymore, at most once per control,
+ * e.g. of entries which set each other's globals.
+ */
+const entryGlobals = (def, kept = []) => {
+    const controls = (def.controls ?? []).filter(isObject);
+    const ofControls = new Set(controls.map(e => e.global));
+    const last = def[appliedGlobals];
+    const given = new Set(last ? [...ofControls].filter(g => !sameValue(def.globals[g], last[g])) : []);
+    const fixed = new Set(kept);
+    let before = last;
+    for (let i = 0; i <= controls.length; i++) {
+        const current = { ...def.globals };
+        controls.forEach(e => {
+            const v = selectedEntry(def, e);
+            if (!isObject(v?.globals))
+                return;
+            const selected = !before || !sameValue(current[e.global], before[e.global]);
+            Object.entries(v.globals).forEach(([g, value]) => {
+                if (!ofControls.has(g) || (selected && !given.has(g) && !(fixed.has(g) && e.type != 'hidden')))
+                    def.globals[g] = value;
+            });
+        });
+        if (JSON.stringify(def.globals) == JSON.stringify(current))
+            break;
+        before = current;
+    }
+    def[appliedGlobals] = { ...def.globals };
+};
 
 /**
  * The patchable parts of the definition `authored` (the one of gen-vis 5 with
  * its expressions of the globals, see utils/resolve.js) of the globals of
  * `def`: resolved with them and the fields of the selected entries of the
- * controls, translated and normalized (`markTypes` are the mark types,
- * see utils/normalize.js); without one the parts of `defOrg`. The
- * globals of an entry can select the entry of a later control, e.g. a
- * language selects its names, they are set in `def.globals` until no entry
- * changes them anymore, at most once per control, e.g. of entries
- * which set each other's globals.
+ * controls (their globals set first, see entryGlobals, `kept` the globals
+ * they do not change), translated and normalized (`markTypes` are the mark
+ * types, see utils/normalize.js); without one the parts of `defOrg`.
  */
-const resolvedParts = (def, defOrg, authored = null, markTypes = {}) => {
-    for (let i = 0; i <= (def.controls ?? []).length; i++) {
-        const selected = selectedEntries(def);
-        const globals = JSON.stringify(def.globals);
-        selected.filter(v => isObject(v.globals)).forEach(v => Object.assign(def.globals, v.globals));
-        if (JSON.stringify(def.globals) == globals)
-            break;
-    }
+const resolvedParts = (def, defOrg, authored = null, markTypes = {}, kept = []) => {
+    entryGlobals(def, kept);
     const pick = d => Object.fromEntries(patchable.filter(k => d?.[k] !== undefined).map(k => [k, d[k]]));
     if (!authored)
         return pick(JSON.parse(JSON.stringify(pick(defOrg))));
@@ -683,11 +714,12 @@ const resolvedParts = (def, defOrg, authored = null, markTypes = {}) => {
  * without one from the values then (see inferTypes of utils/data.js), `files`
  * are the rows of the files of marks, by their url, `symbols` the defaults
  * of the symbols of legends, see symbolDefaults, `ranks` the named lists of
- * props by rank of the defaults, see rankDefaults. Returns the names of the
+ * props by rank of the defaults, see rankDefaults, `kept` the globals which
+ * the entries of the controls of the user do not change, see entryGlobals. Returns the names of the
  * dims whose values change, the ones of another column or type.
  */
-const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, ranks = {}, authored = null, markTypes = {}, types = null } = {}) => {
-    const merged = resolvedParts(def, defOrg, authored, markTypes);
+const applyResolved = (def, defOrg, { dataKeys = () => [], keepVisible = true, transform = () => {}, files = null, symbols = {}, ranks = {}, authored = null, markTypes = {}, types = null, kept = [] } = {}) => {
+    const merged = resolvedParts(def, defOrg, authored, markTypes, kept);
     // the texts in the language of the definition, e.g. of a global of a
     // control; the locale of the numbers and dates is the language
     // without one of its own
