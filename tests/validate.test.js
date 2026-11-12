@@ -1104,6 +1104,30 @@ describe('mistakes which give a wrong or an empty chart without a message', () =
         expect(validateDef(stacked, rows)).toEqual([
             `marks[0]: the bars are vertical on the continuous scale of the dim 'x', they need a 'width' in pixels, a categorical dim of their position or an "interval" of dates`]);
     });
+
+    test('an annotation at a constant value outside of the values of its dim (of all rows), which is not drawn; not within the domain of the scale, of references or of other values on the scale', () => {
+        const ann = (annotations, parts = {}) => validateDef(def({ annotations, ...parts }), rows);
+        expect(ann([{ type: 'line', y: 10, label: 'Ziel' }])).toEqual([
+            `annotations[0].y: 10 is outside of the values of dim 'y', the line is not drawn; "include": 10 of the dim (dims.y) takes it into the domain`]);
+        expect(ann([{ type: 'line', x: '2030-01-01', label: 'out' }])).toEqual([
+            `annotations[0].x: "2030-01-01" is outside of the values of dim 'x', the line is not drawn; "include": "2030-01-01" of the dim (dims.x) takes it into the domain`]);
+        // a range: both ends beyond the same end, the include of both
+        expect(ann([{ type: 'band', x: ['2024-06-01', '2024-07-01'] }])).toEqual([
+            `annotations[0].x: ["2024-06-01","2024-07-01"] is outside of the values of dim 'x', the band is not drawn; "include": ["2024-06-01","2024-07-01"] of the dim (dims.x) takes it into the domain`]);
+        expect(ann([{ type: 'band', x: ['2024-02-01', '2024-07-01'] }, { type: 'band', x: ['2024-06-01', null] }])).toEqual([]);
+        // in the domain: of the data, the nice end (3.0 of 1 to 3), include, a fixed domain, zero, a reference
+        expect(ann([{ type: 'line', y: 2.5 }, { type: 'line', y: 3 }, { type: 'line', x: '2024-02-15' }])).toEqual([]);
+        expect(ann([{ type: 'line', y: 10 }], { dims: { x: 'month', y: { column: 'revenue', include: 10 }, region: 'region' } })).toEqual([]);
+        expect(ann([{ type: 'line', y: 10 }], { dims: { x: 'month', y: { column: 'revenue', domain: [0, 20] }, region: 'region' } })).toEqual([]);
+        expect(ann([{ type: 'line', y: 0 }], { marks: { type: 'bar', x: 'region' } })).toEqual([]);
+        expect(ann([{ type: 'line', y: '@target' }], { globals: { target: 10 } })).toEqual([]);
+        // the rows of the filter do not count
+        expect(ann([{ type: 'line', y: 3 }], { filter: '@region == "North"' })).toEqual([]);
+        // other values on the scale: stacks, rows of a mark of its own; without rows nothing is known
+        expect(ann([{ type: 'line', y: 5 }], { marks: { type: 'bar', x: 'region', stack: true } })).toEqual([]);
+        expect(ann([{ type: 'line', y: 10 }], { marks: [{ type: 'line' }, { type: 'point', data: [{ x: '2024-01-01', y: 10 }] }] })).toEqual([]);
+        expect(validateDef(def({ annotations: [{ type: 'line', y: 10 }] }))).toEqual([]);
+    });
 });
 
 describe('the messages of the check in the words of the definition', () => {

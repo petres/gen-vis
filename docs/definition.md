@@ -2114,7 +2114,11 @@ globals, e.g. `"@target"`:
   of a continuous scale (of a range both ends beyond the same end of the
   domain) is not drawn, nor its label, e.g. a target line above the data;
   `include` of the dim takes the value into the domain (`"include": 10`). A
-  band partly in the domain is drawn up to its edge.
+  band partly in the domain is drawn up to its edge. The check (`gen-vis
+  check`, `validateDef` with the rows) warns of an annotation at a value
+  (not a reference) outside of the domain of the values of its dim in all
+  rows, with the `include` of the fix; the chart does not, its domain
+  changes with filters and legends.
 - `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
   "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,

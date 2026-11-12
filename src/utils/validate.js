@@ -1,6 +1,6 @@
 export { validateDef, curveNames };
 
-import { intervalOf } from "@/utils/scales";
+import { intervalOf, makeScale } from "@/utils/scales";
 import * as d3 from "@/utils/d3";
 import { scales as moreScales } from "@/utils/more";
 import { checkLocale } from "@/utils/locale";
@@ -14,7 +14,7 @@ import { isObject, missing, toNumber } from "@/utils/values";
 import { isOperator, operators, refNames } from "@/utils/expr";
 import { isExpressionText } from "@/utils/expr-parse";
 import { defaultScaleType, facetBy, hasCategories, normalize, scaleTypeOf } from "@/utils/normalize";
-import { inferTypes, toDate } from "@/utils/data";
+import { continuous, convert, inferTypes, toDate } from "@/utils/data";
 import { versionError, languageError } from "@/utils/version";
 import { translate, authoredPath, markKeys, positionChannels, typeOf } from "@/utils/language";
 import { resolve, namesOfGlobals } from "@/utils/resolve";
@@ -837,6 +837,69 @@ const checkAnnotations = ctx => {
         if (a.before !== undefined && !ids.includes(a.before))
             warn(`${path}.before`, `unknown mark '${a.before}'${ids.length ? `, expected one of ${list(ids)}` : ''}`);
     });
+    checkAnnotationDomains(ctx);
+};
+
+// the annotations at a value outside of the domain of a continuous scale
+// of all rows of the data (not the filtered ones), which are not drawn
+// (see outsideOf of marks/annotations.js): of a constant value (not of a
+// reference or an expression), of a range both ends beyond the same end;
+// the domain is the one of makeScale (a fixed domain, include, zero, nice,
+// pad, the end of the last period of an interval); not when other values
+// are on the scale, e.g. of stacks, of the dims of the scale of another one
+// or of the rows of marks of their own, nor of the columns of transforms
+const checkAnnotationDomains = ({ def, dims, rows, warn, coord, annotations }) => {
+    if (!Array.isArray(rows) || rows.length == 0 || annotations.length == 0)
+        return;
+    const constant = v => typeof v == 'number' || (typeof v == 'string' && !/^\s*[@=]/.test(v));
+    if ([def.marks ?? []].flat().some(p => isObject(p) && p.data !== undefined && !String(p.type).startsWith('annotation:')))
+        return;
+    const made = madeColumns(def.transform);
+    const domains = new Map();
+    // the domain of the scale of a dim of all rows, null when in doubt
+    const domainOf = n => {
+        if (domains.has(n))
+            return domains.get(n);
+        let domain = null;
+        const m = dims[n];
+        const scale = isObject(m.scale) ? m.scale : {};
+        const fixed = [scale.domain, scale.include].flat().every(v => v === undefined || v === null || constant(v));
+        if (continuous(m) && scale.orientation && fixed && !m.stacked && scale.of === undefined && typeof m.column == 'string' && !isTemplate(m.column)
+            && !made.has(m.column) && !Object.values(dims).some(d => isObject(d.scale) && d.scale.of === n)) {
+            const texts = distinctTexts(rows, m.column);
+            const values = texts.map(t => convert(m, t, dims)).filter(v => v !== null && v !== undefined);
+            // (values which are no texts of values, e.g. timestamps of JSON of a date dim: in doubt)
+            if (values.length > 0 && values.length == texts.length) {
+                try {
+                    const s = makeScale(n, m, values.map(v => ({ [n]: v })), { dims: { width: 100, height: 100 }, coord, allDims: dims });
+                    const d = s.domain().map(Number);
+                    if (!s.step && d.length >= 2 && d.every(Number.isFinite))
+                        domain = d3.extent(d);
+                } catch {
+                    domain = null;
+                }
+            }
+        }
+        domains.set(n, domain);
+        return domain;
+    };
+    annotations.forEach(([i, a]) => Object.keys(a).filter(k => !annotationKeys.includes(k) && Object.hasOwn(dims, k)).forEach(k => {
+        const ends = [a[k]].flat();
+        if (ends.length == 0 || ends.length > 2 || !ends.every(constant))
+            return;
+        const domain = domainOf(k);
+        if (!domain)
+            return;
+        const at = ends.map(v => +convert(dims[k], v, dims));
+        if (!at.every(Number.isFinite))
+            return;
+        const [lo, hi] = domain;
+        if (Math.max(...at) < lo || Math.min(...at) > hi) {
+            // (of a range both ends, so all of it is drawn)
+            const value = JSON.stringify(a[k]);
+            warn(`annotations[${i}].${k}`, `${value} is outside of the values of dim '${k}', the ${a.type ?? 'annotation'} is not drawn; "include": ${value} of the dim (dims.${k}) takes it into the domain`);
+        }
+    }));
 };
 
 // the controls and their entries
