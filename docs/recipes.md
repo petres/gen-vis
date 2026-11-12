@@ -674,6 +674,8 @@ years (`"format": "%Y"`) once, at their first tick.
   as well, `"@year == @globals.year"`.
 - In expressions of rows (filters, the attributes of marks) a dim or a column
   comes before a global of the same name, `@globals.<name>` is the global.
+  The values of a filter object are of the globals only (no row), so there
+  `{"year": "@year"}` is the dim `year` equal to the global `year`.
 - A dim which only names a column and groups the rows of a mark which draws
   in the colors of its categories (`by` of a line, an area, a bar, a point
   or a text without a color of its own) has the categories of the data and

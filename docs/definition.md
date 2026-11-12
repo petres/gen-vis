@@ -2375,15 +2375,21 @@ transforms) and the globals, e.g. `"@year == @globals.year and @value >
 are dates as the ones of the dim, e.g. `"@date >= '2020-01-01'"` or `"@date
 == @globals.day"`, whatever the format of the data (ISO, day first, JSON
 timestamps, a date of a transform), as of the object form; in other
-expressions its value is the time in milliseconds. A dim of the same name as a global shadows it,
-`@globals.<name>` is the global.
+expressions its value is the time in milliseconds. In an expression of
+the row a dim (or a column) of the same name as a global shadows it,
+`@globals.<name>` is the global (in the values of the object form below
+there is no row, `@<name>` is the global).
 
 An object is the shorthand of conditions of the values of dims, every
 condition holds: a value or a list of values, e.g. of a global, `null` (the
 rows without a value), the keys are names of dims, not columns (a key of no
 dim matches no row and is named in a warning of the console), the values
 are compared as the ones of the rows, e.g. dates, categories as strings and
-the ones which are numbers by their value:
+the ones which are numbers by their value. The values are expressions of
+the globals, not of the row: no dim shadows a global there, so
+`{"region": "@region"}` of a dim `region` and a global `region` is the
+condition "the dim `region` is the value of the global `region`" (as
+`{"region": "@globals.region"}`):
 
 ```json
 { "filter": { "year": "@globals.year", "land": ["Wien", "Tirol"] } }
@@ -2551,7 +2557,10 @@ control of the kind of the chart:
   of every value are loaded with the definition, and `check` checks each of
   them.
 - `@globals.<name>` is the global also where a dim of the same name
-  shadows it, e.g. in a filter of a dim `year` and a global `year`.
+  shadows it, e.g. in a filter expression of a dim `year` and a global
+  `year` (`"@year == @globals.year"`); the values of a filter object are
+  expressions of the globals, there `@year` is the global
+  (`{"year": "@year"}`).
 
 ### Templates
 

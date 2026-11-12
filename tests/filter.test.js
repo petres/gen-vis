@@ -57,6 +57,18 @@ describe('the names of a filter expression', () => {
         expect([...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('data-c'))).toEqual(['2']);
         expect(errors).toEqual([]);
     });
+
+    test('the values of the object form are of the globals: {"country": "@country"} is the dim equal to the global (docs: no row there)', async () => {
+        const el = await mount({ def: {
+            height: 200,
+            globals: { country: 'DE' },
+            filter: { country: '@country', y: '2021' },
+            dims: { country: 'country', x: { column: 'value', zero: true }, y: { column: 'year', type: 'categorical' } },
+            marks: { type: 'bar', 'data-c': '@x' },
+        }, data: 'country,year,value\nAT,2020,1\nAT,2021,2\nDE,2021,3\nDE,2020,4\n' });
+        expect([...el.querySelectorAll('g.vis-mark rect')].map(r => r.getAttribute('data-c'))).toEqual(['3']);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('filters of dates compare dates', () => {
