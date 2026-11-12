@@ -479,7 +479,7 @@ describe('rendering', () => {
         expect(els[0].innerHTML).toBe('');
         expect(els[0].classList.contains('vis-mounted')).toBe(false);
         // the listener of the hover of the facet
-        expect(removed).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+        expect(removed).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
         expect(unmountGenVisElement(els[0])).toBe(false);
         // again
         expect(mountGenVisByClass('chart')).toHaveLength(1);
@@ -2573,7 +2573,26 @@ describe('touch', () => {
         const vis = createGenVis(el, { def: lineDef(), data: lineData });
         await rendered(el);
         vis.destroy();
-        expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+        expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
+    });
+
+    // review of 5.0: the old facet emitted its null after the hover of the new one
+    test('a touch in another facet ends the hover of the first one before its own starts', async () => {
+        const hovers = [];
+        const el = document.body.appendChild(document.createElement('div'));
+        createGenVis(el, { def: { ...lineDef(), facets: { by: 'c', cols: 2 } }, data: lineData, onHover: h => hovers.push(h && h.title) });
+        await rendered(el);
+        await nextTick();
+        const [a, b] = el.querySelectorAll('rect.vis-events');
+        b.dispatchEvent(touch('pointerdown', { clientX: 50 }));
+        await nextTick();
+        a.dispatchEvent(touch('pointerdown', { clientX: 50 }));
+        await nextTick();
+        expect(hovers).toHaveLength(3);
+        expect(hovers[1]).toBeNull();
+        expect(hovers[2]).not.toBeNull();
+        expect(el.querySelectorAll('.vis-hover')).toHaveLength(1);
+        expect(errors).toEqual([]);
     });
 });
 

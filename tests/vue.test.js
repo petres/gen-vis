@@ -300,7 +300,7 @@ describe('the component', () => {
         show.value = false;
         await vueTick();
         expect(el.innerHTML.replace(/<!--[\s\S]*?-->/g, '')).toBe('');
-        expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function));
+        expect(remove).toHaveBeenCalledWith('pointerdown', expect.any(Function), true);
         expect(errors).toEqual([]);
     });
 });

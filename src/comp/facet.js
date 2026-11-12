@@ -317,7 +317,9 @@ const createFacet = (vis, initial) => {
             highlightEntry(null);
     };
 
-    // a touch keeps the hover until the next touch outside of the facet
+    // a touch keeps the hover until the next touch outside of the facet; in
+    // the capture phase, so the hover of this facet ends (hover null) before
+    // the one of another facet under the touch starts
     const hideOnPointerOutside = e => {
         if (hover.visible && !svg.contains(e.target))
             hover.hide();
@@ -332,7 +334,7 @@ const createFacet = (vis, initial) => {
         uid,
         // the first draw, once the facet is in the page, e.g. for the sizes of texts
         mounted() {
-            document.addEventListener("pointerdown", hideOnPointerOutside);
+            document.addEventListener("pointerdown", hideOnPointerOutside, true);
             draw();
             render();
         },
@@ -350,7 +352,7 @@ const createFacet = (vis, initial) => {
         destroy() {
             hover.end();
             interruptAll(inner);
-            document.removeEventListener("pointerdown", hideOnPointerOutside);
+            document.removeEventListener("pointerdown", hideOnPointerOutside, true);
         },
     };
 };
