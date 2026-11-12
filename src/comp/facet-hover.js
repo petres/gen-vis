@@ -293,32 +293,39 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         // the rows of the hover, with a value and of its `filter`, by their
         // key, e.g. of the horizontal axis, compared as strings
         const options = hoverOptions();
-        const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.dims, ctx.scope, { columns: store.columns, path: 'hover.filter', unknown: unknownOf(store) });
-        const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
-        // the nearest key is one with rows, e.g. not one of null values, of
-        // the coordinate systems with the `nearest` of the context, unless
-        // the hover of keys without rows is shown (`"empty": true`)
-        // the classes of `stackBy` (the positions of the stacks are their
-        // starts, e.g. of the classes of a bin): the class under the pointer,
-        // the last start not after it, its marker in its middle, up to the
-        // next start (the last class as wide as the one before)
-        // (also of bars over a range, x0 to x1, see axisNames of layout.js:
-        // the end of a class is its own, `names.end`)
-        const hs = ctx.scales[names.h];
-        const ranged = names.end !== undefined || (names.v && store.dim(names.v).stackBy === names.h);
-        const classes = ranged && hs?.invert ? (() => {
-            const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).filter(k => k !== null && k !== undefined).sort((a, b) => a - b);
-            const ends = names.end === undefined ? null : new Map([...rowsByKey.values()].map(rows => [+rows[0][names.h], rows[0][names.end]]));
-            const index = k => d3.bisectLeft(starts, +k);
-            const next = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
-            const end = i => ends?.get(+starts[i]) ?? next(i);
-            return {
-                nearest: p => starts.length ? starts[Math.max(0, d3.bisectRight(starts, +hs.invert(p)) - 1)] : undefined,
-                middle: k => (hs(k) + hs(end(index(k))))/2,
-            };
-        })() : null;
-        const located = options.empty ? ctx
-            : { ...ctx, nearest: classes?.nearest ?? nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
+        // (prepared with the first event of the facet, not with every draw:
+        // most facets are drawn without a pointer on them, and the rows of a
+        // large chart are grouped and their positions sorted here)
+        let preparedRows = null;
+        const prepared = () => preparedRows ??= (() => {
+            const hoverRows = filterRows(ctx.rows.filter(e => e[v] !== null), options.filter, store.def.dims, ctx.scope, { columns: store.columns, path: 'hover.filter', unknown: unknownOf(store) });
+            const rowsByKey = d3.group(hoverRows, e => String(e[names.h]));
+            // the nearest key is one with rows, e.g. not one of null values, of
+            // the coordinate systems with the `nearest` of the context, unless
+            // the hover of keys without rows is shown (`"empty": true`)
+            // the classes of `stackBy` (the positions of the stacks are their
+            // starts, e.g. of the classes of a bin): the class under the pointer,
+            // the last start not after it, its marker in its middle, up to the
+            // next start (the last class as wide as the one before)
+            // (also of bars over a range, x0 to x1, see axisNames of layout.js:
+            // the end of a class is its own, `names.end`)
+            const hs = ctx.scales[names.h];
+            const ranged = names.end !== undefined || (names.v && store.dim(names.v).stackBy === names.h);
+            const classes = ranged && hs?.invert ? (() => {
+                const starts = [...rowsByKey.values()].map(rows => rows[0][names.h]).filter(k => k !== null && k !== undefined).sort((a, b) => a - b);
+                const ends = names.end === undefined ? null : new Map([...rowsByKey.values()].map(rows => [+rows[0][names.h], rows[0][names.end]]));
+                const index = k => d3.bisectLeft(starts, +k);
+                const next = i => i + 1 < starts.length ? starts[i + 1] : 2*starts[i] - (starts[i - 1] ?? starts[i]);
+                const end = i => ends?.get(+starts[i]) ?? next(i);
+                return {
+                    nearest: p => starts.length ? starts[Math.max(0, d3.bisectRight(starts, +hs.invert(p)) - 1)] : undefined,
+                    middle: k => (hs(k) + hs(end(index(k))))/2,
+                };
+            })() : null;
+            const located = options.empty ? ctx
+                : { ...ctx, nearest: classes?.nearest ?? nearestWithRows(ctx.scales[names.h], [...rowsByKey.values()].map(rows => rows[0][names.h])) };
+            return { hoverRows, rowsByKey, classes, located };
+        })();
         let last = null;
         // the rows of the hover shown, e.g. for a select by the keyboard
         let current = null;
@@ -344,7 +351,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
         let points = null;
         let nearestPoint = null;
         const preparePoints = () => {
-            points ??= hoverRows.filter(row => row[names.h] !== null)
+            points ??= prepared().hoverRows.filter(row => row[names.h] !== null)
                 .map(row => [...coord.hover.point(ctx, row, names), row]);
             nearestPoint ??= pointFinder(points, options.radius ?? 30);
         };
@@ -359,6 +366,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 const point = nearestPoint(p);
                 return point && { key: point[2][names.h], rows: [point[2]], nearest: point[2], point };
             }
+            const { located, rowsByKey } = prepared();
             const position = coord.hover.locate(located, p, names, e);
             if (!position)
                 return null;
@@ -460,7 +468,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
             // a point has no line, the hover is beside it
             const position = found.point
                 ? (noLine(), pointPosition(found.point, ctx.innerWidth))
-                : coord.hover.marker(classes ? { ...ctx, markerAt: classes.middle } : ctx, key, names, line, nearest);
+                : coord.hover.marker(prepared().classes ? { ...ctx, markerAt: prepared().classes.middle } : ctx, key, names, line, nearest);
             // the crosshair through the nearest row replaces the line of the position
             if (crossing) {
                 noLine();
@@ -510,7 +518,7 @@ const createFacetHover = ({ store, slots, emit, marker, live, highlight, origin,
                 return [...points].sort((a, b) => a[0] - b[0] || a[1] - b[1])
                     .map(point => ({ key: point[2][names.h], rows: [point[2]], point }));
             }
-            const all = [...rowsByKey.values()].map(rows => ({ key: rows[0][names.h], rows: sortedByOrder(rows, row => orderOf(row, rows, stacks)) }));
+            const all = [...prepared().rowsByKey.values()].map(rows => ({ key: rows[0][names.h], rows: sortedByOrder(rows, row => orderOf(row, rows, stacks)) }));
             return positionsInOrder(all, ctx.scales[names.h], titleOf);
         };
         // the position of an index, of a key before, e.g. of the draw before

@@ -4,8 +4,8 @@
 // colors of d3-scale-chromatic are only loaded for definitions which name
 // one (see loadColors), the projections of maps with the first map (see
 // coords/geo.js).
-import * as d3Scale from 'd3-scale';
-import { byPrefix, named } from '@/utils/registry';
+import { scaleBand, scaleLinear, scaleLog, scaleOrdinal, scalePoint, scalePow, scaleSequential, scaleSqrt, scaleThreshold, scaleTime, scaleUtc } from 'd3-scale';
+import { named } from '@/utils/registry';
 
 export { bisectCenter, bisectLeft, bisectRight, extent, greatest, group, least, max, mean, min, nice, range, tickStep, ticks } from 'd3-array';
 export { csvFormat, dsvFormat } from 'd3-dsv';
@@ -14,8 +14,7 @@ export { interpolate, piecewise } from 'd3-interpolate';
 export { scaleLinear } from 'd3-scale';
 export {
     area, line,
-    curveBasis, curveBasisClosed, curveCatmullRom, curveCatmullRomClosed, curveLinear, curveLinearClosed,
-    curveMonotoneX, curveNatural, curveStep, curveStepAfter, curveStepBefore,
+    curveLinear, curveLinearClosed, curveMonotoneX, curveStep, curveStepAfter, curveStepBefore,
 } from 'd3-shape';
 export {
     timeSecond, timeMinute, timeHour, timeDay, timeWeek, timeMonth, timeYear,
@@ -26,9 +25,28 @@ import { lazy } from '@/utils/lazy';
 
 export { named };
 
-// the scales (`scale.type`), e.g. linear, time, band or sequential, not the
-// value scaleImplicit
-export const scales = Object.fromEntries(Object.entries(byPrefix(d3Scale, 'scale')).filter(([, v]) => typeof v == 'function'));
+// the scales (`scale.type`), e.g. linear, time, band or sequential: the
+// common ones, the others (see scaleNames) are loaded for the definitions
+// which name one, see loadMore
+export const scales = {
+    band: scaleBand, linear: scaleLinear, log: scaleLog, ordinal: scaleOrdinal, point: scalePoint, pow: scalePow,
+    sequential: scaleSequential, sqrt: scaleSqrt, threshold: scaleThreshold, time: scaleTime, utc: scaleUtc,
+};
+// the names of all scales and curves, known before the others are loaded, e.g. to validateDef
+export const scaleNames = ['band', 'diverging', 'divergingLog', 'divergingPow', 'divergingSqrt', 'divergingSymlog', 'identity', 'linear',
+    'log', 'ordinal', 'point', 'pow', 'quantile', 'quantize', 'radial', 'sequential', 'sequentialLog', 'sequentialPow',
+    'sequentialQuantile', 'sequentialSqrt', 'sequentialSymlog', 'sqrt', 'symlog', 'threshold', 'time', 'utc'];
+export const curveNames = ['linear', 'monotoneX', 'natural', 'catmullRom', 'basis', 'step', 'stepBefore', 'stepAfter', 'linearClosed',
+    'catmullRomClosed', 'basisClosed'];
+// the scales and the curves which are loaded when a definition names one:
+// true of a name of them which is not loaded yet
+export const later = (registry, names, name) => names.some(n => n.toLowerCase() === String(name).toLowerCase()) && !named(registry, name);
+let more = null;
+export const loadMore = async curves => {
+    more ??= await lazy.more();
+    Object.assign(scales, more.scales);
+    Object.assign(curves, more.curves);
+};
 
 // the names of the colors of sequential and diverging scales
 // (`scale.interpolator`), e.g. Blues or RdYlGn, and of the schemes of the

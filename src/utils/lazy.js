@@ -10,6 +10,7 @@ export const lazy = {
     intl: () => import('@/utils/locale-intl.js'),
     colorLegend: () => import('@/comp/color-legend.js'),
     colors: () => import('@/utils/colors.js'),
+    more: () => import('@/utils/more.js'),
     geoMap: () => import('@/coords/geo-map.js'),
     polar: () => import('@/coords/polar-plot.js'),
     geo: () => import('@/utils/geo.js'),

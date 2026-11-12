@@ -1,12 +1,16 @@
 import * as d3 from 'd3-scale-chromatic';
-import { loadColors } from '@/utils/d3';
+import { loadColors, loadMore } from '@/utils/d3';
+import { curves } from '@/utils/draw';
 import { describe, test, expect, beforeAll } from 'vitest';
 import { makeScale, bandCenter, logProblems } from '@/utils/scales';
 import coord from '@/coords/cartesian';
 import { tickValues } from '@/coords/ticks';
 
 // the colors of d3 are loaded by the store, see loadColors
-beforeAll(loadColors);
+beforeAll(async () => {
+    await loadColors();
+    await loadMore(curves);
+});
 
 const options = { dims: { width: 100, height: 50 }, coord };
 

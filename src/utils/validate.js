@@ -2,9 +2,9 @@ export { validateDef, curveNames };
 
 import { intervalOf } from "@/utils/scales";
 import * as d3 from "@/utils/d3";
+import { scales as moreScales } from "@/utils/more";
 import { checkLocale } from "@/utils/locale";
 import { fillTemplate, templateRefs } from "@/utils/def";
-import { curves } from "@/utils/draw";
 import { markTypes } from "@/marks";
 import { coords } from "@/coords";
 import { annotationKeys } from "@/coords/annotations.js";
@@ -21,7 +21,7 @@ import { schema, markNames } from "@/schema/definition.js";
 import { similar } from "@/utils/warn";
 
 // the interpolations of the mark types with a curve, e.g. cartesian:line
-const curveNames = Object.keys(curves);
+const curveNames = d3.curveNames;
 
 const show = v => typeof v == 'string' ? `'${v}'` : String(v);
 const list = a => a.map(show).join(', ');
@@ -428,16 +428,16 @@ const checkScale = (ctx, n, m, path) => {
         return;
     }
     // the name of the schema, e.g. "linear" of "Linear"
-    const lower = otherCase(m.scale.type, Object.keys(d3.scales));
+    const lower = otherCase(m.scale.type, d3.scaleNames);
     const type = lower ?? m.scale.type ?? defaultScaleType(m, n, def.marks);
-    const scale = d3.named(d3.scales, type);
+    const scale = d3.named({ ...d3.scales, ...moreScales }, type);
     const typeName = `the type '${m.type}'`;
     // the type of a dim without one follows from the rows, see inferTypes
     const typed = m.type !== undefined;
     if (lower)
         warn(`${path}.scale.type`, `use '${lower}'`);
     else if (!scale)
-        warn(`${path}.scale.type`, `unknown scale '${type}'${similar(type, Object.keys(d3.scales)) ? choices(type, Object.keys(d3.scales)) : `, e.g. 'linear', 'time' or 'band'`}`);
+        warn(`${path}.scale.type`, `unknown scale '${type}'${similar(type, d3.scaleNames) ? choices(type, d3.scaleNames) : `, e.g. 'linear', 'time' or 'band'`}`);
     if (scale) {
         // e.g. linear, time, threshold or sequentialQuantile vs. point or
         // band, ordinal scales are of any values, e.g. colors of numbers

@@ -361,7 +361,7 @@ describe('requirements', () => {
 
     test('nothing of a plain definition but the coordinate system and the locale', () => {
         expect(requirements(engineOf(def))).toEqual({
-            colors: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, inside: false, locales: [undefined],
+            colors: false, more: false, coords: [undefined], geo: false, transforms: false, colorLegend: false, inside: false, locales: [undefined],
         });
     });
 
@@ -375,7 +375,7 @@ describe('requirements', () => {
                 k: { column: 'k', scheme: 'Tableau10', fromData: true, legend: {} },
             },
         });
-        expect(need).toEqual({ colors: true, coords: ['polar'], geo: true, transforms: true, colorLegend: true, inside: false, locales: ['de'] });
+        expect(need).toEqual({ colors: true, more: false, coords: ['polar'], geo: true, transforms: true, colorLegend: true, inside: false, locales: ['de'] });
         expect(requirements({ dims: { c: { scale: { scheme: 'Blues' } } } }).colors).toBe(true);
         expect(requirements({ dims: { k: { scheme: 'Tableau10' } } }).colors).toBe(true);
         // a legend of categories is no legend of colors
@@ -393,7 +393,7 @@ describe('requirements', () => {
                 y: "=match(@e, {3: null}, literal({column: 'value', type: 'numeric'}))",
                 c: { scale: { interpolator: "=match(@e, {0: 'Reds'})" }, legend: "=match(@e, {0: literal({})})" },
             } }));
-        expect(need).toEqual({ colors: true, coords: [undefined], geo: false, transforms: true, colorLegend: true, inside: false, locales: [undefined, 'en'] });
+        expect(need).toEqual({ colors: true, more: false, coords: [undefined], geo: false, transforms: true, colorLegend: true, inside: false, locales: [undefined, 'en'] });
         // the placement of labels inside the bands of an area, also of the marks of another value
         expect(requirements(engineOf({ controls: [{ global: 'e', values: ['a', 'b'] }],
             marks: "=match(@e, {b: literal([{type: 'area', id: 'a'}, {type: 'text', id: 't', place: {in: 'a'}}])}, literal([{type: 'area', id: 'a'}]))" })).inside).toBe(true);

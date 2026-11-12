@@ -9,7 +9,7 @@ import { markTypes as registered } from '@/marks';
 import { coords } from '@/coords';
 import { definitions } from '@/dev/definitions.js';
 import { localeNames as locales } from '@/utils/locale';
-import { scales } from '@/utils/d3';
+import { scaleNames } from '@/utils/d3';
 import { projectionNames as projections } from '@/coords/geo.js';
 import { transformNames } from '@/utils/transform';
 import { markNames } from '@/schema/definition.js';
@@ -52,7 +52,7 @@ describe('the schema', () => {
         expect(curveNames).toEqual(curves);
         expect(localeNames).toEqual(locales);
         expect(formats).toEqual(dataFormats);
-        expect(scaleTypes).toEqual(Object.keys(scales).sort());
+        expect(scaleTypes).toEqual([...scaleNames].sort());
         expect(projectionNames).toEqual(projections);
         expect(transformTypes).toEqual(transformNames);
         expect(controlTypes).toEqual(['radio', 'select', 'slider', 'hidden']);

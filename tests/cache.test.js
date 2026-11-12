@@ -6,6 +6,11 @@ import { describe, test, expect, onTestFinished } from 'vitest';
 import { createStore } from '@/store';
 import { layout } from '@/layout';
 import { makeScale } from '@/utils/scales';
+import { loadMore } from '@/utils/d3';
+import { curves } from '@/utils/draw';
+import { beforeAll } from 'vitest';
+
+beforeAll(() => loadMore(curves));
 import { examples, errors, useDom, mount, mountVis, pointer, nextTick, resize } from './dom.js';
 
 useDom();

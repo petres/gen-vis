@@ -541,19 +541,24 @@ const convertValue = (dim, v) => Array.isArray(v)
 const markRowsKept = new WeakMap();
 const onceRows = new WeakMap();
 const keptMarkRows = (store, mark, facet) => {
-    const globals = store.def.globals ?? {};
-    const names = refNames(mark.filter);
-    const own = names.every(n => Object.hasOwn(globals, n) && facet.scope[n] === globals[n]);
-    const key = own ? JSON.stringify(names.map(n => globals[n])) : null;
+    // the values of the names of the filter which are ones of the scope of
+    // the facet, e.g. globals (also as `globals.year`) and sizes, the others
+    // are values of the rows; marks of the same filter share its rows, e.g.
+    // the marks of the selected year
+    const values = refNames(mark.filter).filter(n => typeof n == 'string' && Object.hasOwn(facet.scope, n)).map(n => facet.scope[n]);
+    const plain = values.every(v => v === null || (typeof v != 'object' && typeof v != 'function'));
+    const key = plain ? JSON.stringify([mark.filter, values]) : null;
     let kept = markRowsKept.get(facet.rows);
-    const hit = kept?.get(mark);
-    if (key !== null && hit?.key === key)
-        return hit.rows;
+    const hit = key !== null ? kept?.get(key) : undefined;
+    if (hit)
+        return hit;
     const rows = filterRows(facet.rows, mark.filter, store.def.dims, facet.scope, { columns: store.columns, path: `${markPath(store.def, mark)}.filter`, unknown: unknownOf(store) });
     if (key !== null) {
         if (!kept)
             markRowsKept.set(facet.rows, kept = new Map());
-        kept.set(mark, { key, rows });
+        // the rows of the values before are not kept, e.g. of every year of a control
+        [...kept.keys()].filter(k => kept.size >= 32).slice(0, 1).forEach(k => kept.delete(k));
+        kept.set(key, rows);
     }
     return rows;
 };

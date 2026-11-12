@@ -3,21 +3,17 @@ export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, element
 import * as d3 from "@/utils/d3";
 import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
 
+// (the other curves are loaded for the definitions which name one, see loadMore of utils/d3.js)
 // the interpolations of the paths and areas between their points, `monotoneX`
 // is smooth without overshooting the values, e.g. for monthly data
 const curves = {
     linear: d3.curveLinear,
     monotoneX: d3.curveMonotoneX,
-    natural: d3.curveNatural,
-    catmullRom: d3.curveCatmullRom,
-    basis: d3.curveBasis,
     step: d3.curveStep,
     stepBefore: d3.curveStepBefore,
     stepAfter: d3.curveStepAfter,
     // closed, e.g. around the circle of polar plots
     linearClosed: d3.curveLinearClosed,
-    catmullRomClosed: d3.curveCatmullRomClosed,
-    basisClosed: d3.curveBasisClosed,
 };
 
 // the props whose values are styles of an element, not attributes, values

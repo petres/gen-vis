@@ -6,7 +6,10 @@ import { geoConicConformal } from 'd3-geo';
 import { projections } from '@/coords/geo-map';
 import { projectionNames } from '@/coords/geo';
 
-beforeAll(d3.loadColors);
+beforeAll(async () => {
+    await d3.loadColors();
+    await d3.loadMore({});
+});
 
 describe('the registries of the names of definitions', () => {
     test('scales, interpolators, schemes and projections', () => {

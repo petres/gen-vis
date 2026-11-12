@@ -399,6 +399,8 @@ const createVis = app => {
         }
     };
 
+    // the first draw of plots beside legends waits for their width, see mounted
+    let beforeWidth = false;
     const render = () => {
         // the options are at the top level of the definition
         const opts = store.def;
@@ -490,7 +492,9 @@ const createVis = app => {
         }
         if (parts.bottom)
             drawLegends('bottom', parts.bottom, at.bottom);
-        drawFacets(bodySides ? plots : body);
+        // (not before the width beside the legends is known, see mounted)
+        if (!beforeWidth)
+            drawFacets(bodySides ? plots : body);
 
         // the footer, html of the definition, e.g. a link of the source,
         // the values of the globals are text, cleaned (see parsed of
@@ -506,7 +510,8 @@ const createVis = app => {
             setHtml(footerSpan, footerHtml);
         }
         drawButtons(own);
-        app.drawn();
+        if (!beforeWidth)
+            app.drawn();
     };
 
     // the buttons of the page (the slot buttons), table, copy, csv, svg and
@@ -619,10 +624,25 @@ const createVis = app => {
             document.fonts?.addEventListener?.('loadingdone', fontsLoaded);
             const before = sides;
             queued = false;
+            // the plots beside legends have the width of the rest, known once
+            // the legends are drawn: the plots are drawn then, once, not
+            // before in the full width and again
+            beforeWidth = Boolean(sidesOf(legendsAt()));
             render();
-            // the plots beside legends have the width of the rest, e.g. after the
-            // first draw of a legend of colors
-            if (sides || (before !== null && before !== sides))
+            if (beforeWidth) {
+                beforeWidth = false;
+                const w = plotsWidth();
+                if (w && w != width) {
+                    measure();
+                    update(false, true);
+                    queued = false;
+                    render();
+                } else {
+                    drawFacets(plots ?? body);
+                    app.drawn();
+                }
+            } else if (before !== null && before !== sides)
+                // e.g. after the first draw of a legend of colors
                 queueMicrotask(() => guard(resized));
         },
         // the props of the buttons or the slots changed

@@ -83,10 +83,22 @@ const atOnce = entry => {
                 if (reached.has(m))
                     return;
                 reached.add(m);
+                // not through the index of a package: its files are the ones used
+                if (/node_modules\/[^/]+\/src\/index\.js$/.test(m))
+                    return;
                 (ctx.getModuleInfo(m)?.importedIds ?? []).forEach(visit);
             };
             visit(entry);
         }
+        // files of packages shared by parts loaded later are no files of their
+        // own, which those would wait for: the small ones are in the base, e.g.
+        // the radial line of polar plots and of the labels inside bands and
+        // the functions of d3-array (inlineRuntime checks that there is none)
+        if (/node_modules\/d3-array\//.test(id) || /node_modules\/d3-shape\/src\/(lineRadial|curve\/radial|math|constant|array|path|point)\.js$/.test(id))
+            return 'base';
+        // the parts of maps are one file: they are loaded together
+        if (/node_modules\/(d3-geo|topojson-client)\//.test(id) || /\/src\/(coords\/geo-map|utils\/geo)\.js$/.test(id))
+            return 'geo-map';
         return reached.has(id) ? 'base' : null;
     };
 };
@@ -106,10 +118,58 @@ const exportPage = () => ({
 // see docs/usage.md, neither has Vue, the component of the Vue of a page is
 // a function of it (see src/vue-adapter.js); the Vue plugin is the one of
 // the pages of the dev server (src/dev/)
+// the helper of the bundler (the object of the exports of a module, of
+// `import * as` and of modules loaded later which share a chunk) is a chunk
+// of its own or a part of one of the chunks using it, which the others
+// import, e.g. the base or the table the colors: one more request they wait
+// for. Its code is written into the chunks using it instead; the build
+// fails if the output of the bundler is another one than the one read here,
+// and if a part loaded later imports a file other than the base.
+const inlineRuntime = () => ({
+    name: 'inline-runtime',
+    apply: 'build',
+    enforce: 'post',
+    generateBundle(options, bundle) {
+        const chunks = Object.values(bundle).filter(f => f.type == 'chunk');
+        const host = chunks.find(f => Object.keys(f.modules).some(id => /rolldown[/:]runtime/.test(id)));
+        if (host) {
+            const file = host.fileName.split('/').pop();
+            // the name of the helper in its chunk and the one of its export
+            const local = /([\w$]+)=\(([\w$]+),([\w$]+)\)=>\{let ([\w$]+)=\{\};for\(var ([\w$]+) in \2\)[\w$]+\(\4,\5,\{get:\2\[\5\],enumerable:!0\}\)/.exec(host.code)?.[1];
+            const exported = local && /export\{([^}]*)\};?\s*$/.exec(host.code.replace(/\/\/#.*$/gm, '').trim())?.[1].split(',')
+                .map(e => e.trim().split(/\s+as\s+/)).find(([name]) => name == local);
+            if (!exported)
+                throw new Error(`the helper of the bundler was not found in ${host.fileName}, see inlineRuntime`);
+            const name = exported[1] ?? exported[0];
+            const helper = as => `const ${as}=(d=>(a,n)=>{let r={};for(var i in a)d(r,i,{get:a[i],enumerable:!0});return n||d(r,Symbol.toStringTag,{value:"Module"}),r})(Object.defineProperty);`;
+            const escaped = file.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+            const statement = new RegExp(`import\\{${name.replace(/\$/g, '\\$')}(?: as ([\\w$]+))?\\}from"[^"]*${escaped}";?`);
+            chunks.filter(f => f !== host && f.imports.includes(host.fileName) && statement.test(f.code)).forEach(f => {
+                f.code = f.code.replace(statement, (m, as = name) => helper(as));
+                if (!f.code.includes(file))
+                    f.imports = f.imports.filter(i => i != host.fileName);
+            });
+            // a chunk of only the helper is not needed anymore
+            if (Object.keys(host.modules).length == 1) {
+                chunks.filter(f => f.code.includes(file)).forEach(f => {
+                    throw new Error(`the import of the helper of the bundler in ${f.fileName} was not replaced, see inlineRuntime`);
+                });
+                delete bundle[host.fileName];
+            }
+        }
+        // a part loaded later waits for no other file than the base (but the
+        // parts which are loaded for one another), see atOnce
+        const known = /^chunks\/(base|gzip|table|more)-/;
+        Object.values(bundle).filter(f => f.type == 'chunk' && !f.isEntry).forEach(f => f.imports.filter(i => bundle[i] && !known.test(i)).forEach(i => {
+            throw new Error(`${f.fileName} imports ${i}: a file shared by parts loaded later, name its modules in atOnce`);
+        }));
+    },
+});
+
 export default defineConfig(({ mode }) => {
     const module = mode == 'module';
     return {
-        plugins: [vue(), injectCss(mode), ...(module ? [exportPage()] : [])],
+        plugins: [vue(), injectCss(mode), ...(module ? [inlineRuntime(), exportPage()] : [])],
         resolve: {
             alias: [
                 { find: '@', replacement: fileURLToPath(new URL('./src', import.meta.url)) },

@@ -9,7 +9,8 @@ import { resolve, namesOfGlobals, variants as resolvedVariants } from "@/utils/r
 import { applyGlobals, applyState, snapshot } from "@/utils/state";
 import { checkLocale, getLocale, loadLocale } from "@/utils/locale";
 import { loadCoord } from "@/coords";
-import { loadColors, ownScheme } from "@/utils/d3";
+import { curveNames, later, loadColors, loadMore, ownScheme, scaleNames, scales } from "@/utils/d3";
+import { curves } from "@/utils/draw";
 import { lazy } from "@/utils/lazy";
 import { isObject } from "@/utils/values";
 import { hasCategories, normalize } from "@/utils/normalize";
@@ -249,6 +250,9 @@ const requirements = defOrg => {
     const dims = all.flatMap(d => Object.values(d.dims ?? {})).filter(isObject);
     return {
         colors: dims.some(m => Boolean(m.scale?.interpolator || [m.scale?.scheme, m.scheme].some(s => s && !ownScheme(s)))),
+        // a scale or a curve which is loaded with the first definition naming one, see utils/more.js
+        more: dims.some(m => later(scales, scaleNames, m.scale?.type))
+            || all.some(d => [d.marks ?? []].flat().some(p => isObject(p) && later(curves, curveNames, p.curve))),
         coords: [...new Set(all.filter((d, i) => i == 0 || d.coord != null).map(d => d.coord ?? undefined))],
         geo: all.some(d => Boolean(d.geo?.data)),
         transforms: all.some(d => Boolean(d.transform)),
@@ -282,13 +286,14 @@ const languagesOf = def => {
 const loadParts = need => {
     const parts = Promise.all([
         need.colors ? loadColors() : null,
+        need.more ? loadMore(curves) : null,
         need.geo ? lazy.geo() : null,
         need.transforms ? loadTransforms() : null,
         need.colorLegend ? lazy.colorLegend() : null,
         need.inside ? lazy.inside() : null,
         Promise.all(need.coords.map(name => loadCoord(name))),
         ...need.locales.map(locale => loadLocale(locale)),
-    ]).then(([, geo, , colorLegend, inside, coords]) =>
+    ]).then(([, , geo, , colorLegend, inside, coords]) =>
         ({ coords: new Map(need.coords.map((name, i) => [name ?? 'cartesian', coords[i]])), geo, colorLegend, inside }));
     // the errors are the ones of the load, not unhandled ones
     parts.catch(() => {});
