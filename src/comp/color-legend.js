@@ -81,7 +81,7 @@ function createColorLegend(vis, legend) {
     const size = () => Number(options().size) || 240;
     // a vertical scale has the high values at the top, a prop of the width
     // of the visualisation, e.g. horizontal on a phone
-    const isVertical = () => evaluate(options().orientation, store.scopeAt(store.visWidth)) == 'vertical';
+    const isVertical = () => evaluate(options().orientation, store.scope) == 'vertical';
 
     // the length of the scale drawn, e.g. wider of the labels of classes
     let drawnSize = null;

@@ -124,7 +124,6 @@ const createVis = (app, failed = null) => {
     // of the visualisation, see measure
     let view = null;
     let width = null;
-    let fullWidth = null;
     let globals = {};
     let controls = [];
     // the check instead of the icon of the copy for a while
@@ -150,7 +149,7 @@ const createVis = (app, failed = null) => {
     const legendsAt = () => {
         const at = { top: [], bottom: [], left: [], right: [] };
         // a prop of the width of the visualisation, e.g. below the plots of a phone
-        const scope = store.scopeAt(fullWidth);
+        const scope = store.scope;
         // the legends of the width of the visualisation, see color-legend.js
         store.dimNamesWithKey('legend').forEach(n => at[evaluate(store.dim(n).legend.position, scope) ?? 'top']?.push(n));
         // the annotations with a name after the legends of the dims, at
@@ -163,7 +162,7 @@ const createVis = (app, failed = null) => {
     // globals and the width, e.g. steps of `totalWidth` or a global of a
     // control, or `empty` without rows
     const messageOf = () => {
-        const scope = store.scopeAt(width);
+        const scope = store.scope;
         const message = store.text(evaluate(store.def.message ?? null, scope));
         if (message !== null && message !== undefined && message !== '')
             return String(message);
@@ -257,7 +256,7 @@ const createVis = (app, failed = null) => {
     const ownWidth = () => store.fixedWidth || sizeOf(store, store.def.width, 'width', null);
     const plotsWidth = (rootWidth = undefined) => {
         const total = ownWidth() || (rootWidth ?? innerWidth(root));
-        fullWidth = store.visWidth = total;
+        store.visWidth = total;
         if (!sidesOf(legendsAt()))
             return total;
         const besides = [...root.querySelectorAll(':scope > .vis-body-sides > .vis-legends')]
@@ -310,8 +309,11 @@ const createVis = (app, failed = null) => {
     const resized = (rootWidth = undefined) => {
         if (removed)
             return;
+        const full = store.visWidth;
         const w = plotsWidth(rootWidth);
-        if (!w || w == width)
+        // (`totalWidth` is the width of the visualisation: a new one is drawn
+        // anew, also with the plots of the same width beside legends)
+        if (!w || (w == width && store.visWidth == full))
             return;
         measure(rootWidth);
         update(false, true);

@@ -340,7 +340,9 @@ const ofWidth = raw => raw !== undefined && raw !== null && typeof raw != 'boole
 const layout = (store, width, before = null) => {
     const def = store.def;
     const axis = axisNames(store);
-    const scope = store.scopeAt(width);
+    // (`totalWidth` is the width of the visualisation, not the one of plots
+    // beside legends; without a visualisation the width given)
+    const scope = store.scopeAt(store.visWidth ?? width);
     const stacked = axis.v ? store.dim(axis.v).stacked : undefined;
     const kept = before?.[rowsKept];
     const reuse = kept?.keep && kept.store === store && kept.def === def && kept.data === store.data && kept.columns === store.columns

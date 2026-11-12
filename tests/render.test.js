@@ -4692,6 +4692,16 @@ describe('texts of expressions of other names than globals (review of 5.0)', () 
         expect(el.querySelector('.vis-subtitle').textContent).toBe('en');
         expect(errors).toEqual([]);
     });
+    test('totalWidth is the width of the visualisation, also of plots beside legends (of less width)', async () => {
+        // (jsdom: every element 800 wide, the legends beside the plots too)
+        const side = { ...base, width: 1000, dims: { ...base.dims, c: { column: 'year', legend: { position: '=steps(@totalWidth, {0: "top", 900: "right"})' } } },
+            marks: { type: 'point', fill: 'c' }, title: "=cat('W ', @totalWidth)" };
+        const el = await mount({ def: { ...side, message: "=steps(@totalWidth, {0: 'narrow', 900: null})" }, data });
+        expect(el.querySelector('.vis-body-sides .vis-legends')).not.toBeNull();
+        expect(el.querySelector('.vis-title').textContent).toBe('W 1000');
+        expect(el.querySelector('.vis-message')).toBeNull();
+        expect(errors).toEqual([]);
+    });
     test('of html (the source) the texts of the names are text, the ones of the expression html', async () => {
         const el = await mount({ def: { ...base, source: "=cat('<b>', @who, '</b>')" }, data, globals: { who: '<i>x</i>' } });
         const footer = el.querySelector('.vis-footer');
