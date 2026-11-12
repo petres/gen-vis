@@ -5,7 +5,14 @@
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { parquetWriteBuffer } from 'hyparquet-writer';
 import { fitText } from '@/utils/draw';
+import { tickValues } from '@/coords/ticks';
 import { errors, useDom, mount, mountVis, nextTick, rendered, highlighted, highlightCss } from './dom.js';
+
+// the ticks computed, see 'fixed ticks of dates'
+vi.mock('@/coords/ticks', async original => {
+    const module = await original();
+    return { ...module, tickValues: vi.fn(module.tickValues) };
+});
 
 useDom();
 
@@ -847,6 +854,26 @@ describe('fixed ticks of dates', () => {
         const el = await mount({ def, data: 'day,value,land\n2020-01-01,1,Wien\n2020-04-01,2,Wien' });
         expect([...el.querySelectorAll('.vis-axis-bottom .tick text')].map(t => t.textContent)).toEqual(['Feb', 'Mrz']);
         expect(el.querySelectorAll('.vis-grid line')).toHaveLength(2);
+        expect(errors).toEqual([]);
+    });
+
+    test('the grid lines are at the ticks of the axis, computed once', async () => {
+        const counted = async grid => {
+            const def = lineDef();
+            def.dims.x.grid = grid;
+            def.dims.y.grid = grid;
+            tickValues.mockClear();
+            const el = await mount({ def, data: lineData });
+            return [tickValues.mock.calls.length, el];
+        };
+        const [without] = await counted(false);
+        const [calls, el] = await counted(true);
+        expect(calls).toBe(without);
+        // (the ticks are at half pixels, see utils/axis.js)
+        const ticks = [...el.querySelectorAll('.vis-axis-bottom .tick')].map(t => +/translate\(([^,]+)/.exec(t.getAttribute('transform'))[1]);
+        const lines = [...el.querySelectorAll('.vis-grid line')].filter(l => l.getAttribute('x1') == l.getAttribute('x2')).map(l => +l.getAttribute('x1'));
+        expect(lines).toHaveLength(ticks.length);
+        lines.forEach((x, j) => expect(Math.abs(x - ticks[j])).toBeLessThanOrEqual(0.5));
         expect(errors).toEqual([]);
     });
 });

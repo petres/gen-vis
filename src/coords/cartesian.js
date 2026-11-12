@@ -116,7 +116,7 @@ const axes = ctx => {
             format = d => String(+d === +d ? +d : d) == String(+crossed.value === +crossed.value ? +crossed.value : crossed.value) ? '' : shown(d);
         }
 
-        const values = i.values ? tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims) : (s.ticks ? s.ticks(ticks) : s.domain());
+        const values = tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims);
         // the labels of an axis of dates which repeat the one before are left
         // out, e.g. of quarterly ticks of the format "%Y" (the year at its
         // first tick); the tick marks stay. (Not of numbers: a rounded label
@@ -160,7 +160,7 @@ const axes = ctx => {
         const parts = [];
         // the grid lines are at the ticks of the axis
         if (i.grid)
-            parts.push(grid(ctx, n, s, tickValues(i, s, ticks, m, ctx.scope, ctx.store.def.dims), ['left', 'right'].includes(i.position)));
+            parts.push(grid(ctx, n, s, values, ['left', 'right'].includes(i.position)));
 
         // the axis of the draw before, its ticks are moved with a transition
         parts.push({
