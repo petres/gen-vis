@@ -122,6 +122,11 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     let held = null;
     // the props given while they are applied, see update
     let pending = null;
+    // a reload without a state of the page keeps the state of the chart
+    // (`ownState`, also the changes of the user while it is loaded), as if
+    // the page had passed it back, see apply and wantedState
+    let keepOwn = false;
+    let ownState = null;
     // the listeners of the props, see setListeners
     const propListeners = {};
     // the table instead of the plots, also of a definition loaded again,
@@ -250,7 +255,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         emit,
         files: { save: () => exportPng(), copy: () => copyPng(), csv: () => exportCsv(), svg: () => saveSvg() },
         table: { shown: () => tableShown, show: on => showTable(on) },
-        stateChanged: () => emit('update:state', store.state),
+        stateChanged: () => {
+            ownState = store.state;
+            emit('update:state', ownState);
+        },
         // after every draw, e.g. of a new width or a legend toggled
         drawn: () => {
             drawDebug();
@@ -305,7 +313,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     const whenIdle = fn => typeof requestIdleCallback == 'function' ? requestIdleCallback(fn, { timeout: 2000 }) : setTimeout(fn, 100);
 
     // the sources of the load of the store, the ones of the props
-    const sources = () => ({ def: props.def, defUrl: props.defFile, data: props.data, state: props.state, globals: props.globals,
+    const sources = () => ({ def: props.def, defUrl: props.defFile, data: props.data, state: wantedState(), globals: props.globals,
         defaults: props.defaults, check: props.check || props.debug });
     // the load of a visualisation still waiting (see observe) with its
     // sources, null if the props changed since, the draw loads it anew
@@ -358,6 +366,12 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             dropVis();
             syncState();
             syncGlobals();
+            // the choices of the user which do not apply anymore, e.g. a
+            // category which is not in the new data, are the defaults now
+            if (keepOwn && !sameValue(ownState ?? {}, store.state)) {
+                ownState = store.state;
+                emit('update:state', ownState);
+            }
             showVis();
             render();
         } catch (e) {
@@ -397,12 +411,16 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             heights.delete(heights.keys().next().value);
     };
 
+    // the state the chart shows: the one of the page, after a reload
+    // without one its own one, see keepOwn
+    const wantedState = () => keepOwn ? ownState : props.state;
     // only if it differs, the own updates of update:state come back
     // unchanged; true if it was set
     const syncState = () => {
-        if (!store.loaded || sameValue(props.state ?? {}, store.state))
+        const state = wantedState();
+        if (!store.loaded || sameValue(state ?? {}, store.state))
             return false;
-        store.setState(props.state);
+        store.setState(state);
         return true;
     };
     const syncGlobals = () => {
@@ -565,6 +583,13 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         const changed = k => k in next && next[k] !== before[k];
         // other defaults are drawn anew, the same ones of a new object not
         const reload = changed('def') || changed('defFile') || changed('data') || (changed('defaults') && !sameValue(next.defaults ?? null, before.defaults ?? null));
+        // a state of the page wins, without one a reload keeps the chart's own one
+        if ('state' in next)
+            keepOwn = false;
+        else if (reload && store.loaded) {
+            keepOwn = true;
+            ownState = store.state;
+        }
         if (reload)
             init();
         // a waiting visualisation which is not lazy anymore is loaded

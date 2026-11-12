@@ -275,3 +275,46 @@ test('an error of a draw is shown below the controls, another value, state, glob
     expect(shown()).toEqual({ error: expect.stringMatching(/missing.json/), svg: 0, radios: 0 });
     errors.length = 0;
 });
+
+// review of 5.0: new data reset the choices of the user without update:state
+test('a reload keeps the state of the chart, the choices which do not apply anymore are the defaults, update:state tells it', async () => {
+    const def = defOf('t', { data: undefined, globals: { col: 'value' },
+        controls: [{ type: 'radio', global: 'col', name: 'C', values: ['value', 'other'] }],
+        dims: { x: 'year', y: '=@col', land: { column: 'land', legend: {} } } });
+    const rows = lands => lands.flatMap(land => [{ year: 2020, value: 1, other: 2, land }, { year: 2021, value: 2, other: 3, land }]);
+    const states = [];
+    const reloaded = async () => {
+        await nextTick();
+        await vi.waitFor(() => expect(vis.store.loading).toBe(false));
+        await nextTick();
+    };
+    const { el, vis } = create({ def, data: rows(['A', 'B', 'C']), 'onUpdate:state': s => states.push(s) });
+    await rendered(el);
+    el.querySelectorAll('input[type=radio]')[1].click();
+    el.querySelector('.vis-legend-entry[data-key="B"]').click();
+    await nextTick();
+    const chosen = { globals: { col: 'other' }, visible: { land: { B: false } } };
+    expect(vis.state).toEqual(chosen);
+    states.length = 0;
+    // new data with all of them: kept, no event
+    vis.update({ data: rows(['A', 'B', 'C']) });
+    await reloaded();
+    expect(vis.state).toEqual(chosen);
+    expect(checked(el)).toEqual([false, true]);
+    expect(states).toEqual([]);
+    // without B: its choice is gone, the page is told
+    vis.update({ data: rows(['A', 'C']) });
+    await reloaded();
+    expect(vis.state).toEqual({ globals: { col: 'other' } });
+    expect(states).toEqual([{ globals: { col: 'other' } }]);
+    // a new definition without the control
+    vis.update({ def: { ...def, controls: [], dims: { ...def.dims, y: 'value' } } });
+    await reloaded();
+    expect(vis.state).toEqual({});
+    expect(states.at(-1)).toEqual({});
+    // a state of the same update wins
+    vis.update({ def, data: rows(['A', 'B']), state: { visible: { land: { A: false } } } });
+    await reloaded();
+    expect(vis.state).toEqual({ visible: { land: { A: false } } });
+    expect(errors).toEqual([]);
+});

@@ -441,6 +441,13 @@ definition) is applied without loading it again. Globals, values and entries
 the definition does not have (anymore) are ignored, new entries of the
 definition keep their defaults.
 
+A reload (a new `def`, `defFile`, `data` or other `defaults`) keeps the
+state of the chart, as if the page had passed it back: the choices which
+still apply (the control and its value, the category of an entry of a
+legend) are kept, the others are the defaults, and if the state is another
+one then, `update:state` is emitted. A `state` given in the same `update()`
+(or a new prop of the component) is applied instead.
+
 ```html
 <GenVis def-file="/data/bev/def.json" v-model:state="state"/>
 ```
