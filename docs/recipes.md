@@ -217,7 +217,7 @@ to at least 12 pixels (`dodge`). The right margin is measured of them.
         "values": [{"value": "abs", "name": "bn EUR"}, {"value": "index", "name": "Index 2015 = 100"}]}],
     "transform": {"type": "index", "column": "gdp", "as": "index", "by": "country", "base": {"year": 2015}},
     "dims": {
-        "x": {"column": "year", "format": "c"},
+        "x": "year",
         "y": {"column": "=match(@values, {index: 'index'}, 'gdp')", "format": ",.0f", "grid": true},
         "country": "country"
     },
@@ -302,7 +302,7 @@ country of the point.
         "x": {"column": "growth", "name": "GDP growth", "format": ".1f", "grid": true, "axis": {"format": ".1~f", "title": {"name": "Real GDP growth, %"}}},
         "y": {"column": "unemp_change", "name": "Change of unemployment", "format": "+.1f", "grid": true, "axis": {"format": "+.1~f", "title": {"name": "Change of the unemployment rate, pp"}}},
         "country": {"column": "country", "legend": {}, "categories": {"Austria": "#C3423F", "Germany": "#5B5B5B", "Spain": "#E6A000"}},
-        "year": {"column": "year", "format": "c"}
+        "year": "year"
     },
     "hover": {"mode": "point", "cross": true, "columns": ["country", "year"]},
     "annotations": [{"type": "line", "x": 0}, {"type": "line", "y": 0}],

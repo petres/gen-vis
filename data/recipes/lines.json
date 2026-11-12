@@ -11,7 +11,7 @@
         "values": [{"value": "abs", "name": "bn EUR"}, {"value": "index", "name": "Index 2015 = 100"}]}],
     "transform": {"type": "index", "column": "gdp", "as": "index", "by": "country", "base": {"year": 2015}},
     "dims": {
-        "x": {"column": "year", "format": "c"},
+        "x": "year",
         "y": {"column": "=match(@values, {index: 'index'}, 'gdp')", "format": ",.0f", "grid": true},
         "country": "country"
     },
