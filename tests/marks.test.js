@@ -559,6 +559,23 @@ describe('bars and ticks of periods and of the scale of another dim (final revie
         expect(errors).toEqual([]);
     });
 
+    test('the ticks of periods are the starts of the periods from the first date of the data: weeks from Mondays, quarters with a pad or an earlier start of the domain', async () => {
+        const ticks = async (x, data) => {
+            const el = await mount({ def: { width: 600, height: 250, dims: { x, y: 'v' }, marks: { type: 'bar' } }, data });
+            return [...el.querySelectorAll('[data-dim="x"] .tick text')].map(t => t.textContent);
+        };
+        // Mondays, in the format of weeks (not d3's Sundays, at the ends of the bars)
+        expect(await ticks({ column: 'd', interval: 'week' }, 'd,v\n2024-01-01,1\n2024-01-08,2\n2024-01-15,3\n2024-01-22,2\n2024-01-29,4\n2024-02-05,2'))
+            .toEqual(['2024', '08. Jan', '15. Jan', '22. Jan', '29. Jan', '05. Feb', '12. Feb']);
+        const quarters = 'd,v\n2023-01-01,1\n2023-04-01,2\n2023-07-01,3\n2023-10-01,2\n2024-01-01,4\n2024-04-01,2\n2024-07-01,5';
+        for (const x of [{ column: 'd', interval: 'quarter', pad: 0.05 }, { column: 'd', interval: 'quarter', domain: ['2022-11-15', null] }]) {
+            const t = await ticks(x, quarters);
+            expect(t).toContain('April');
+            expect(t).not.toContain('Februar');
+        }
+        expect(errors).toEqual([]);
+    });
+
     test('a tick of a column beside horizontal bars runs across their bands, a tick of no length warns', async () => {
         const el = await mount({ def: { width: 400, height: 200, dims: { x: { column: 'b', zero: true }, y: 'a' },
             marks: [{ type: 'bar' }, { type: 'tick', x: 't', stroke: 'red' }] }, data: 'a,b,t\nA,3,4\nB,4,2\nC,5,6' });

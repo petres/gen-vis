@@ -206,10 +206,13 @@ const getLocale = (locale = 'de') => {
                 const [d0, d1] = scale.domain();
                 return scale.tickFormat(count, number.format(Math.max(Math.abs(d0), Math.abs(d1)) >= 10000 ? ',' : ''));
             }
+            // (the ticks of periods of weeks are the starts of the weeks,
+            // e.g. Mondays of data from Mondays, of the format of a week)
+            const weeks = intervals => scale.period?.unit == 'week' ? intervals.map((f, i) => i == 4 ? d => d : f) : intervals;
             if (type == 'time')
-                return timeTickFormat(time.format, timeTicks, timeIntervals.time);
+                return timeTickFormat(time.format, timeTicks, weeks(timeIntervals.time));
             if (type == 'utc')
-                return timeTickFormat(time.utcFormat, timeTicks, timeIntervals.utc);
+                return timeTickFormat(time.utcFormat, timeTicks, weeks(timeIntervals.utc));
             return null;
         },
         // the default format of the values of the hover and of labels: dates

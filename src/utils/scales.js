@@ -27,14 +27,24 @@ const intervalOf = (spec, utc = false) => {
     const base = utc ? inUtc : local;
     // the period starts at the date, e.g. a half year in April, so it is
     // `count` units long, not up to the next multiple of them (d3's `every`)
-    // (`range` the starts of the units from `lo` to before `hi`, e.g. ticks,
-    // `starts(lo)` whether a date is the start of a period of the ones
-    // from the unit of `lo`, e.g. every third month of quarters)
-    const starts = lo => {
-        const first = base.floor(lo);
-        return d => +base.floor(d) == +d && base.count(first, d) % count == 0;
+    // (the periods are the ones from a date `origin`, the first one of the
+    // data, e.g. weeks from a Monday, not d3's from Sundays, or every third
+    // month of quarters from January: `at(origin, k)` the start of the k-th
+    // one, `starts(origin)` whether a date is a start, `range(origin, lo, hi)`
+    // the starts from `lo` to before `hi`, e.g. ticks; each one of `count`
+    // units from the origin, not one after the other, e.g. the 31st of the
+    // months which have one)
+    const at = (origin, k) => base.offset(origin, k*count);
+    const near = (origin, d) => Math.round((d >= origin ? base.count(origin, d) : -base.count(d, origin))/count);
+    const starts = origin => d => [-1, 0, 1].some(i => +at(origin, near(origin, d) + i) == +d);
+    const range = (origin, lo, hi) => {
+        const out = [];
+        for (let k = near(origin, lo) - 1, t = at(origin, k); t < hi; t = at(origin, ++k))
+            if (t >= lo)
+                out.push(t);
+        return out;
     };
-    return count > 0 ? { offset: d => base.offset(d instanceof Date ? d : new Date(d), count), range: (lo, hi) => base.range(lo, hi), starts } : null;
+    return count > 0 ? { unit: m[2], offset: d => base.offset(d instanceof Date ? d : new Date(d), count), range, starts } : null;
 };
 
 // the offset of the center of a band, the position of band scales is its start
@@ -532,16 +542,19 @@ const makeScale = (name, dim, rows, { dims = {}, coord = {}, scope = {}, stackOf
         const ticks = s.ticks;
         s.ticks = count => {
             const all = ticks.call(s, count);
-            // the starts of the periods from the start of the domain, e.g.
-            // of quarters every third month, not the months between
+            // the starts of the periods from the first date of the data (not
+            // from the start of the domain, e.g. of a `pad`), e.g. of
+            // quarters every third month, not the months between
             const [lo, hi] = d3.extent(s.domain());
-            const start = period.starts(lo);
-            const whole = all.filter(start);
+            const origin = found.extent?.[0] ?? lo;
+            const whole = all.filter(period.starts(origin));
             if (whole.length >= 2)
                 return whole;
-            // a domain of a few periods (e.g. 3 months, d3 ticks weeks):
-            // the starts of its periods, every n-th of more than `count`
-            const starts = period.range(lo, new Date(+hi + 1)).filter(start);
+            // a domain of a few periods (e.g. 3 months, d3 ticks weeks) or
+            // of periods which are none of d3's ticks (e.g. weeks from
+            // Mondays): the starts of its periods, every n-th of more than
+            // `count`
+            const starts = period.range(origin, lo, new Date(+hi + 1));
             const every = Math.ceil(starts.length/Math.max(1, count ?? 10));
             return starts.length ? starts.filter((t, i) => i % every == 0) : all;
         };
