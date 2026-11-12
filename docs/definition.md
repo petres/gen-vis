@@ -19,7 +19,7 @@ states:
     "source": "Q: Statistik Austria",
     "height": 300,
     "dims": {
-        "x": { "column": "Jahr", "format": "c" },
+        "x": "Jahr",
         "y": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true },
         "land": {
             "column": "Bundesland",
@@ -36,8 +36,9 @@ states:
 }
 ```
 
-`Jahr` holds numbers, so the dim `x` is numeric and `"format": "c"` writes
-the years without a thousands separator. `zero` includes 0 in the domain of
+`Jahr` holds numbers, so the dim `x` is numeric; numbers which are all
+whole and below 10 000 have no thousands separator, so the years need no
+format (see `format` of [axes](#axes)). `zero` includes 0 in the domain of
 `y`, `grid` draws the lines of its ticks. The dim `land` has a category per
 state, the total first, hidden at the start, the others of the data after
 it in the order of the rows (`fromData`), with the colors of the scheme

@@ -26,7 +26,7 @@ longer version is `data/bev/def.json`):
     "title": "Bevölkerung nach Bundesland",
     "height": 300,
     "dims": {
-        "x": { "column": "Jahr", "format": "c" },
+        "x": "Jahr",
         "y": { "column": "Einwohner", "format": ",.0f", "zero": true, "grid": true },
         "land": { "column": "Bundesland", "scheme": "Tableau10", "legend": { "onlyData": true } }
     },
@@ -36,8 +36,9 @@ longer version is `data/bev/def.json`):
 
 The dims name the columns: `x` and `y` are the positions, with an axis
 each, `land` has a category per state, with a color of the scheme and a
-legend. The mark draws a line per state (`by`). The years are numbers, so
-`"format": "c"` shows them as 2002, not 2.002; `zero` starts the axis at 0.
+legend. The mark draws a line per state (`by`). The years are numbers,
+written as years (2002, no thousands separator) without a format; `zero`
+starts the axis at 0.
 The filter drops the Austria total (`ÖSTERREICH`), and `onlyData` keeps it
 out of the legend. The margins are measured of the axes, the hover lists
 the states of the year under the pointer.
@@ -45,13 +46,19 @@ the states of the year under the pointer.
 A page which draws it:
 
 ```html
-<div class="genVis" data-def-file="def.json" data-download></div>
+<div class="genVis" data-def-file="def.json" data-check data-download></div>
 
 <script type="module">
 import { mountGenVisByClass } from 'https://cdn.jsdelivr.net/npm/@preschen/gen-vis@5/dist-lib/esm/gen-vis.js';
 mountGenVisByClass('genVis');
 </script>
 ```
+
+`data-check` logs the warnings of the check of the definition in the
+console, e.g. a typo of a key or a column which is not in the data, which
+otherwise often draw a wrong or an empty chart without a message; it is
+for development (the check is loaded only with it), leave it out on the
+published page.
 
 The `$schema` declares the definition language version (gen-vis 5).
 Editors like VS Code use it to complete and check the definition. The
