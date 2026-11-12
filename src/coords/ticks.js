@@ -16,11 +16,25 @@ const inRange = (scale, v) => {
     return p >= a - 0.5 && p <= b + 0.5;
 };
 
+// the least distance of the ticks of a vertical axis by default, in pixels
+// (labels of 12 pixels)
+const minSpacing = 18;
+
 // the number of the ticks of an axis, its `ticks` or one per `tickSpacing`
-// pixels of its `length`, e.g. of the width of the plot area, at least 2
-const tickCount = (axis, scope, length) => {
+// pixels of its `length`, e.g. of the width of the plot area, at least 2;
+// without them (and without `values`) the ones of d3 (10), of a vertical
+// axis of the `scale` fewer if they are less than minSpacing apart, e.g. of
+// small facets, whose labels overlapped (a horizontal one leaves out labels,
+// see labelStep)
+const tickCount = (axis, scope, length, scale) => {
     // null is no number, e.g. of a parent, so the one of tickSpacing
     const ticks = evaluate(axis.ticks, scope) ?? undefined;
+    if (ticks === undefined && !axis.tickSpacing && scale?.ticks && axis.values === undefined && (axis.position == 'left' || axis.position == 'right')) {
+        let count = 10;
+        while (count > 2 && (scale.ticks(count).length - 1)*minSpacing > length)
+            count--;
+        return count == 10 ? undefined : count;
+    }
     if (ticks !== undefined || !axis.tickSpacing)
         return ticks;
     return Math.max(2, Math.round(length / evaluate(axis.tickSpacing, scope)));

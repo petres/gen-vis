@@ -42,7 +42,7 @@ const autoMargins = (store, facets, given, texts = () => [], stepped = false) =>
         const pos = i.position;
         const range = s.range();
         const length = Math.abs(range[range.length - 1] - range[0]);
-        const ticks = tickCount(i, f.scope, length);
+        const ticks = tickCount(i, f.scope, length, s);
         const format = tickFormat(store, n, s, ticks) || (s.tickFormat ? s.tickFormat(ticks) : (d => d));
         const values = tickValues(i, s, ticks, m, f.scope, def.dims);
         // the labels of a shared scale only at the outer facets of a grid, see axes of coords/cartesian.js

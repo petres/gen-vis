@@ -1042,7 +1042,10 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   them free); the title stays at the edge.
 - `ticks` (also of the dim): the number of the ticks, `tickSpacing` (also
   of the dim): without `ticks` a tick per this many pixels of the axis,
-  e.g. `80`, so a narrow chart has fewer ticks. `values`: fixed ticks,
+  e.g. `80`, so a narrow chart has fewer ticks. Without them (and without
+  `values`) the ticks are the ones of d3 (about 10), of a vertical axis
+  fewer if they would be less than 18 pixels apart, e.g. of small facets
+  (the labels of a horizontal axis are thinned, see below). `values`: fixed ticks,
   converted as the values of the data, e.g. dates of strings or categories
   as strings, so `["2004", "2008"]` and `[2004, 2008]` are the same ticks
   of a band scale of years, the ones outside of the domain are left out,

@@ -326,3 +326,25 @@ describe('the plot area keeps half of the size', () => {
         expect(given.margins).toMatchObject({ left: 220, right: 100 });
     });
 });
+
+// review of 5.0: the labels of a vertical axis overlapped in small facets (10 ticks whatever the height)
+describe('the default number of the ticks of a vertical axis', () => {
+    const labels = async (y, height, data = 'x,v\n1,0\n2,22') => {
+        const el = await mount({ def: { width: 400, height, dims: { x: 'x', y }, marks: { type: 'line' } }, data });
+        const ticks = [...el.querySelectorAll('[data-dim="y"] .tick')];
+        const at = t => Number(/translate\([^,]+,([^)]+)\)/.exec(t.getAttribute('transform'))[1]);
+        return { texts: ticks.map(t => t.textContent), gap: Math.min(...ticks.slice(1).map((t, i) => Math.abs(at(t) - at(ticks[i])))) };
+    };
+    test('fewer of a short plot area, at least 18 pixels apart; the ones of d3 of a tall one', async () => {
+        const short = await labels('v', 160);
+        expect(short.gap).toBeGreaterThanOrEqual(18);
+        expect(short.texts.length).toBeGreaterThanOrEqual(3);
+        const tall = await labels('v', 400);
+        expect(tall.texts).toEqual(['0', '2', '4', '6', '8', '10', '12', '14', '16', '18', '20', '22']);
+    });
+    test('ticks, tickSpacing and values are the ones given', async () => {
+        expect((await labels({ column: 'v', ticks: 10 }, 160)).texts).toHaveLength(12);
+        expect((await labels({ column: 'v', tickSpacing: 10 }, 160)).texts.length).toBeGreaterThan(8);
+        expect((await labels({ column: 'v', axis: { values: [0, 1, 2, 3, 4, 5, 6] } }, 160)).texts).toHaveLength(7);
+    });
+});

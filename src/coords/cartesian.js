@@ -83,7 +83,7 @@ const axes = ctx => {
         const m = store.dim(n);
         const i = m.axis;
         const s = ctx.scales[n];
-        const ticks = tickCount(i, ctx.scope, Math.abs(s.range()[1] - s.range()[0]));
+        const ticks = tickCount(i, ctx.scope, Math.abs(s.range()[1] - s.range()[0]), s);
 
         // the format of the labels, the one of d3 of the scale for fixed
         // values without a format
