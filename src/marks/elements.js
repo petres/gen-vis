@@ -1,4 +1,4 @@
-export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propScale, bandOffset, once, dodge, halo, inside, centered };
+export { perRow, perGroup, finite, curve, points, areaPoints, alongRows, propDim, propScale, bandOffset, once, dodge, halo, inside, centered };
 
 import * as d3 from "@/utils/d3";
 import { refOf, refNames } from '@/utils/expr';

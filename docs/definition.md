@@ -608,11 +608,17 @@ are measured in the font of the visualisation. The texts of `text` and
 ends of lines or bars or above the points of a scatter plot, laid out as
 they are drawn (`dx`, `dy`, `text-anchor`, `dominant-baseline`, `font-size`,
 `max-width`), also the texts and labels of annotations, of cartesian charts
-(not rotated texts and texts inside areas). The texts along the width (the labels of a
+(not rotated texts, texts inside areas, the texts of a mark with `clip` and
+the ones of rows whose value is outside of a fixed `domain`, which are
+beyond the plot area whatever the margins; a text at a place of the facet,
+e.g. a unit at `"=@plot:top - 6"`, is measured). The texts along the width (the labels of a
 horizontal axis, the texts of marks) are measured at their place in the
 plot area of the final width, the one less the margins, so a narrow chart
-gets the margins it needs (they keep half of the width for the plot area
-at least). The legends and the
+gets the margins it needs. The measured sides of a direction take half of
+the width or of the height together at most (less the sides which are
+given; not of a height of `steps`), so the plot area keeps half of it at
+least, e.g. of a long label of a left axis: the wider side gives way, a
+text which does not fit then is cut at the edge of the chart. The legends and the
 titles of facets are not part of the margins, they are beside or above the
 facets. `"margins": "auto"` is the same as no margins (the styles and the
 defaults of the page, else measured); `"auto"` of a side is measured.
@@ -2089,6 +2095,11 @@ globals, e.g. `"@target"`:
 - An annotation at a value without a position is not drawn, e.g. at a
   category whose rows a filter leaves out; a category which is not in the
   data at all (or 0 of a log scale) warns in the console.
+- Annotations do not extend the domain: one at a value outside of the domain
+  of a continuous scale (of a range both ends beyond the same end of the
+  domain) is not drawn, nor its label, e.g. a target line above the data;
+  `include` of the dim takes the value into the domain (`"include": 10`). A
+  band partly in the domain is drawn up to its edge.
 - `props` are svg attributes, e.g. `fill` or `stroke` (or `"marker-end":
   "arrow"`, an arrowhead, see [attributes](#attributes)), the defaults are grey,
   their names are the ones of the facet and of the annotation, e.g. `@y`,

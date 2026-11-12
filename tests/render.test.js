@@ -4481,7 +4481,7 @@ describe('texts in several languages', () => {
                 categories: { Wien: { name: { de: 'Wien', en: 'Vienna' } }, Tirol: { name: 'Tirol' } } },
         },
         marks: { type: 'line', by: 'c' },
-        annotations: [{ type: 'line', y: 2500, label: { de: 'Ziel', en: 'Target' } }],
+        annotations: [{ type: 'line', y: 1500, label: { de: 'Ziel', en: 'Target' } }],
     });
     const data = 'year,value,land\n2020,1000,Wien\n2021,2000,Wien\n2020,3000,Tirol\n2021,3500,Tirol';
     const texts = el => ({

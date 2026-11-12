@@ -21,9 +21,10 @@ const tickInset = { bottom: 4, top: 5, right: 4, left: 5 };
  * the ends of a horizontal axis which reach beyond the plot area (the left
  * and the right margin), the labels of an angular axis around the circle;
  * at least 8 pixels beside axes (e.g. a point at the end of a line), none
- * of a map.
+ * of a map; at most half of the width and of the height (not of a height of
+ * steps, `stepped`) of a direction together.
  */
-const autoMargins = (store, facets, given, texts = () => []) => {
+const autoMargins = (store, facets, given, texts = () => [], stepped = false) => {
     const def = store.def;
     const sides = ['top', 'right', 'bottom', 'left'];
     const need = Object.fromEntries(sides.map(k => [k, 0]));
@@ -164,5 +165,28 @@ const autoMargins = (store, facets, given, texts = () => []) => {
         need.left = left;
         need.right = right;
     }
-    return Object.fromEntries(sides.map(k => [k, given[k] === 'auto' ? Math.ceil(sideOf(k, need[k])) : given[k]]));
+    const margins = Object.fromEntries(sides.map(k => [k, given[k] === 'auto' ? Math.ceil(sideOf(k, need[k])) : given[k]]));
+    // the measured sides of a direction together take at most half of the
+    // size, less the given sides, so the plot area keeps half of it at
+    // least, e.g. of a long label of a left axis or a text far beyond the
+    // plot area: the wider side gives way first (down to the other one), a
+    // text which does not fit then is cut or overflows; not the height of
+    // a plot area of the height of its steps (`steps`, of the categories
+    // of horizontal bars), the margins add to it
+    if (facets.length > 0)
+        [['left', 'right', facets[0].width], ...(stepped ? [] : [['top', 'bottom', facets[0].height]])].forEach(([a, b, size]) => {
+            const auto = [a, b].filter(k => given[k] === 'auto');
+            const room = Math.max(0, size/2 - [a, b].filter(k => given[k] !== 'auto').reduce((t, k) => t + (Number(given[k]) || 0), 0));
+            const total = auto.reduce((t, k) => t + margins[k], 0);
+            if (!(size > 0) || total <= room)
+                return;
+            if (auto.length == 1)
+                margins[auto[0]] = Math.floor(room);
+            else {
+                const [lo, hi] = margins[a] <= margins[b] ? [a, b] : [b, a];
+                margins[lo] = Math.floor(Math.min(margins[lo], room/2));
+                margins[hi] = Math.floor(room - margins[lo]);
+            }
+        });
+    return margins;
 };

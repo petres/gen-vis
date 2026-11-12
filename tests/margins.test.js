@@ -9,7 +9,7 @@ import { layout } from '@/layout';
 import { textWidth } from '@/utils/measure';
 import { autoMargins } from '@/utils/margins';
 import { createGenVis } from '@/index.js';
-import { useDom, rendered, nextTick } from './dom.js';
+import { useDom, rendered, nextTick, mount } from './dom.js';
 
 beforeAll(loadColors);
 useDom();
@@ -244,6 +244,11 @@ describe('the ends of a horizontal axis of the final width', () => {
             const { v } = await of(def, width, rows);
             const f = v.facets[0];
             const end = f.scales.x(2021) + 4 + textWidth('Ein langer Name', '12px sans-serif');
+            // the plot area keeps half of the width, of 220 pixels the text
+            // does not fit then
+            expect(f.innerWidth).toBeGreaterThanOrEqual(width/2);
+            if (width == 220)
+                continue;
             expect(end).toBeLessThanOrEqual(f.innerWidth + f.margins.right);
             expect(end).toBeGreaterThan(f.innerWidth + f.margins.right - 4);
         }
@@ -269,5 +274,55 @@ describe('"auto" and expressions of the margins', () => {
         expect(await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 300)).toEqual(measured);
         expect((await margins({ margins: { left: "=if(@totalWidth > 500, 80, 'auto')" } }, 600)).left).toBe(80);
         expect(await margins({ margins: { left: '=if(@totalWidth > 500, 80)' } }, 300)).toEqual(measured);
+    });
+});
+
+describe('the plot area keeps half of the size', () => {
+    const months = 'd,v\n2024-01-01,1\n2024-02-01,2\n2024-03-01,3';
+    const of = async (def, data, width = 640) => {
+        const store = createStore();
+        await store.init({ def, data });
+        return layout(store, width).facets[0];
+    };
+
+    test('an annotation outside of the domain is not drawn and makes no margin, also not its label', async () => {
+        for (const a of [{ type: 'line', y: 10, label: 'Ziel' }, { type: 'line', y: -20, label: 'Min' }, { type: 'line', x: '2030-01-01', label: 'out' },
+            { type: 'text', x: '2024-06-01', y: 2, text: 'Event' }, { type: 'band', x: ['2024-06-01', '2024-07-01'], label: 'Sommer' }]) {
+            const def = { width: 640, height: 400, dims: { x: 'd', y: 'v' }, marks: [{ type: 'line' }], annotations: [a] };
+            const f = await of(def, months);
+            expect(f.innerHeight).toBeGreaterThan(300);
+            expect(f.innerWidth).toBeGreaterThan(560);
+            const el = await mount({ def, data: months });
+            expect(el.querySelector('.vis-annotation, .vis-annotation-label')).toBeNull();
+        }
+        // a band partly in the domain is drawn up to its edge
+        const el = await mount({ def: { width: 640, dims: { x: 'd', y: 'v' }, marks: [{ type: 'line' }], annotations: [{ type: 'band', x: ['2024-02-01', '2024-07-01'], label: 'Sommer' }] }, data: months });
+        expect(el.querySelector('rect.vis-annotation')).not.toBeNull();
+        // `include` takes it into the domain, its label above the line
+        const f = await of({ dims: { x: 'd', y: { column: 'v', include: 10 } }, marks: [{ type: 'line' }], annotations: [{ type: 'line', y: 10, label: 'Ziel' }] }, months);
+        expect(f.scales.y.domain()[1]).toBeGreaterThanOrEqual(10);
+        expect(f.innerHeight).toBeGreaterThan(300);
+    });
+
+    test('labels of values outside of a fixed domain make no margin, texts at a place of the facet do', async () => {
+        const y = await of({ dims: { x: 'd', y: { column: 'v', domain: [0, 1.5] } }, marks: [{ type: 'line', clip: true }, { type: 'label', text: '@y', anchor: 'top' }] }, months);
+        expect(y.innerHeight).toBeGreaterThan(300);
+        const x = await of({ dims: { x: { column: 'd', domain: ['2024-01-01', '2024-01-20'] }, y: 'v' }, marks: [{ type: 'line', clip: true }, { type: 'text', text: 'a long label', dx: 4 }] }, months);
+        expect(x.innerWidth).toBeGreaterThan(500);
+        // the texts of a mark with `clip` end at the edges of the plot area
+        const clipped = await of({ dims: { x: 'd', y: 'v' }, marks: [{ type: 'line' }, { type: 'text', select: 'last', text: 'a long label', dx: 4, clip: true }] }, months);
+        expect(clipped.margins.right).toBe(8);
+        // a unit above the plot area
+        const unit = await of({ dims: { x: 'd', y: 'v' }, marks: [{ type: 'line' }, { type: 'text', once: true, x: '@plot:left', y: '=@plot:top - 30', text: 'in €' }] }, months);
+        expect(unit.margins.top).toBeGreaterThan(30);
+    });
+
+    test('a long label of a left axis leaves half of the width to the plot area, the side without labels keeps its floor', async () => {
+        const f = await of({ dims: { y: { column: 'k', type: 'categorical' }, x: 'v' }, marks: [{ type: 'bar' }] }, `k,v\n${'A very long category label '.repeat(4)},5\nb,3`);
+        expect(f.innerWidth).toBeGreaterThanOrEqual(320);
+        expect(f.margins.right).toBe(8);
+        // a given side counts: the measured one takes the rest of the half
+        const given = await of({ margins: { right: 100 }, dims: { y: { column: 'k', type: 'categorical' }, x: 'v' }, marks: [{ type: 'bar' }] }, `k,v\n${'A very long category label '.repeat(4)},5\nb,3`);
+        expect(given.margins).toMatchObject({ left: 220, right: 100 });
     });
 });

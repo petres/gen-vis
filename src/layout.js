@@ -11,9 +11,9 @@ import { facetBy } from "@/utils/normalize";
 import { markPath, sizeOf, warnOnce, withPath } from "@/utils/warn";
 import { highlightVars } from "@/utils/highlight";
 import { textWidth } from "@/utils/measure";
-import { directOf, elementOf, replaceRow } from "@/utils/draw";
+import { directOf, elementOf, replaceRow, rowOf } from "@/utils/draw";
 import { markTypes } from "@/marks";
-import { alongRows } from "@/marks/elements";
+import { alongRows, propDim } from "@/marks/elements";
 
 // the warning of a condition of a filter of no dim, e.g. of a column
 // instead of the dim of it, which no row has, see rowFilter
@@ -513,7 +513,7 @@ const layout = (store, width, before = null) => {
     // provisional margins, then the facets are built again with them
     let built = build(auto ? Object.fromEntries(Object.entries(given).map(([k, v]) => [k, v === 'auto' ? 30 : v])) : given);
     if (auto)
-        built = build(autoMargins(store, built.facets, given, f => textBoxes(store, f)));
+        built = build(autoMargins(store, built.facets, given, f => textBoxes(store, f), stepped !== undefined));
     const { size, facets } = built;
 
     return {
@@ -825,8 +825,9 @@ const textBoxes = (store, f) => {
     // of cartesian charts (the positions of polar ones are around the center, maps have no margins)
     if ((store.def.coord ?? 'cartesian') != 'cartesian')
         return [];
+    // (not of a mark with `clip`, its texts end at the edges of the plot area)
     const marks = (store.def.marks ?? []).filter(p => (p.type == 'svg:text' || String(p.type).startsWith('annotation:'))
-        && p.place?.in === undefined && inFacet(store.def, p, f));
+        && p.place?.in === undefined && !p.clip && inFacet(store.def, p, f));
     if (marks.length == 0)
         return [];
     const groups = new Map();
@@ -848,6 +849,17 @@ const textBoxes = (store, f) => {
         // texts and labels (their position and anchor in the attributes set at
         // once, a label in the size of its style, see styles.css)
         const items = layer?.groups ? layer.groups.flatMap(g => g.items) : layer?.items ?? [];
+        // a text at a value of its row outside of the domain of its scale
+        // (e.g. a label of a point beyond a fixed domain, a zoom) is beyond
+        // the plot area whatever the margins, it makes none; a text at a
+        // place of the facet (e.g. a unit at "=@plot:top - 6") or moved
+        // beyond it (`dodge`, `dy`) does
+        const dims = ['x', 'y'].map(k => propDim(p, ctx, k)).filter(d => d && !d.scale.step);
+        const beyond = row => row && dims.some(({ name, scale }) => {
+            const at = scale(row[name]);
+            const [r0, r1] = d3.extent(scale.range());
+            return at < r0 - 0.5 || at > r1 + 0.5;
+        });
         return items.filter(v => (v[elementOf] ?? layer.element) == 'text').map(item => {
             const v = { ...(item[directOf] ?? {}), ...item };
             if (String(v.class ?? '').includes('vis-annotation-label') && v['font-size'] === undefined)
@@ -859,7 +871,7 @@ const textBoxes = (store, f) => {
             const max = parseFloat(v['max-width']);
             const width = Math.min(textWidth(String(text), `${v['font-weight'] ?? ''} ${size}px ${family}`.trim()), max > 0 ? max : Infinity);
             const x = parseFloat(v.x) + lengthOf(v.dx, size), y = parseFloat(v.y) + lengthOf(v.dy, size);
-            if (!Number.isFinite(x) || !Number.isFinite(y))
+            if (!Number.isFinite(x) || !Number.isFinite(y) || beyond(item[rowOf]))
                 return null;
             const anchor = v['text-anchor'], baseline = v['dominant-baseline'];
             const left = anchor == 'middle' ? x - width/2 : anchor == 'end' ? x - width : x;

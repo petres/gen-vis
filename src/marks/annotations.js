@@ -1,6 +1,7 @@
 import { markPath, warnOnce } from "@/utils/warn";
 import { directOf } from "@/utils/draw";
 import { convert } from "@/utils/data";
+import * as d3 from "@/utils/d3";
 
 // the annotations of the coordinate systems as mark types, a band, a line, a
 // text or a circle per row at its values of the dims (the items of
@@ -39,6 +40,23 @@ const unknownOf = (ctx, row) => Object.keys(row).filter(k => ctx.scales[k] && ro
     return s.domain().every(d => Number.isFinite(+d)) && values.some(v => !Number.isFinite(s(convert(m, v))));
 });
 
+// the dims of the values of an annotation (`row`) which are wholly outside
+// of the domain of their continuous scale, beyond one end of its range (a
+// range of values beyond the same end, `null` is the edge of the domain),
+// e.g. a target line above the data: annotations do not extend the domain
+// (`include` of the dim does), they are not drawn, nor their labels, which
+// would be far beyond the plot area, see textBoxes of layout.js
+const outsideOf = (ctx, row) => Object.keys(row).filter(k => ctx.scales[k] && row[k] !== null && row[k] !== undefined).filter(k => {
+    const s = ctx.scales[k];
+    const range = s.range();
+    if (s.step || !range.every(v => typeof v == 'number'))
+        return false;
+    const m = ctx.store.dim(k);
+    const [r0, r1] = d3.extent(range);
+    const at = [row[k]].flat().map((v, i) => s(v === null || v === undefined ? s.domain()[i ? s.domain().length - 1 : 0] : convert(m, v)));
+    return at.every(Number.isFinite) && (d3.max(at) < r0 - 0.5 || d3.min(at) > r1 + 0.5);
+});
+
 const annotation = type => ({
     marks(groups, mark, ctx) {
         const coord = ctx.store.coord;
@@ -51,6 +69,10 @@ const annotation = type => ({
         return {
             class: "vis-annotations",
             items: groups.flatMap(g => g.rows.flatMap(row => {
+                // (no warning: the domain changes with the data, e.g. of a
+                // filter or the entries of a legend hidden)
+                if (outsideOf(ctx, row).length > 0)
+                    return [];
                 const items = coord.annotate(ctx, {
                     ...row,
                     type,
