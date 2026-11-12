@@ -120,7 +120,10 @@ describe('the language of 5.0', () => {
         expect(def.filter).toEqual({ '==': ['@Jahr', '@year'] });
         expect(def.controls).toEqual([{ id: 'year', type: 'slider', global: 'year', name: 'Jahr', values: { column: 'Jahr' }, inImage: false }]);
         expect(def.marks[0]).toEqual({ type: 'cartesian:bar', by: [], highlight: { fill: '#5BC5F2' }, props: { fill: '#1E4F77', y: '@y:scaled', x1: '@x:scaled' } });
-        expect(def.marks[1].props).toEqual({ text: '@x:formatted', 'font-size': 11, x: '@x:scaled', y: '@y:scaled:center', dx: 4, 'text-anchor': 'start', 'dominant-baseline': 'middle', fill: null });
+        // beyond the end of a bar of a negative value as well (before the 0 of x)
+        const negative = { and: ['@y:bandwidth', { '<': ['@x:scaled', '@x:scaled:0'] }] };
+        expect(def.marks[1].props).toEqual({ text: '@x:formatted', 'font-size': 11, x: '@x:scaled', y: '@y:scaled:center',
+            dx: { if: [negative, -4, 4] }, 'text-anchor': { if: [negative, 'end', 'start'] }, 'dominant-baseline': 'middle', fill: null });
     });
 
     test('dodged bars, cells, rules of ranges, numbers as values of the scale', () => {

@@ -1022,7 +1022,10 @@ formats, e.g. `"%K. Halbjahr %Y"`, d3's `%q` the quarter.
   the edge of the plot area (`"labels": {"at": "edge"}`, the default), only
   the line and the tick marks are at the value, so they cover no bars, or
   are with the line, `"labels": {"at": "axis"}`, then without the label
-  where the line of the other axis crosses it; the title stays at the edge.
+  where the line of the other axis crosses it, on the side of `position`
+  also where the bars of negative values are (they cover them, e.g. of a
+  bottom axis at 0 the labels of the bars down from it: `"edge"` keeps
+  them free); the title stays at the edge.
 - `ticks` (also of the dim): the number of the ticks, `tickSpacing` (also
   of the dim): without `ticks` a tick per this many pixels of the axis,
   e.g. `80`, so a narrow chart has fewer ticks. `values`: fixed ticks,
@@ -1542,7 +1545,13 @@ attributes are merged into the defaults, e.g. `d` of a path.
   a corner (`top-end` above it and after it, e.g. a note at the start of a
   line, `top-start`, `bottom-end`, `bottom-start`), with the `text-anchor`
   and `dominant-baseline` of it; `dx` and `dy` of the mark replace the
-  distance.
+  distance. A label of a bar of a negative value (before the 0 of its
+  scale) is beyond the end of its bar as well: `end` and `start` beside
+  the bands of a categorical `y` (horizontal bars), `top` and `bottom`
+  beside the bands of `x` (or its periods of an `interval`) are mirrored
+  there, e.g. `top` is below a bar down from 0; not of points and other
+  positions without bands, nor of a mark with the `dx` (`dy`) of the
+  side.
 
 ### Examples
 

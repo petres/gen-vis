@@ -198,6 +198,23 @@ describe('labels with an anchor', () => {
         expect(num(labels[0], 'y')).toBeCloseTo(num(bar, 'y') + num(bar, 'height')/2);
         expect(errors).toEqual([]);
     });
+
+    test('the labels of bars of negative values are beyond their ends, not on the bars, of a distance of the mark as given', async () => {
+        const at = t => [t.getAttribute('dx'), t.getAttribute('dy'), t.getAttribute('text-anchor'), t.getAttribute('dominant-baseline')];
+        const hbars = texts(await mount({ def: { dims: { y: { column: 'k', type: 'categorical' }, x: 'v' }, marks: [{ type: 'bar' }, { type: 'label', anchor: 'end', text: '@x' }] }, data: 'k,v\na,5\nb,-3' }));
+        expect(hbars.map(at)).toEqual([['4', null, 'start', 'middle'], ['-4', null, 'end', 'middle']]);
+        // vertical bars of a column of names (no type), dodged ones
+        const vbars = texts(await mount({ def: { dims: { x: 'k', y: 'v' }, marks: [{ type: 'bar' }, { type: 'label', anchor: 'top', text: '@y' }] }, data: 'k,v\na,5\nb,-3' }));
+        expect(vbars.map(at)).toEqual([[null, '-4', 'middle', 'auto'], [null, '4', 'middle', 'hanging']]);
+        const dodged = texts(await mount({ def: { dims: { x: { column: 'k', type: 'categorical' }, y: 'v', t: 't' }, marks: [{ type: 'bar', by: 't', dodge: true }, { type: 'label', by: 't', dodge: true, anchor: 'top', text: '@y' }] }, data: 'k,v,t\na,1,p\na,-2,q' }));
+        expect(dodged.map(at)).toEqual([[null, '-4', 'middle', 'auto'], [null, '4', 'middle', 'hanging']]);
+        // labels of points stay above them, a dy of the mark is the one given
+        const points = texts(await mount({ def: { dims: { x: 'x', y: 'v' }, marks: [{ type: 'point' }, { type: 'label', anchor: 'top', text: '@y' }] }, data: 'x,v\n1,5\n2,-3' }));
+        expect(points.map(at)).toEqual([[null, '-4', 'middle', 'auto'], [null, '-4', 'middle', 'auto']]);
+        const given = texts(await mount({ def: { dims: { x: 'k', y: 'v' }, marks: [{ type: 'bar' }, { type: 'label', anchor: 'top', dy: -2, text: '@y' }] }, data: 'k,v\na,5\nb,-3' }));
+        expect(given.map(at)).toEqual([[null, '-2', 'middle', 'auto'], [null, '-2', 'middle', 'auto']]);
+        expect(errors).toEqual([]);
+    });
 });
 
 describe('cells', () => {

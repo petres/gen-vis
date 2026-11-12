@@ -290,6 +290,8 @@ const anchors = {
     'bottom-end': { dx: 4, dy: 4, 'text-anchor': 'start', 'dominant-baseline': 'hanging' },
     'bottom-start': { dx: -4, dy: 4, 'text-anchor': 'end', 'dominant-baseline': 'hanging' },
 };
+// the anchors of labels of bars of negative values, beyond their ends
+const mirrored = { end: 'start', start: 'end', top: 'bottom', bottom: 'top' };
 
 /**
  * A mark as the engine reads it: its channels as the `props` of the scaled
@@ -616,8 +618,20 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
                 else if (x)
                     props.x = dodged(x.dim, dodgeGroup).center;
             }
-            if (anchor)
-                Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) => props[k] ??= v);
+            if (anchor) {
+                // the label of a bar of a negative value (before the 0 of its
+                // scale) is beyond its end as well: `end` and `start` of a
+                // horizontal bar, `top` and `bottom` of a vertical one are
+                // mirrored there; only beside the bands of the other position
+                // (bars, not e.g. points) and not of a distance of the mark
+                const [value, band, distance, before] = anchor == 'end' || anchor == 'start' ? [x, y, 'dx', '<'] : [y, x, 'dy', '>'];
+                const mirror = mirrored[anchor] && value?.dim !== undefined && value.fixed === undefined && band?.dim !== undefined
+                    && props[distance] === undefined && !centered(value.dim);
+                const negative = mirror && { [before]: [props[value == x ? 'x' : 'y'], ref(value.dim, 'scaled:0')] };
+                const cond = mirror && (ofDim(band.dim)?.interval !== undefined ? negative : { and: [ref(band.dim, 'bandwidth'), negative] });
+                Object.entries(anchors[anchor] ?? {}).forEach(([k, v]) =>
+                    props[k] ??= mirror && anchors[mirrored[anchor]][k] !== v ? { if: [cond, anchors[mirrored[anchor]][k], v] } : v);
+            }
             if (raw.type == 'label' && props.fill === undefined)
                 props.fill = null;
         } else {
