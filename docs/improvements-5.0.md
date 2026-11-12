@@ -4,8 +4,10 @@ The result of the review of 2026-11-10 of the branch `v5` (at `8b6b08e`): what w
 measured, what it means and what to change. The bugs of the same review are
 fixed in the code and listed in the CHANGELOG, not here.
 
-Status of an item: **done** (in 5.0), **open** (small, can go into 5.0 or 5.x),
-**later** (a larger change, after 5.0).
+Everything here is **done** (in 5.0). What is open or for later is in
+[todo/](todo/README.md): the scheduler of the draws, the data in columns, the
+lazy hover and the definitions compiled ahead moved there, with the open
+points of the outside review of 2026-11-12.
 
 ## How it was measured
 
@@ -52,12 +54,10 @@ So a chart is slow because of its data, not because of its drawing.
 | S4 | A resize uses the width of the `ResizeObserver` entry instead of measuring again. | one forced layout less per chart and resize (about 20 % of a page resize) | done |
 | S5 | The rows of a mark of its own `data` are kept between draws. They were new objects at every draw, so the keyed update re-created all their elements and they never animated. | fewer DOM changes at every redraw, transitions for these marks | done |
 | S6 | The tick inset of the styles is read once per draw, not per axis (`getComputedStyle` between writes). | one style recalculation less per axis | done |
-| S7 | The first measure of the charts of a page in one pass: all charts which become ready together measure first and draw afterwards (one shared scheduler, a macrotask). Today every chart reads its width after the chart before wrote its SVG, one forced layout each. | up to −13 % if a page mounts many charts at once | open |
-| S8 | The `window` transform: a sorted sliding window for median and quantiles (2.1 s for 100 000 rows at size 365), a monotonic deque for min and max (O(n·size) today), `rank` with the numbers read once. | seconds → milliseconds for long windows | open |
-| S9 | `fitText` measures with the canvas (`textWidth` of `utils/measure.js`) instead of a binary search of `textContent` writes and `getComputedTextLength` reads per cut label. | fewer forced layouts in charts with cut labels | open |
-| S10 | The legend reads the font once per legend, not `getComputedStyle` per entry at every draw (also every frame of a slider). | one style recalculation less per entry | open |
-| S11 | The highlight of marks without `by` indexes its elements by row once per draw instead of `querySelectorAll('*')` per change of the hover. | cheaper hover on scatter plots and bars of many rows | open |
-| S12 | Data in columns, see A2. | most of the 40 % of the load | later |
+| S8 | The `window` transform: a sorted sliding window for median and quantiles (2.1 s for 100 000 rows at size 365), a monotonic deque for min and max (O(n·size) today), `rank` with the numbers read once. | seconds → milliseconds for long windows | done (a sliding window, the outside review) |
+| S9 | `fitText` measures with the canvas (`textWidth` of `utils/measure.js`) instead of a binary search of `textContent` writes and `getComputedTextLength` reads per cut label. | fewer forced layouts in charts with cut labels | done (the canvas gets near, the element checks; the outside review) |
+| S10 | The legend reads the font once per legend, not `getComputedStyle` per entry at every draw (also every frame of a slider). | one style recalculation less per entry | done (the outside review) |
+| S11 | The highlight of marks without `by` indexes its elements by row once per draw instead of `querySelectorAll('*')` per change of the hover. | cheaper hover on scatter plots and bars of many rows | done (the outside review) |
 
 S1 to S6 measured together, 5.0.0-alpha.2 against the branch with them (and
 with the fixes of the review, which cost a little: the checks of the marks
@@ -105,19 +105,18 @@ The fixes and features of the review added 5.3 kB gzip to the first load
 CSV of semicolons and the shared rows (`data.js`, `load.js`), the cleaned
 HTML (`html.js`), the marks without a position and the tweens of arcs
 (`marks/elements.js`, `draw.js`), the table button (0.7 kB, its table is a
-lazy chunk). Z1 to Z4 below give more than that back.
+lazy chunk).
 
 | # | Change | Saves (gzip, estimated by share) | Status |
 |---|---|---|---|
 | Z1 | Parts of d3 which only lazy chunks use are in `base`: `arc`, `areaRadial`, `lineRadial` and the radial curve of `d3-shape` (only polar charts), `quickselect` and `quantile` of `d3-array` (only transforms). They are reached through the barrel file of their package, which `base` imports. Removing the manual chunk group (`atOnce` of `vite.config.js`) does not move them; it needs deep imports of these files (an alias around the `exports` of the packages) or a plugin which assigns them to the chunk of their only user. | 2.5–3 kB | done (the outside review, see the CHANGELOG) |
 | Z2 | The scales by name instead of `import * as d3Scale` (`utils/d3.js`): without radial, identity and the sequential and diverging variants of log, pow, sqrt, symlog and quantile, unless a definition names one (then loaded as the colors are). | about 1 kB | done (the outside review, see the CHANGELOG) |
-| Z3 | The hover as a lazy chunk (`comp/facet-hover.js`, `comp/hover.js`, `coords/hover.js`), loaded when the browser is idle after the first draw or with the first pointer or key event. | 5–6 kB | open |
 | Z4 | The curves which few charts use (basis, catmullRom, cardinal, natural, their closed forms) loaded as the colors of d3 are, by `requirements` of `utils/load.js`. | about 2 kB | done (the outside review, see the CHANGELOG) |
 | Z5 | The PNG has only the faces of Inter its texts use, not all six (188 kB of base64 in every rasterised image). | size and time of every PNG, not the bundle | done |
 | Z6 | One vocabulary in the engine, see A1; the language of 4.x and its migration are removed (its lazy chunk of 6.4 kB is gone). | 0.5 kB of the first load (104.6 → 104.1 kB): the renames were a small part of the translation, the expansion of the marks stays | done |
 | Z7 | A lazy chunk of the times (`scaleTime`, `d3-time`, `d3-time-format`, the periods) for charts without dates. | about 7 kB for charts without dates, one more request for all others | not worth it: most charts are time series |
 
-Z1 to Z4 are 10–12 kB without a change of a feature. The size of 4.1 is not
+Z1, Z2 and Z4 are done; the lazy hover (5–6 kB) is in [todo/speed-size.md](todo/speed-size.md). The size of 4.1 is not
 in reach without dropping features: 5.0 has more of them.
 
 ## Architecture
@@ -148,72 +147,23 @@ set of shorthand expansions, the paths of the checks are the ones of the
 definition (but for the `props` of a mark), and nothing changes for a
 definition.
 
-### A2: data in columns (later)
+### Smaller points (done)
 
-Today CSV becomes an object of strings per row (d3), then a second object per
-row with the values of the dims (`PreparedRow`), and a value is converted up
-to three times: by the inference of the type, by the transforms, by
-`prepareData`. The 14 MB CSV of the immo charts keeps its whole text alive
-through the slices of its strings.
-
-A table of columns instead: the reader writes a column per header, the type
-of a column is inferred once and numbers and dates are converted once into
-typed arrays (`Float64Array`), categories into indices of a dictionary.
-Parquet already arrives in columns and is turned into rows today. The
-transforms compute columns already (`columns` of `utils/transform.js`), and
-most readers go through accessors (`columnValues`, `rowName`), so the change
-is contained to `utils/data.js`, `utils/load.js`, the transforms and
-`PreparedRow` (a view of a row of the table, or an index).
-
-It removes most of the 40 % of the load and most of the memory of large
-files. It also makes S1 cheaper: a shared table is immutable by its form.
-Before it: a benchmark of the three large examples as a test, so the gain is
-measured and kept.
-
-### A3: one scheduler of the draws (open, see S7)
-
-Every chart measures and draws by itself: at the mount, at a resize and at
-`destroy` each one forces a layout after the one before wrote. S3 and S4
-remove two of the three; one scheduler of the module (measure all, then draw
-all) removes the third and is the place for S10.
-
-### A4: definitions compiled ahead (an option, later)
-
-A page of fixed definitions needs neither the language nor the resolution of
-parents, the migration or the checks at run time. `gen-vis compile` could
-write the prepared definition and a second entry of the package could read
-only those. It is a second code path to keep; with A1 the gain is small.
-Only if the size of the first load matters more than it does today.
-
-### Smaller points
-
-- `store.scope` and `store.names` build their object at every read
-  (`templateNames`), also per pointer move. A cache per state of the
-  definition.
-- The keys of the remembered heights are the JSON of an inline definition
-  (`sourceKey` of `comp/app.js`), up to 500 of them. A hash is enough.
-- `layout` builds all facets twice with automatic margins and runs the marks
-  of texts once more per layout (`textBoxes`); the ticks of an axis with a
-  grid are computed twice (`coords/cartesian.js`).
-- `raise` moves the axes to the end of the facet and the next draw moves
-  them back: two moves per draw.
-- Dead code found by the review: `finish` of `utils/draw.js`, the outer ticks
-  of `utils/axis.js` (`tickSizeOuter` is always 0), `propDim` beside
-  `propScale` in `marks/elements.js`, `tickInset` twice (`utils/axis.js`,
-  `utils/margins.js`), `dateComparisons` beside `comparisons` in
-  `utils/data.js`, exports only of tests (`isBinary`, `inferType`,
-  `randomOf`, `getAttr`, `cubicInOut`, `csvCell`, `parts`).
+- `store.scope` and `store.names` are built once per state of the globals,
+  not at every read.
+- The keys of the remembered heights of inline definitions are a hash.
+- The ticks of an axis with a grid are computed once.
+- A definition is resolved, translated and normalized once per load
+  (`utils/compile.js`), it was four times.
+- Dead code is removed: `finish` of `utils/draw.js`, the outer ticks of
+  `utils/axis.js`, `propScale` beside `propDim`, `dateComparisons`, exports
+  nothing imports; `tickInset` is one.
 
 ## Content security policy
 
 The CSV reader of d3 (`csvParse`) builds a function from text and so needs
-`unsafe-eval`; 5.0 reads CSV and TSV without it (**done**). What is left for
-a page with a strict policy (**open**):
-
-- the stylesheet of the package and the one of the highlights of a chart are
-  `<style>` elements made by script: `style-src` needs `'unsafe-inline'` or
-  a nonce, which the package cannot be given yet (a prop `nonce`, or the
-  styles as a file to link: `./inter.css` is one already);
-- styles written as text of the attribute `style` (`patch` of
-  `comp/html.js` with a string) are blocked without `'unsafe-inline'`;
-  styles set as properties are not.
+`unsafe-eval`; 5.0 reads CSV and TSV without it. The prop `nonce`
+(`data-nonce`) is the nonce of the `<style>` elements of the package (its
+stylesheet and the one of the highlights of a chart), see
+[usage.md](usage.md). What still violates a strict policy is in
+[todo/bugs.md](todo/bugs.md).

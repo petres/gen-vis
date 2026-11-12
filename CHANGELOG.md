@@ -994,6 +994,26 @@ Changed behaviour a definition or a page can meet:
 - **Nothing of another origin is loaded by a definition**: no `url()` of one
   in the styles of marks, legends and symbols, no `href` of an `image` or a
   `use` to one; the exported SVG has no images and no `use` of other files.
+- **`totalWidth` is the width of the visualisation everywhere**, as
+  documented, also of charts whose plots are beside legends: the height,
+  the margins, `message`, the texts and the marks had the smaller width of
+  the plots, the position of the legends the full one, so the steps of a
+  definition switched at two widths (e.g. the example electricity is 500 px
+  high at 720 px with its legend at the right, it was 380).
+- **The labels of bars of negative values** (`anchor` `end`, `start`, `top`,
+  `bottom`) are beyond the end of the bar, not inside it.
+- **The stacks of a mark are of the rows its `filter` keeps** (the others
+  widened the domain).
+- **Dates with times of the day show the time by default** (`%x %H:%M`) in
+  `@x:formatted`, the hover and labels.
+- **Whole numbers of four digits read as dates are years** (the JSON number
+  `2019` of a dim of an `interval` or of the `year` transform; they were
+  milliseconds of 1970).
+- **A value of a line between missing values is drawn**, as a dot (the path
+  has round caps unless the mark gives its own).
+- **A vertical axis without `ticks`, `tickSpacing` or `values` has fewer
+  ticks** when they would be less than 18 px apart, e.g. of small facets.
+- **`{name}` of a global in the `text` of a mark is filled**, as in titles.
 - **Exports are refused while the chart shows an error**, with a message
   (also the CSV, which saved a file).
 
@@ -1018,6 +1038,14 @@ Features:
   the expression (`filter: expression "@a == @p": unknown reference 'p'`),
   `gen-vis export` the paths of the files instead of
   `http://gen-vis.local/fs/` urls.
+- The prop `nonce` (`data-nonce`) for a content security policy of styles:
+  the `<style>` elements of the package have it (the stylesheet also takes
+  the nonce of a script of the page), see `docs/usage.md`.
+- More of the check: separators of thousands in a CSV of semicolons
+  (`1.200` is read as 1.2), a scheme or an interpolator in another case
+  (`use 'Tableau10'`), a key of a dim at the top level
+  (`dims.<name>.legend`), a dim of dates with a band scale (leave out
+  `"type": "date"`: a band per date is one of categories).
 - The quick start of the README has `data-check`.
 
 Fixes:
@@ -1031,6 +1059,8 @@ Fixes:
 - A dim of an `interval` over a column of years (`2019`, ...) is a dim of dates.
 - `fill` and `stroke` of a categorical dim with a scale of colors of its own
   (`range`, `scheme`) are its scaled value.
+- The limits of the classes of a color legend are told apart, the ones of a
+  threshold scale are shown as given (`0,25`, not `0,3`).
 - The box of the hover stays within the chart and the window: on the other
   side where it does not fit, else moved inside; it widened narrow pages.
 - The hover of a chart whose positions have no values threw an error.
@@ -1043,8 +1073,9 @@ Fixes:
   definition written in a template of Vue.
 
 Speed and size (measured in Chromium, 72 examples and 5 large cases; the
-first load is 104.2 kB gzip after all of the above, 105.1 kB before the
-review, in two requests instead of three):
+first load is 105.7 kB gzip after all of the above, 105.1 kB before the
+review, in two requests instead of three: the changes of the build and the
+lazy scales took 3.6 kB off, the fixes and features put 4.2 kB on):
 
 - The parts loaded later wait for no file but the base: the helper of the
   bundler is written into the chunks using it, the parts of maps are one
@@ -1057,6 +1088,24 @@ review, in two requests instead of three):
 - Plots beside legends are drawn once on mount, not in the full width first.
 - The scales and curves few definitions name (15 of 26 scales, 5 of 11
   curves) are loaded for the definitions which name one.
+
+- The `window` transform slides: the least and the largest value of a
+  monotonic queue, medians and quantiles of the sorted values of the window
+  (a median over 365 rows of 100 000: 33 ms, it was 3.3 s); `rank` reads
+  each number once (56 ms, it was 330 ms). The results are the same.
+- A definition is resolved, translated and normalized once per load
+  (`utils/compile.js`), it was four times.
+- Cut labels (`max-width`) are found with the canvas and checked in the
+  element: half of the layout reads, the same cuts. The legend reads the
+  font of its names once per draw. The highlight of marks without `by`
+  indexes their elements by row once per draw (a pointer move over 5000
+  points: 1.3 ms, it was 2.4). `store.names` and `store.scope` are built
+  once per state of the globals. The grid lines take the ticks of their
+  axis.
+- Internal: one builder of the scope, one list of the aliases of the mark
+  types, one `tickInset`, one escaper of html; dead code removed.
+
+What is left of the reviews is in [docs/todo/](docs/todo/README.md).
 
 ### Features of house styles
 
