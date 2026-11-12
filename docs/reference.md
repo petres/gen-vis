@@ -58,7 +58,7 @@ See [definition.md](definition.md#dims).
 | `legend` | [legend](#legend) \| switch |  |  |
 | `hover` | [dimHover](#dimHover) \| switch |  |  |
 | `domain` | list of domainValue \| expression |  | The domain of the scale, see scale.domain, e.g. [0, null]. |
-| `zero` | boolean |  | The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`. |
+| `zero` | boolean |  | The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 and the radius of points (r) include it by default, false keeps the domain of the data; also `scale.zero`. |
 | `nice` | boolean \| number |  | Rounds the ends of the domain of the scale, see scale.nice. |
 | `pad` | number \| list of number \| expression |  | Extends the ends of the domain taken from the data relative to its size, see scale.pad, e.g. 0.1. |
 | `include` | domainValue \| list of domainValue \| expression |  | Values the domain includes, see scale.include, e.g. 0. |
@@ -88,7 +88,7 @@ See [definition.md](definition.md#scales).
 | `domain` | list of domainValue \| expression |  | Fixes the domain, a null first or last entry is taken from the data, the values are converted as the ones of the data, e.g. dates, and can be references, e.g. to a global. A diverging scale has a middle entry, a threshold scale the values between its classes, a point or band scale its categories in their order; also `domain` of the dim. |
 | `include` | domainValue \| list of domainValue \| expression |  | Values the domain taken from the data includes, e.g. 0 or 100, a value or a list, also references; also `include` of the dim. |
 | `center` | domainValue |  | The domain taken from the data is symmetric around this value, e.g. 0 of changes; the middle of a diverging scale. |
-| `zero` | boolean |  | The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim. |
+| `zero` | boolean |  | The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), as the radius of points (r), not of a log scale; also `zero` of the dim. |
 | `closed` | expression \| `"left"`, `"right"` | `"left"` | The end of the classes of a threshold scale they include, the lower one (left, value >= limit) or the upper one (right, value > limit). |
 | `domainAbs` | pair |  | Extends the domain by absolute values, [start, end], the values are added. |
 | `pad` | number \| list of number \| expression |  | Extends the ends of the domain taken from the data (not fixed ones, e.g. 0 of bars) relative to its size, both (a number) or at the start and the end ([start, end]), positive values extend, e.g. 0.1 of 10% below and above; also `pad` of the dim. |

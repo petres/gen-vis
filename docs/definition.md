@@ -780,7 +780,7 @@ The shorthands of a dim are parts of its scale and its axis:
 
 | Shorthand | Is |
 |-----------|----|
-| `zero: true` | `scale.zero`: the domain of the data includes 0, an end at 0 is not extended, e.g. a line chart from 0; the value dims of bars and areas from 0 (also stacked) have it by default, `false` keeps the domain of the data |
+| `zero: true` | `scale.zero`: the domain of the data includes 0, an end at 0 is not extended, e.g. a line chart from 0; the value dims of bars and areas from 0 (also stacked) and the dims of the radius `r` of points (so their areas are the ones of the values) have it by default, `false` keeps the domain of the data |
 | `domain` | `scale.domain` |
 | `nice` | `scale.nice` |
 | `pad` | `scale.pad` |
@@ -1436,7 +1436,9 @@ attributes are merged into the defaults, e.g. `d` of a path.
   `scale`, e.g. `"scale": {"type": "ordinal", "range": ["red", "blue"]}`).
 - `r`, `opacity`, `stroke-width` and `font-size` naming a dim which is not
   categorical are its scaled value, e.g. `"r": "size"` of a dim `size` with
-  `"scale": {"type": "sqrt", "range": [0, 20]}`.
+  `"scale": {"type": "sqrt", "range": [0, 20]}`; the domain of a dim of `r`
+  starts at 0 (`zero`, as the one of bars), so the areas of the circles are
+  the ones of the values, `"zero": false` keeps the domain of the data.
 - Values with `var(` are css variables, e.g. `"stroke":
   "var(--gen-vis-grid-color)"`, set as a style, see [styles](usage.md#styles).
 - `marker-end` and `marker-start` of `"arrow"` are arrowheads at the end or

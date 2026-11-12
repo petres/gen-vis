@@ -541,6 +541,21 @@ describe('the default fill of bars, areas and arcs without categories', () => {
     });
 });
 
+describe('the radius of points of a dim (docs/definition.md, attributes)', () => {
+    test('is from 0 by default, the areas are the ones of the values; "zero": false keeps the domain of the data', async () => {
+        const radii = async size => {
+            const el = await mount({ def: { width: 600, dims: { x: 'x', y: 'v', size }, marks: [{ type: 'point', r: 'size' }] }, data: 'x,v,s\n1,1,10\n2,2,50\n3,3,100' });
+            return [...el.querySelectorAll('g.vis-mark circle')].map(c => +c.getAttribute('r'));
+        };
+        const r = await radii({ column: 's', scale: { type: 'sqrt', range: [0, 20] } });
+        expect(r[0]).toBeCloseTo(20*Math.sqrt(0.1));
+        expect(r[1]).toBeCloseTo(20*Math.sqrt(0.5));
+        expect(r[2]).toBeCloseTo(20);
+        expect((await radii({ column: 's', zero: false, scale: { type: 'sqrt', range: [0, 20] } }))[0]).toBe(0);
+        expect(errors).toEqual([]);
+    });
+});
+
 describe('a fill of a dim of an ordinal scale of colors', () => {
     test('is the color of its range, no warning', async () => {
         const el = await mount({ def: { width: 600, dims: { x: { column: 'k', type: 'categorical' }, y: 'v', c: { column: 't', scale: { type: 'ordinal', range: ['red', 'blue'] } } }, marks: [{ type: 'bar', fill: 'c' }] }, data: 'k,v,t\na,1,p\nb,2,q' });

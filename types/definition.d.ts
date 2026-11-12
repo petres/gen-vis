@@ -780,7 +780,7 @@ export interface Dim {
      */
     domain?: [DomainValue, ...DomainValue[]] | `=${string}` | `@${string}` | Expression;
     /**
-     * The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 include it by default, false keeps the domain of the data; also `scale.zero`.
+     * The domain includes 0 and an end at 0 is not extended, e.g. of bars, negative values below it; bars and areas from 0 and the radius of points (r) include it by default, false keeps the domain of the data; also `scale.zero`.
      */
     zero?: boolean;
     /**
@@ -905,7 +905,7 @@ export interface Scale {
      */
     center?: number | string | null | Expression;
     /**
-     * The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), not of a log scale; also `zero` of the dim.
+     * The domain taken from the data includes 0 and an end at 0 is not extended (by pad), e.g. of the base of bars, which include it by default (false: not), as the radius of points (r), not of a log scale; also `zero` of the dim.
      */
     zero?: boolean;
     /**

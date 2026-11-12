@@ -294,8 +294,9 @@ const anchors = {
  * A mark as the engine reads it: its channels as the `props` of the scaled
  * positions, `dims` are the dims of the definition (implicit dims of columns are added),
  * `stacks` collects the stacked value dims (`{ dim, by, condition }`),
- * `bases` the value dims of bars and areas from their base (0 of the scale,
- * see translate), `coord` is the coordinate system.
+ * `bases` the value dims of bars and areas from their base and the dims of
+ * the radius of circles (0 of the scale, see translate), `coord` is the
+ * coordinate system.
  */
 const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], bases = new Set()) => {
     const { p, props } = markParts(raw, i);
@@ -411,8 +412,12 @@ const mark = (raw, i, dims, coord, stacks, used = new Set(), implicitDims = [], 
     });
     ['r', 'opacity', 'stroke-width', 'font-size'].forEach(k => {
         const v = props[k];
-        if (typeof v == 'string' && Object.hasOwn(dims, v) && isObject(dims[v]) && !isCategorical(dims[v]))
+        if (typeof v == 'string' && Object.hasOwn(dims, v) && isObject(dims[v]) && !isCategorical(dims[v])) {
             props[k] = ref(v);
+            // the area of a circle of the value: a radius from 0 (`zero`)
+            if (k == 'r')
+                bases.add(v);
+        }
     });
     const prefix = type.split(':')[0];
     if (prefix == 'svg' && kind != 'circle' && kind != 'text' && raw.type != 'cell') {
@@ -849,7 +854,10 @@ const translated = raw => {
     });
     // the value dims of bars and areas from 0 (their default base, also of
     // stacks) include 0, so the bars start at the axis, not below the plot
-    // (`zero` of the scale, an end at 0 is not extended), not of a log scale
+    // (`zero` of the scale, an end at 0 is not extended), the dims of the
+    // radius of circles (`r`), so their areas are the ones of the values
+    // (the least one is not a circle of the start of the range, e.g. 0
+    // of a sqrt scale of the range [0, 20]), not of a log scale
     // (the bars start at the start of its domain), not with `"zero": false`
     // of the dim; the ends of a fixed domain stay
     bases.forEach(n => {
