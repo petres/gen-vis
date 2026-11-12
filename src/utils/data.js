@@ -281,9 +281,15 @@ const zonedTime = ([, y, m, d, h, mi, s, fraction, z, sign, oh, om = '00']) => {
     return wallTime(true, y, m, d, h, mi, s, fraction) - (sign == '-' ? -1 : 1)*(oh*60 + +om)*60000;
 };
 
-// dates are strings, timestamps or Date objects. A date without a time zone,
-// e.g. "2024-06-01" or "2024-06-01 13:00", is the one of the time zone of the
-// scale, local or UTC (`utc`), so it is the same day everywhere (Date.parse
+// a whole number of four digits as a date is a year, e.g. 2019 of JSON (as
+// the text "2019"), not a timestamp: 1000 to 9999 milliseconds after 1970
+// are the times of no data
+const yearNumber = v => Number.isInteger(v) && v >= 1000 && v <= 9999;
+
+// dates are strings, timestamps, years (see yearNumber) or Date objects. A
+// date without a time zone, e.g. "2024-06-01" or "2024-06-01 13:00", is the
+// one of the time zone of the scale, local or UTC (`utc`), so it is the same
+// day everywhere (Date.parse
 // reads a date without a time as midnight UTC, the day before west of UTC
 // in local time). A date with a time zone is the one of ISO, e.g.
 // "2024-06-01T13:00:00Z", other strings are no dates, e.g. "Phase 1", which
@@ -295,7 +301,7 @@ const toDate = (v, utc = false) => {
     if (v instanceof Date)
         t = v.getTime();
     else if (typeof v == 'number' || typeof v == 'bigint')
-        t = Number(v);
+        t = yearNumber(Number(v)) ? wallTime(utc, Number(v)) : Number(v);
     else
         t = textTime(String(v).trim(), utc);
     return isNaN(t) ? null : t;
@@ -998,8 +1004,9 @@ const absent = v => missing(v) || missingToken(v);
 const inferType = (values, n = values.length, hint = undefined) => {
     const at = typeof values == 'function' ? values : i => values[i];
     // the values of a dim of periods (an `interval`, hint 'date') which are
-    // all texts of dates are dates, also years, e.g. "2019", not numbers;
-    // numbers are timestamps then, they stay numbers
+    // all texts of dates are dates, also years, e.g. "2019" or the number
+    // 2019 of JSON (see yearNumber); other numbers are timestamps then, they
+    // stay numbers
     if (hint == 'date') {
         let dated = false;
         const checked = new Set();
@@ -1008,7 +1015,7 @@ const inferType = (values, n = values.length, hint = undefined) => {
             if (checked.has(v) || absent(v))
                 continue;
             checked.add(v);
-            if (typeof v != 'string' || toDate(v) === null)
+            if (!(typeof v == 'string' || yearNumber(v)) || toDate(v) === null)
                 return inferType(values, n, 'continuous');
             dated = true;
         }

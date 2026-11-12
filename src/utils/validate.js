@@ -577,23 +577,26 @@ const checkFormats = (n, m, path, warn) => {
 
 // a value of the definition of a date dim, e.g. of its domain, is converted
 // as the ones of the data (see toDate of utils/data.js): a text of a date
-// (a number is a time in milliseconds), another text is none, e.g.
-// "01/2023", which leaves the end of a domain to the data
+// (a number is a time in milliseconds, one of four digits a year), another
+// text is none, e.g. "01/2023", which leaves the end of a domain to the data
+// (a small number which is no year is probably none of milliseconds)
+const millis = v => typeof v == 'number' && Math.abs(v) < 1e5 && toDate(v) === v;
 const checkDate = (v, path, warn) => {
     if (typeof v == 'string' && !/^[=@{]/.test(v) && toDate(v) === null)
         warn(path, `'${v}' is no date, e.g. "2023", "2023-01", "2023-01-31" or "31.01.2023"`);
-    else if (typeof v == 'number' && Math.abs(v) < 1e5)
-        warn(path, `${v} is a time in milliseconds since 1970 as a date, a year is a text, e.g. "${v}"`);
+    else if (millis(v))
+        warn(path, `${v} is a time in milliseconds since 1970 as a date, a year has four digits, e.g. 2024`);
 };
 
 // the values of a date dim which are numbers are milliseconds since
-// 1970, small ones are probably years, e.g. 2024, only if the rows are given
+// 1970 (of four digits years), other small ones are probably no dates,
+// only if the rows are given
 const checkDates = ({ rows, warn }, n, m, path) => {
     if (m.type != 'date' || !Array.isArray(rows) || typeof m.column != 'string')
         return;
-    const year = rows.map(r => r?.[m.column]).find(v => typeof v == 'number' && Math.abs(v) < 1e5);
-    if (year !== undefined)
-        warn(`${path}.type`, `the values of '${m.column}' are numbers, e.g. ${year}, which are milliseconds since 1970 as dates, years are numeric or strings, e.g. "${year}"`);
+    const small = rows.map(r => r?.[m.column]).find(millis);
+    if (small !== undefined)
+        warn(`${path}.type`, `the values of '${m.column}' are numbers, e.g. ${small}, which are milliseconds since 1970 as dates, a year has four digits, e.g. 2024`);
 };
 
 // the conditions of the rows of dims, see rowFilter of utils/data.js:

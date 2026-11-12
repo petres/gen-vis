@@ -518,6 +518,13 @@ describe('prepareData', () => {
         expect(types(years, {})).toBe('numeric');
         expect(types([{ d: '2024-01-01' }, { d: '2024-04-01' }], { interval: 'quarter' })).toBe('date');
         expect(types([{ d: 1704067200000 }, { d: 1711929600000 }], { interval: 'quarter' })).toBe('numeric');
+        // years as numbers of JSON are years, not timestamps of 1970
+        expect(types([{ d: 2019 }, { d: 2020 }], { interval: 'year' })).toBe('date');
+        expect(types([{ d: 2019 }, { d: 20200 }], { interval: 'year' })).toBe('numeric');
+        expect(toDate(2019)).toBe(new Date(2019, 0, 1).getTime());
+        expect(toDate(2019, true)).toBe(Date.UTC(2019, 0, 1));
+        expect(toDate(2019n)).toBe(new Date(2019, 0, 1).getTime());
+        [999, 10000, 2019.5, 1704067200000].forEach(t => expect(toDate(t)).toBe(t));
         expect(types([], { interval: 'year' })).toBe('date');
         // a number format makes it numeric
         expect(types(years, { interval: 'year', format: ',.0f' })).toBe('numeric');

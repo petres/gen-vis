@@ -644,6 +644,11 @@ describe('bars and ticks of periods and of the scale of another dim (final revie
         expect(rects(el).length).toBe(3);
         expect([...el.querySelectorAll('[data-dim="x"] .tick text')].map(t => t.textContent)).toEqual(['2019', '2020', '2021', '2022']);
         expect(errors).toEqual([]);
+        // of the numbers of JSON too (they were timestamps of 1970)
+        const json = await mount({ def: { width: 500, height: 250, dims: { x: { column: 'd', interval: 'year' }, y: 'v' }, marks: { type: 'bar' } }, data: [{ d: 2019, v: 1 }, { d: 2020, v: 2 }, { d: 2021, v: 3 }] });
+        expect(rects(json).length).toBe(3);
+        expect([...json.querySelectorAll('[data-dim="x"] .tick text')].map(t => t.textContent)).toEqual(['2019', '2020', '2021', '2022']);
+        expect(errors).toEqual([]);
     });
 
     test('a tick of a column beside horizontal bars runs across their bands, a tick of no length warns', async () => {

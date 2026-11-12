@@ -757,13 +757,14 @@ describe('validateDef and the schema', () => {
         expect(validateDef(def)).toEqual([]);
     });
 
-    test('years of a date dim are milliseconds, if the rows are given', () => {
+    test('small numbers of a date dim are milliseconds, of four digits years, if the rows are given', () => {
         const def = base();
         def.dims.x = { column: 'year', type: 'date' };
         expect(validateDef(def)).toEqual([]);
         expect(validateDef(def, [{ year: '2020', value: 1, land: 'Wien' }, { year: Date.UTC(2021, 0, 1), value: 2, land: 'Wien' }])).toEqual([]);
-        expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([
-            `dims.x.type: the values of 'year' are numbers, e.g. 2020, which are milliseconds since 1970 as dates, years are numeric or strings, e.g. "2020"`,
+        expect(validateDef(def, [{ year: 2020, value: 1, land: 'Wien' }])).toEqual([]);
+        expect(validateDef(def, [{ year: 20, value: 1, land: 'Wien' }])).toEqual([
+            `dims.x.type: the values of 'year' are numbers, e.g. 20, which are milliseconds since 1970 as dates, a year has four digits, e.g. 2024`,
         ]);
     });
 
@@ -1089,11 +1090,13 @@ describe('mistakes which give a wrong or an empty chart without a message', () =
     });
 
     test('a value of a date dim which is no date', () => {
-        expect(validateDef(def({ dims: { x: { column: 'month', domain: ['01/2023', null], include: 2024, axis: { values: ['2024-02', 'Feb'] } }, y: 'revenue', region: 'region' } }), rows)).toEqual([
+        expect(validateDef(def({ dims: { x: { column: 'month', domain: ['01/2023', null], include: 202, axis: { values: ['2024-02', 'Feb'] } }, y: 'revenue', region: 'region' } }), rows)).toEqual([
             `dims.x.domain[0]: '01/2023' is no date, e.g. "2023", "2023-01", "2023-01-31" or "31.01.2023"`,
-            'dims.x.include: 2024 is a time in milliseconds since 1970 as a date, a year is a text, e.g. "2024"',
+            'dims.x.include: 202 is a time in milliseconds since 1970 as a date, a year has four digits, e.g. 2024',
             `dims.x.axis.values[1]: 'Feb' is no date, e.g. "2023", "2023-01", "2023-01-31" or "31.01.2023"`,
         ]);
+        // a number of four digits is a year
+        expect(validateDef(def({ dims: { x: { column: 'month', include: 2024 }, y: 'revenue', region: 'region' } }), rows)).toEqual([]);
     });
 
     test('the columns a transform reads: of the data or of a transform before it', () => {

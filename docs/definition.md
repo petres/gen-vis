@@ -285,7 +285,8 @@ column:
 }
 ```
 
-- `year`: the year of a date, e.g. `2024` of `2024-06-01`.
+- `year`: the year of a date, e.g. `2024` of `2024-06-01` (and of a year,
+  e.g. the number `2024`).
 - `align`: the same day of a date in the year `year` (2020 by default, a
   leap year), e.g. to compare the years of daily data on one axis, with
   `year` as the categories.
@@ -849,7 +850,10 @@ are not shown in the hover, only of the marks which use the value of the row
 has the values it uses is named in a warning of the console (also of the
 CLI), e.g. `marks[1] ('caps'): none of its 312 rows is drawn, 312 without a
 value of dim 'y'`, of a column which is not in the data also `(column 'yaer'
-is not in the data)`. Dates are timestamps or strings. A date without a time
+is not in the data)`. Dates are timestamps or strings; a whole number of
+four digits (1000 to 9999) is a year, e.g. `2019` of JSON as the text
+`"2019"`, not a timestamp (of milliseconds after 1970, which no data has),
+of a date dim, a dim of an `interval` and the transform `year` alike. A date without a time
 zone, e.g. `2024-06-01`, `2024-06`, `2024`, `2024-06-01 13:00` (also with a
 `T`, seconds and their fraction, `24:00` is the end of the day) or
 `01.06.2024` (the day first, also with a time), is the one of the time zone
@@ -875,7 +879,9 @@ them, e.g. `"6 months"`
 are written, in the order of the rows or of `order`, e.g. `"ascending"` of
 ISO dates). A
 dim with an `interval` and without a `type` is a date dim if its values
-are texts of dates, also of years, e.g. `2019` of a CSV. The
+are texts of dates, also of years, e.g. `2019` of a CSV, or years as
+numbers, e.g. `2019` of JSON (other numbers are timestamps, the dim is
+numeric). The
 domain of the data reaches the end of the last period (without the 2% of
 other positions), so bars at the ends fit; `@x:scaled` (also
 `@x:scaled:center`) is the middle of the period of a row, so bars, points

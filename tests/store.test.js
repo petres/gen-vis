@@ -298,13 +298,13 @@ describe('Store.init', () => {
         expect(warn).not.toHaveBeenCalled();
     });
 
-    // the check has the rows, e.g. of years as numbers of a date dim,
+    // the check has the rows, e.g. of small numbers of a date dim,
     // and warns also if the data could not be loaded
     test('warnings of the rows and of a failed load', async () => {
         const warn = vi.spyOn(console, 'warn').mockImplementation(() => {});
         const dated = { dims: { x: { column: 'year', type: 'date' }, y: 'value' }, marks: { type: 'line' } };
-        await createStore().init({ def: dated, data: [{ year: 2020, value: 1 }], check: true });
-        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/dims\.x\.type: the values of 'year' are numbers, e\.g\. 2020/));
+        await createStore().init({ def: dated, data: [{ year: 20, value: 1 }], check: true });
+        expect(warn).toHaveBeenCalledWith(expect.stringMatching(/dims\.x\.type: the values of 'year' are numbers, e\.g\. 20,/));
         warn.mockClear();
         const wrong = { ...def, data: 'http://h/missing.csv', marks: [{ type: 'path' }] };
         await expect(createStore().init({ def: wrong, check: true })).rejects.toThrow(/Could not load/);

@@ -26,6 +26,8 @@ describe('transforms', () => {
         expect(column({ type: 'align', column: 'date', as: 'day' }, 'day')).toEqual(['2020-01-01', '2020-07-01', '2020-01-01', '2020-01-01', '2020-01-01', '2020-07-01']);
         expect(applyTransforms([{ d: '2023-02-28T13:05:00' }, { d: '2024-02-29' }], [{ type: 'align', column: 'd', year: 2024 }]).get('d'))
             .toEqual(['2024-02-28T13:05:00', '2024-02-29']);
+        // a whole number of four digits is a year (of JSON), not a timestamp of 1970
+        expect(applyTransforms([{ d: 2024 }, { d: '2023' }, { d: 1704067200000 }], [{ type: 'year', column: 'd', as: 'year' }]).get('year')).toEqual([2024, 2023, 2024]);
     });
 
     test('the year and the day of dates of a utc scale are the ones of UTC', () => {
