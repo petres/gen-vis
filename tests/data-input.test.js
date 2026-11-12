@@ -88,6 +88,18 @@ describe('lines and areas along x, not in the order of the rows', () => {
         expect(errors).toEqual([]);
     });
 
+    test('select first and last of a point along x, as of a text (its center cx)', async () => {
+        const at = {};
+        for (const select of ['first', 'last']) {
+            const el = await mount({ def: def([{ type: 'point', select, r: 6 }, { type: 'text', select, text: 'end' }]), data: 'a,b\n3,1\n1,5\n2,4' });
+            at[select] = parseFloat(el.querySelector('g[data-mark] circle').getAttribute('cx'));
+            expect(at[select]).toBeCloseTo(parseFloat(el.querySelector('g[data-mark] text').getAttribute('x')));
+        }
+        // the first one of x = 1, the last one of x = 3 (the first row)
+        expect(at.first).toBeLessThan(at.last);
+        expect(errors).toEqual([]);
+    });
+
     test('"order": "rows" keeps the order of the rows, e.g. a connected scatter plot', async () => {
         const el = await mount({ def: def([{ type: 'line', order: 'rows' }, { type: 'label', order: 'rows', select: 'last', text: 'last' }]), data: 'a,b\n3,2\n1,3\n2,4' });
         const x = xs(paths(el)[0]);

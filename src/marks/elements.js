@@ -49,7 +49,7 @@ const rankOf = ({ name, scale }) => {
 
 /**
  * The rows of a group in the order along the dim its path runs along: the
- * dim of `x` (of polar charts `angle`, the prefix `d.` of the paths of lines
+ * dim of `x` (`cx` of circles, of polar charts `angle`, the prefix `d.` of the paths of lines
  * and areas), of `y` if that one is categorical and `x` is not (a vertical
  * line through the categories); of a band or a point scale in the order of
  * its categories, of a continuous one ascending (the rows without a value at
@@ -63,8 +63,9 @@ const alongRows = (rows, mark, ctx, prefix = '') => {
     if (order == 'rows' || rows.length < 2)
         return rows;
     const polar = /^polar:/.test(mark?.type ?? '');
-    const first = propDim(mark, ctx, `${prefix}${polar ? 'angle' : 'x'}`);
-    const other = propDim(mark, ctx, `${prefix}${polar ? 'radius' : 'y'}`);
+    // (of a circle, e.g. a point, its center `cx` and `cy`)
+    const first = propDim(mark, ctx, `${prefix}${polar ? 'angle' : 'x'}`) ?? (polar ? undefined : propDim(mark, ctx, `${prefix}cx`));
+    const other = propDim(mark, ctx, `${prefix}${polar ? 'radius' : 'y'}`) ?? (polar ? undefined : propDim(mark, ctx, `${prefix}cy`));
     const dim = order == 'x' ? first : order == 'y' ? other
         : (!polar && other?.scale.step && !first?.scale.step ? other : first);
     const rank = dim && rankOf(dim);
