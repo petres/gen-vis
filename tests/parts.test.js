@@ -4,6 +4,7 @@
 // the highlight, legends, texts, transforms and messages
 import { describe, test, expect, vi, onTestFinished } from 'vitest';
 import { parquetWriteBuffer } from 'hyparquet-writer';
+import { fitText } from '@/utils/draw';
 import { errors, useDom, mount, mountVis, nextTick, rendered, highlighted, highlightCss } from './dom.js';
 
 useDom();
@@ -555,6 +556,31 @@ describe('texts', () => {
         expect(lines.map(t => t.getAttribute('dy'))).toEqual(['-1.8em', '1.2em', '1.2em', '1.2em']);
         expect(lines.every(t => t.getAttribute('x') == '5')).toBe(true);
         expect(errors).toEqual([]);
+    });
+
+    test('a cut text is the longest start which fits, near it by the canvas, checked in the element in a few reads', () => {
+        const svg = document.body.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'svg'));
+        onTestFinished(() => svg.remove());
+        // the widths of the layout differ from the estimate of the canvas
+        // (0.55 em per character without one), e.g. of a letter-spacing,
+        // wide capitals: each step of a binary search would be a read
+        const width = t => [...t].reduce((w, c) => w + (c == c.toUpperCase() && c != c.toLowerCase() ? 11 : c == ' ' ? 3 : 7.5) + 1.2, 0);
+        let reads = 0;
+        const node = svg.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'text'));
+        node.getComputedTextLength = () => (reads++, width(node.textContent));
+        for (const [text, max] of [['Grundstücks- und Wohnungswesen', 90], ['WWW MMM www mmm WWW', 60], ['a b c d e f g h i j k l', 40], ['Österreich', 5], ['kurz', 200]]) {
+            node.setAttribute('max-width', max);
+            reads = 0;
+            fitText(node, text);
+            // the longest start of the cut of a binary search
+            let n = text.length;
+            while (n > 0 && width(`${text.slice(0, n).trimEnd()}…`) > max)
+                n--;
+            const expected = width(text) <= max ? text : `${text.slice(0, n).trimEnd()}…`;
+            expect(node.childNodes[0].textContent).toBe(expected);
+            expect(node.querySelector('title')?.textContent).toBe(expected == text ? undefined : text);
+            expect(reads).toBeLessThanOrEqual(text == 'Österreich' ? 3 : 4);
+        }
     });
 });
 

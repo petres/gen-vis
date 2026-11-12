@@ -2,6 +2,7 @@ export { curves, setProps, setAttrs, groupAttrs, groupKey, rowOf, keyOf, element
 
 import * as d3 from "@/utils/d3";
 import { animate, create, finish as finishAnimation, interrupt, itemOf, join, scriptAttr, setAttr, targetOf } from "@/utils/dom";
+import { textWidth as canvasWidth } from '@/utils/measure';
 
 // (the other curves are loaded for the definitions which name one, see loadMore of utils/d3.js)
 // the interpolations of the paths and areas between their points, `monotoneX`
@@ -307,7 +308,8 @@ const fitText = (node, text) => {
     if (path)
         node.querySelectorAll(':scope > title').forEach(t => t.remove());
     inner.textContent = text;
-    if (textWidth(node) <= max)
+    const full = textWidth(node);
+    if (full <= max)
         return;
     if (!path && node.getAttribute('text-overflow') == 'wrap') {
         const words = text.split(/\s+/).filter(Boolean);
@@ -333,16 +335,42 @@ const fitText = (node, text) => {
         });
         return;
     }
-    // the longest start with an ellipsis which fits
+    // the longest start with an ellipsis which fits: near it by the widths
+    // of the canvas (see nearCut), then checked in the element a character
+    // at a time, usually two reads of the layout instead of one per step of
+    // a binary search
+    const cut = n => `${text.slice(0, n).trimEnd()}…`;
+    const fits = n => {
+        inner.textContent = cut(n);
+        return textWidth(node) <= max;
+    };
+    let n = nearCut(node, text, cut, max, full);
+    if (fits(n))
+        while (n < text.length && fits(n + 1))
+            n++;
+    else
+        while (n > 0 && !fits(--n));
+    inner.textContent = cut(n);
+    node.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title')).textContent = text;
+};
+
+// the length of the longest start of `text` which fits in `max` with an
+// ellipsis (`cut`), of the widths of the canvas in the font of the element,
+// scaled to its width of the whole text (`full`, e.g. of a letter-spacing or
+// of features of the font, which the canvas does not have): a guess, the
+// element has the last word, see fitText
+const nearCut = (node, text, cut, max, full) => {
+    const cs = typeof getComputedStyle == 'function' ? getComputedStyle(node) : null;
+    const font = cs?.fontSize ? `${cs.fontStyle} ${cs.fontWeight} ${cs.fontSize} ${cs.fontFamily}` : '12px sans-serif';
+    const whole = canvasWidth(text, font);
+    const scale = whole > 0 && full > 0 ? full/whole : 1;
     let [lo, hi] = [0, text.length];
     while (lo < hi) {
         const mid = Math.ceil((lo + hi)/2);
-        inner.textContent = `${text.slice(0, mid).trimEnd()}…`;
-        if (textWidth(node) <= max)
+        if (canvasWidth(cut(mid), font)*scale <= max)
             lo = mid;
         else
             hi = mid - 1;
     }
-    inner.textContent = `${text.slice(0, lo).trimEnd()}…`;
-    node.appendChild(document.createElementNS('http://www.w3.org/2000/svg', 'title')).textContent = text;
+    return lo;
 };
