@@ -930,6 +930,134 @@ Security, the events and the exports:
   format (e.g. `.jpg`) names its extension and the formats, `gen-vis`
   without a command is a usage error (exit 2).
 
+### Fixes and features of the outside review
+
+The review of 2026-11-12 by reviewers who had not seen the code (the
+definition language from the docs alone, the drawing, the live behaviour,
+speed and size, the architecture) and its fixes.
+
+Changed behaviour a definition or a page can meet:
+
+- **Comparison chains of mixed operators are chains** as in mathematics:
+  `20 <= @x < 50` is `20 <= @x and @x < 50` (it was always false, without a
+  message); `==` or `!=` mixed with another comparison is an error of the
+  parse which names the place.
+- **A dim with an axis of its own is a second axis on a scale of its own**:
+  the position of the axis says the orientation (`left`, `right` vertical,
+  `top`, `bottom` horizontal), an axis without a position of a dim named in
+  `y` (or `x`) is at the right (at the top); it was drawn with the scale of
+  the first axis under its own title. `"scale": {}` is a scale of the
+  defaults (the axis collapsed). The check warns of an axis whose position
+  follows from nothing and of a position of the other orientation.
+- **A rule, bar, point or text whose channels and attributes are the same
+  for all rows** (no `by`, `data`, `dodge`, `place`) is drawn once per
+  facet, as with `once` (it was drawn once per row, e.g. 16 lines at the
+  same place); with a `filter` once if it keeps a row; `"once": false` keeps
+  one per row.
+- **The plot area keeps at least half of the width and of the height**: the
+  measured margins of a direction take half at most (the wider side gives
+  way), a text which does not fit then is cut at the edge of the chart. A
+  labelled annotation above the data, or one long name of a category,
+  collapsed the plot to 0 px.
+- **An annotation at a value outside of the domain is not drawn** (it
+  collapsed the plot or was drawn in the margins); `include` of the dim
+  takes the value into the domain, e.g. of a target line, the check warns
+  of a constant one outside of the values of all rows and names that fix.
+  Texts of marks with `clip` and of rows outside of a fixed domain make no
+  margin.
+- **A dim of the radius `r` of points is from 0 by default** (`zero`), the
+  areas of the circles are in proportion to the values; `"zero": false` is
+  the scale of before.
+- **The ticks of an `interval`** are the starts of its periods counted from
+  the first date of the data: weeks from the Mondays of the data (not
+  Sundays), quarters also with a `pad` or an earlier start of the domain.
+- **`order: "ascending"` and `"descending"`**: numbers by their value also
+  with a text among them, the texts after them (`9 | 10 | Total`).
+- **Rotated labels of an axis** end (or start) at their tick, centered on
+  it; they sat a few pixels beside it.
+- **A reload keeps the state of the chart** (`update` with a new `def`,
+  `defFile`, `data` or `defaults`), as if the page had passed it back: the
+  choices which still apply are kept, the others are the defaults,
+  `update:state` reports a change, a `state` of the same update wins. The
+  choices of the user were reset without an event.
+- **The globals of an entry of a control are set when the entry becomes
+  selected**, not while it stays selected: the control of such a global
+  could not be changed afterwards.
+- **An error of a draw is shown below the title and the controls** of the
+  chart; another value of a control, a new state, new globals or another
+  width draw it again. The error replaced the chart for good.
+- **The store of the mark types of a page is read-only** and has only the
+  parts for mark types (`def`, `dim`, `prop`, `format`, `text`, `locale`,
+  `rows`, `scope`), the context can not be written either (types
+  `MarkContext`, `MarkStore`); the store of a coordinate system is the one
+  of the package, no stable interface, see `docs/extensions.md`.
+- **Nothing of another origin is loaded by a definition**: no `url()` of one
+  in the styles of marks, legends and symbols, no `href` of an `image` or a
+  `use` to one; the exported SVG has no images and no `use` of other files.
+- **Exports are refused while the chart shows an error**, with a message
+  (also the CSV, which saved a file).
+
+Features:
+
+- `"hover": false` (or `null`) of a definition: no hover.
+- `true` of the `axis`, the `legend` and the `hover` of a dim is `{}`, the
+  defaults; a text as `axis.title` is its name.
+- The `data` of a definition can be its rows, a list of objects.
+- An aggregate `count` without a column counts the rows of the group (it
+  gave 0); other operations without a column are an error.
+- The check warns of mistakes which drew a wrong or an empty chart without
+  a message: a listed category which is no value of its column (and the
+  values of no category), a line or an area without a position of the
+  values, keys of a mark which are no attribute of its element (with hints
+  for `size`, `shape`, `color` of a column, `width` of a line), d3 formats
+  which d3 reads as another one (`",.2q"`, unknown directives of times),
+  values of a dim of dates which are no dates, columns a transform reads
+  which neither the data nor an earlier transform has, bars on a continuous
+  position of the rows of an aggregate (the types of such rows were not
+  inferred). Its messages name the key of the definition and the text of
+  the expression (`filter: expression "@a == @p": unknown reference 'p'`),
+  `gen-vis export` the paths of the files instead of
+  `http://gen-vis.local/fs/` urls.
+- The quick start of the README has `data-check`.
+
+Fixes:
+
+- The labels of a color legend without a `format` have the precision and
+  the thousands separators of the values (`0,001`, `10.000`; they were
+  `0,0` and `10000,0`).
+- `select: "first"` and `"last"` of points are along x, as the ones of texts.
+- The ticks of stacked whole numbers are whole numbers.
+- The axes of `log` and `symlog` scales without a `format` are in the locale.
+- A dim of an `interval` over a column of years (`2019`, ...) is a dim of dates.
+- `fill` and `stroke` of a categorical dim with a scale of colors of its own
+  (`range`, `scheme`) are its scaled value.
+- The box of the hover stays within the chart and the window: on the other
+  side where it does not fit, else moved inside; it widened narrow pages.
+- The hover of a chart whose positions have no values threw an error.
+- A touch in another facet: the `hover` of `null` of the first facet comes
+  before the hover of the new one.
+- `imageWidth: 'screen'` of a hidden chart is the width of the definition
+  or the default.
+- A web font which is loaded after the first draw measures the chart again.
+- A new `def` object of the same content is not loaded again, e.g. a
+  definition written in a template of Vue.
+
+Speed and size (measured in Chromium, 72 examples and 5 large cases; the
+first load is 104.2 kB gzip after all of the above, 105.1 kB before the
+review, in two requests instead of three):
+
+- The parts loaded later wait for no file but the base: the helper of the
+  bundler is written into the chunks using it, the parts of maps are one
+  file, files of d3 only parts loaded later use are not in the base.
+- Marks of the same `filter` share its rows (the cache never hit for
+  `@globals.year`): a change of a control of a chart of six marks over
+  27 000 rows 57 → 37 ms, a resize 45 → 21 ms.
+- The rows of the hover are prepared with the first event of a facet, not
+  with every draw (a line of 50 000 rows: a resize 26 → 16 ms).
+- Plots beside legends are drawn once on mount, not in the full width first.
+- The scales and curves few definitions name (15 of 26 scales, 5 of 11
+  curves) are loaded for the definitions which name one.
+
 ### Features of house styles
 
 From the wishes of the WIFO styles, useful to any house style:
