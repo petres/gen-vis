@@ -189,14 +189,22 @@ const getLocale = (locale = 'de') => {
         tickFormat(scale, type, count = 10) {
             // whole numbers of whole numbers (see makeScale), thousands
             // separators if the domain reaches 10 000, as the valueFormat,
-            // so years are e.g. 2024
-            if (['linear', 'pow', 'sqrt'].includes(type)) {
+            // so years are e.g. 2024; of symlog scales too (their ticks
+            // are the ones of a linear scale)
+            if (['linear', 'pow', 'sqrt', 'symlog'].includes(type)) {
                 const [d0, d1] = scale.domain();
                 // (not of ticks between them, e.g. of a domain within two whole numbers)
                 const whole = scale.integers && scale.ticks(count).every(Number.isInteger);
                 const precision = whole ? 0 : d3.precisionFixed(d3.tickStep(d0, d1, count));
                 const grouping = Math.max(Math.abs(d0), Math.abs(d1)) >= 10000 ? ',' : '';
                 return number.format(`${grouping}.${Number.isFinite(precision) ? precision : 0}f`);
+            }
+            // of log scales the labels d3 thins (the ones of 1 to `count`
+            // times a power), the values as they are in the locale (not of
+            // SI prefixes, e.g. 10m of 0.01), thousands separators as above
+            if (type == 'log' && scale.tickFormat) {
+                const [d0, d1] = scale.domain();
+                return scale.tickFormat(count, number.format(Math.max(Math.abs(d0), Math.abs(d1)) >= 10000 ? ',' : ''));
             }
             if (type == 'time')
                 return timeTickFormat(time.format, timeTicks, timeIntervals.time);

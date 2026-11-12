@@ -513,7 +513,7 @@ The texts, the sizes and the look are keys of the top level:
 - `hover` and `highlight`: see [`hover`](#hover) and [`highlight`](#highlight).
 
 `locale` sets the number and date formats of the axes and the hover, also of
-axes without `format`: `de` (the default) or `en`, a language of the browser
+axes without `format` (also of `log` and `symlog` scales): `de` (the default) or `en`, a language of the browser
 (`Intl`), e.g. `fr`, `it` or `de-CH`, or an object with a `base` locale and the
 parts which are changed, see d3's
 [formatLocale](https://d3js.org/d3-format#formatLocale) and

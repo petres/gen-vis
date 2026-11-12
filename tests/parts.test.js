@@ -707,6 +707,19 @@ describe('the marks of a global', () => {
 });
 
 describe('the locale of a global', () => {
+    test('the axes of log and symlog scales without a format are in the locale', async () => {
+        const labels = async (type, data, locale) => {
+            const el = await mount({ def: { width: 600, height: 300, locale, dims: { x: { column: 'k', type: 'categorical' }, y: { column: 'v', scale: { type } } }, marks: [{ type: 'point' }] }, data });
+            return [...el.querySelectorAll('.vis-axis-left .tick text')].map(t => t.textContent).filter(Boolean);
+        };
+        // decimal commas and thousands separators, not SI prefixes (10m of 0.01), d3's thinning of the labels of a log scale
+        expect(await labels('log', 'k,v\na,30\nb,35')).toContain('30,5');
+        expect(await labels('log', 'k,v\na,0.002\nb,1500000')).toEqual(['0,01', '0,1', '1', '10', '100', '1.000', '10.000', '100.000', '1.000.000']);
+        expect(await labels('log', 'k,v\na,0.002\nb,1500000', 'en')).toContain('1,000,000');
+        expect(await labels('symlog', 'k,v\na,-2000.5\nb,0.5\nc,15000')).toEqual(expect.arrayContaining(['−2.000', '0', '20.000']));
+        expect(errors).toEqual([]);
+    });
+
     test('a control of the language changes the formats', async () => {
         const def = lineDef({ locale: '@lang' });
         def.dims.y.hover = { format: ',.1f' };
