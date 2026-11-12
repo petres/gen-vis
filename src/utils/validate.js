@@ -171,6 +171,13 @@ class RowNames extends MarkNames {
 // e.g. "Linear", which the registry accepts, see named of utils/registry.js
 const otherCase = (name, names) => typeof name == 'string' && !names.includes(name)
     ? names.find(n => n.toLowerCase() == name.toLowerCase()) : undefined;
+// an unknown name of colors of d3 of a name in another case, e.g. "rdylgn":
+// the hint of the name as written in the docs, `use 'RdYlGn'`, else of an
+// example
+const colorHint = (name, registry, example) => {
+    const other = otherCase(name, Object.keys(registry));
+    return other ? `use '${other.charAt(0).toUpperCase()}${other.slice(1)}'` : `e.g. '${example}'`;
+};
 
 // --- the schema ---
 
@@ -241,6 +248,9 @@ const describe = node => {
     return typeNames[node.type] ?? 'a value';
 };
 
+// the keys of a dim, e.g. `legend`, a part of a dim at the top is named so
+const dimProperties = () => resolveNode(schema.definitions.dim)?.properties ?? {};
+
 /**
  * The warnings [path, message] of a value of a part of the schema (`node`):
  * unknown keys of objects without additionalProperties, values which are
@@ -287,7 +297,7 @@ const schemaWarnings = (v, node, path = '', key = 'value', out = []) => {
             if (Object.hasOwn(properties, k))
                 schemaWarnings(e, properties[k], p, k, out);
             else if (node.additionalProperties === false)
-                out.push([p, `unknown key${choices(k, Object.keys(properties))}`]);
+                out.push([p, `unknown key${choices(k, Object.keys(properties))}${!path && Object.hasOwn(dimProperties(), k) ? `, a part of a dim: dims.<name>.${k}` : ''}`]);
             else
                 schemaWarnings(e, node.additionalProperties, p, k, out);
         });
@@ -318,7 +328,7 @@ const checkDims = ctx => {
         if (m.ranks !== undefined && !(Array.isArray(m.ranks) && m.ranks.every(isObject)) && !(typeof m.ranks == 'string' && m.ranks))
             warn(`${path}.ranks`, `expected a list of props, of the first category, the second one, ..., or the name of a list of the defaults (ranks)`);
         if (m.scheme !== undefined && !d3.named(d3.schemeNames, m.scheme))
-            warn(`${path}.scheme`, `unknown scheme '${m.scheme}', e.g. 'Tableau10'`);
+            warn(`${path}.scheme`, `unknown scheme '${m.scheme}', ${colorHint(m.scheme, d3.schemeNames, 'Tableau10')}`);
         if (m.scale)
             checkScale(ctx, n, m, path);
         if (m.axis) {
@@ -472,9 +482,9 @@ const checkScale = (ctx, n, m, path) => {
             warn(`${path}.scale.type`, `stacks start at 0, which a ${type} scale has no position of, the stacked marks are not drawn, e.g. "type": "symlog" has a 0`);
     }
     if (m.scale.interpolator !== undefined && !d3.named(d3.interpolatorNames, m.scale.interpolator))
-        warn(`${path}.scale.interpolator`, `unknown interpolator '${m.scale.interpolator}', e.g. 'Blues'`);
+        warn(`${path}.scale.interpolator`, `unknown interpolator '${m.scale.interpolator}', ${colorHint(m.scale.interpolator, d3.interpolatorNames, 'Blues')}`);
     if (m.scale.scheme !== undefined && !d3.named(d3.schemeNames, m.scale.scheme))
-        warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', e.g. 'Blues'`);
+        warn(`${path}.scale.scheme`, `unknown scheme '${m.scale.scheme}', ${colorHint(m.scale.scheme, d3.schemeNames, 'Blues')}`);
     if (type == 'threshold' && !(Array.isArray(m.scale.domain) && m.scale.domain.every(v => v !== null)))
         warn(at('domain'), `a threshold scale needs the values between its classes`);
     if (m.type == 'date' && m.scale.orientation !== undefined && !['time', 'utc', 'band', 'point'].includes(type))

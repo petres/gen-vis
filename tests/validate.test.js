@@ -306,6 +306,23 @@ describe('validateDef', () => {
         ]);
     });
 
+    test('a name of colors in another case and a part of a dim at the top: the hint of the fix', () => {
+        const def = base();
+        def.legend = { position: 'bottom' };
+        def.dims.c.scheme = 'TABLEAU10';
+        def.dims.y.scale = { type: 'sequential', interpolator: 'VIRIDIS' };
+        def.dims.x.scale = { type: 'threshold', domain: [1], scheme: 'rdylgn' };
+        expect(validateDef(def)).toEqual([
+            "dims.x.scale.scheme: unknown scheme 'rdylgn', use 'RdYlGn'",
+            "dims.y.scale.interpolator: unknown interpolator 'VIRIDIS', use 'Viridis'",
+            "dims.c.scheme: unknown scheme 'TABLEAU10', use 'Tableau10'",
+            "legend: unknown key, a part of a dim: dims.<name>.legend",
+        ]);
+        // the first letter in any case is the name, e.g. tableau10
+        def.dims.c.scheme = 'tableau10';
+        expect(validateDef(def)).not.toContain("dims.c.scheme: unknown scheme 'tableau10', use 'Tableau10'");
+    });
+
     test('a band scale of a date dim: a band per date is one of categories (docs: interval)', () => {
         const def = { dims: { x: { column: 'd', type: 'date', scale: { type: 'band' } }, y: 'v' }, marks: [{ type: 'bar' }] };
         expect(validateDef(def)).toEqual([
