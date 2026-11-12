@@ -108,11 +108,14 @@ const cssPixels = (value, styles) => {
  * has the store, the slots (`slots()`), the props of the buttons
  * (`props()`), the files (save, copy, csv), `emit` of the events of the
  * hover, `stateChanged()` of a change of the user, `rendered()` once it is
- * drawn, `drawn()` after every draw and `showError(error)`, see app.js.
+ * drawn, `drawn()` after every draw, `showError(error)` and `retry()`, see app.js.
+ * With `failed` (the message of an error of a draw) only the header, the
+ * controls and the error are drawn, so the user can choose another value:
+ * a change of the controls or of the width calls `app.retry()`.
  * Changes are drawn together in a microtask (see invalidate), a new view
  * (see update) only after a change of the state or of the width.
  */
-const createVis = app => {
+const createVis = (app, failed = null) => {
     const { store, files } = app;
     const slots = () => app.slots() ?? {};
     const texts = () => store.locale.texts;
@@ -232,6 +235,11 @@ const createVis = app => {
     };
 
     const changeSelected = () => {
+        if (failed) {
+            app.stateChanged();
+            app.retry();
+            return;
+        }
         update(true);
         app.stateChanged();
     };
@@ -437,6 +445,14 @@ const createVis = app => {
 
         controls.forEach(f => f.update());
 
+        // the error of a draw instead of the plots and the legends
+        if (failed) {
+            message ??= el('div', { class: 'vis-error' });
+            setText(message, failed);
+            place(root, message, footer);
+            return;
+        }
+
         // a text instead of the plots and the legends, e.g. of a narrow screen
         const text = messageOf();
         const at = legendsAt();
@@ -608,6 +624,21 @@ const createVis = app => {
             controls = store.def.controls.filter(e => e.type != 'hidden')
                 .map(e => createControl(vis, e, globals, formChanged));
             form.append(...controls.map(f => f.el));
+            if (failed) {
+                render();
+                // another width draws it again, not the first one observed
+                let observed = null;
+                if (typeof ResizeObserver == 'function') {
+                    resizeObserver = new ResizeObserver(entries => {
+                        const w = entries.at(-1)?.contentRect.width;
+                        if (observed !== null && w != observed)
+                            app.retry();
+                        observed ??= w;
+                    });
+                    resizeObserver.observe(root);
+                }
+                return;
+            }
             measure();
             update();
             store.listeners.add(stateListener);
@@ -645,6 +676,7 @@ const createVis = app => {
                 // e.g. after the first draw of a legend of colors
                 queueMicrotask(() => guard(resized));
         },
+        failed: Boolean(failed),
         // the props of the buttons or the slots changed
         invalidate,
         highlight,

@@ -4,7 +4,7 @@
 // by class and the buttons of the footer
 import { test, expect, vi, beforeEach, beforeAll } from 'vitest';
 import { createGenVis, mountGenVisByClass, unmountGenVisElement } from '@/index.js';
-import { errors, useDom, rendered, nextTick } from './dom.js';
+import { errors, useDom, rendered, nextTick, resize } from './dom.js';
 
 vi.mock('@/utils/raster.js', () => ({
     rasterize: async () => new Blob(['png'], { type: 'image/png' }),
@@ -223,4 +223,55 @@ test('the element of the page of { root: true } is left as it was after the dest
     drawn.destroy();
     expect(page.outerHTML).toBe('<div style="min-height: 100px;"></div>');
     expect(errors).toEqual([]);
+});
+
+// review of 5.0: the error of a draw replaced the controls, nothing but a new definition drew it again
+test('an error of a draw is shown below the controls, another value, state, globals or width draws it again', async () => {
+    const def = defOf('t', { data: undefined, globals: { col: 'value' },
+        controls: [{ type: 'radio', global: 'col', name: 'C', values: ['value', 'bad'] }],
+        marks: "=match(@col, {bad: literal([{type: 'nosuch'}])}, literal([{type: 'point'}]))" });
+    const errorsOf = [], states = [];
+    const { el, vis } = create({ def, data: csv, onError: e => errorsOf.push(e), 'onUpdate:state': s => states.push(s) });
+    await rendered(el);
+    const radio = i => el.querySelectorAll('input[type=radio]')[i];
+    const shown = () => ({ error: el.querySelector('.vis-error')?.textContent ?? null, svg: el.querySelectorAll('svg.vis-svg').length, radios: el.querySelectorAll('input[type=radio]').length });
+    radio(1).click();
+    await nextTick();
+    expect(shown()).toEqual({ error: expect.stringMatching(/unknown mark type 'nosuch'/), svg: 0, radios: 2 });
+    expect(title(el)).toBe('t');
+    expect(states).toEqual([{ globals: { col: 'bad' } }]);
+    // the user chooses the other value again
+    radio(0).click();
+    await nextTick();
+    expect(shown()).toEqual({ error: null, svg: 1, radios: 2 });
+    expect(states.at(-1)).toEqual({});
+    // of the state and the globals of the page
+    radio(1).click();
+    await nextTick();
+    vis.update({ state: null });
+    await nextTick();
+    expect(shown().svg).toBe(1);
+    vis.update({ globals: { col: 'bad' } });
+    await nextTick();
+    expect(shown().svg).toBe(0);
+    vis.update({ globals: { col: 'value' } });
+    await nextTick();
+    expect(shown().svg).toBe(1);
+    // of another width (the first one observed is the one of the error)
+    radio(1).click();
+    await nextTick();
+    const failed = errorsOf.length;
+    resize(500);
+    resize(500);
+    await nextTick();
+    expect(errorsOf.length).toBe(failed);
+    resize(400);
+    await nextTick();
+    expect(errorsOf.length).toBe(failed + 1);
+    expect(shown().radios).toBe(2);
+    // an error of the load has no controls
+    vis.update({ def: null, defFile: 'missing.json' });
+    await vi.waitFor(() => expect(errorsOf.length).toBe(failed + 2));
+    expect(shown()).toEqual({ error: expect.stringMatching(/missing.json/), svg: 0, radios: 0 });
+    errors.length = 0;
 });

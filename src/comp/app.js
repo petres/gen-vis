@@ -100,6 +100,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
     const store = createStore();
     const outer = root ? element : el('div', { class: 'vis-outer' });
     let error = null;
+    // the error is one of a draw of the definition loaded, not of its load:
+    // the controls stay above it (see `failed` of createVis), a change of
+    // the state, the globals or the width draws it again, see retry
+    let drawFailed = false;
     let errorEl = null;
     let debugEl = null;
     let vis = null;
@@ -163,7 +167,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             outer.style.minHeight = held.value = `${reserved}px`;
         } else
             release();
-        if (error) {
+        if (error && !drawFailed) {
             errorEl ??= el('div', { class: 'vis-error' });
             setText(errorEl, error);
             outer.insertBefore(errorEl, outer.firstChild);
@@ -217,7 +221,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             outer.insertBefore(vis.el, debugEl && debugEl.parentNode === outer ? debugEl : null);
             vis.mounted();
         } catch (e) {
-            showError(e);
+            showError(e, true);
             return;
         }
         // the facets are drawn, once it is in the page
@@ -252,7 +256,8 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             drawDebug();
             measureLater();
         },
-        showError: e => showError(e),
+        showError: e => showError(e, true),
+        retry: () => queueMicrotask(retry),
     };
 
     // a lazy visualisation waits until it is near the viewport (one height
@@ -346,6 +351,7 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             // the error is kept while the new definition is loaded, a
             // definition which could not be drawn is not drawn again meanwhile
             error = null;
+            drawFailed = false;
             // the state and the globals might have changed while loading,
             // the store has the ones given when it started, the visualisation
             // before is not drawn with them
@@ -391,14 +397,31 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             heights.delete(heights.keys().next().value);
     };
 
-    // only if it differs, the own updates of update:state come back unchanged
+    // only if it differs, the own updates of update:state come back
+    // unchanged; true if it was set
     const syncState = () => {
-        if (store.loaded && !sameValue(props.state ?? {}, store.state))
-            store.setState(props.state);
+        if (!store.loaded || sameValue(props.state ?? {}, store.state))
+            return false;
+        store.setState(props.state);
+        return true;
     };
     const syncGlobals = () => {
-        if (store.loaded && !sameValue(props.globals ?? {}, store.globals ?? {}))
-            store.setGlobals(copyOf(props.globals));
+        if (!store.loaded || sameValue(props.globals ?? {}, store.globals ?? {}))
+            return false;
+        store.setGlobals(copyOf(props.globals));
+        return true;
+    };
+
+    // the definition whose draw failed drawn again, e.g. of another value
+    // of a control, its error again if it fails again
+    const retry = () => {
+        if (!drawFailed || removed)
+            return;
+        drawFailed = false;
+        error = null;
+        dropVis();
+        showVis();
+        render();
     };
 
     // the elements of the rows of the values of dims in all facets,
@@ -411,13 +434,28 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
         vis?.highlight({});
     };
 
-    // not after it was removed, e.g. a load failing later
-    const showError = e => {
+    // not after it was removed, e.g. a load failing later; an error of a
+    // draw (`drawn`) of the definition loaded is shown below its controls,
+    // not one of the controls themselves
+    const showError = (e, drawn = false) => {
         if (removed)
             return;
         console.error(e);
         error = e.message;
+        const again = vis?.failed;
         dropVis();
+        drawFailed = drawn && store.loaded && !again;
+        if (drawFailed) {
+            try {
+                vis = createVis(visApp, error);
+                visLoads = store.loads;
+                outer.insertBefore(vis.el, debugEl && debugEl.parentNode === outer ? debugEl : null);
+                vis.mounted();
+            } catch {
+                dropVis();
+                drawFailed = false;
+            }
+        }
         render();
         emit('error', e.message);
     };
@@ -535,10 +573,10 @@ const createGenVis = (element, given = {}, { root = false } = {}) => {
             init();
         }
         if (!reload) {
-            if ('state' in next)
-                syncState();
-            if ('globals' in next)
-                syncGlobals();
+            const set = ['state' in next && syncState(), 'globals' in next && syncGlobals()];
+            // a draw which failed is tried again with them
+            if (set.some(Boolean))
+                retry();
         }
         if ('highlight' in next)
             setHighlight(props.highlight);

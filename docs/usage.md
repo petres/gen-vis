@@ -186,7 +186,11 @@ If `def`, `defFile` or `data` change (`update` of [createGenVis](#javascript),
 a new prop of the component), the visualisation is loaded again, also of
 other `defaults`, a new `state` or new `globals` are applied without
 loading it again. Errors are shown in place of
-the visualisation, e.g. of a definition which can not be drawn.
+the visualisation, e.g. of a definition or data which can not be loaded;
+an error of the draw of a loaded definition, e.g. of a value of a control
+whose marks can not be drawn, is shown below its title and controls, so the
+user can choose another value: a new state, new globals or another width
+draw it again.
 
 ## Events and slots
 
